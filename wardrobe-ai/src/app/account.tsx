@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { router } from 'expo-router';
 import { cloudEnabled, finishGoogleSignIn, firebaseConfigured, googleSignIn, logOut, observeAccount } from '../services/firebaseClient';
 import { uploadDeviceClothing } from '../services/wardrobeStorage';
 import type { User } from 'firebase/auth';
@@ -12,9 +13,11 @@ export default function AccountScreen() {
   const [message, setMessage] = useState('');
   useEffect(() => {
     let active = true;
-    void finishGoogleSignIn().catch(error => {
-      if (active) setMessage(error instanceof Error ? error.message : 'Google sign-in could not be completed.');
-    });
+    void finishGoogleSignIn()
+      .then(result => { if (active && result) router.replace('/'); })
+      .catch(error => {
+        if (active) setMessage(error instanceof Error ? error.message : 'Google sign-in could not be completed.');
+      });
     const unsubscribe = observeAccount(value => { setUser(value); setLoading(false); }, () => { setMessage('Your account name could not be saved. Publish the updated user-profile Firestore rules, then reload this page.'); });
     return () => { active = false; unsubscribe(); };
   }, []);
@@ -46,7 +49,7 @@ export default function AccountScreen() {
           </View>
           <Pressable style={styles.dangerAction} accessibilityRole="button" disabled={busy} onPress={() => run(logOut)}><Text style={styles.dangerText}>Sign out</Text></Pressable>
         </> : cloudEnabled ? <>
-          <Pressable style={styles.button} accessibilityRole="button" disabled={busy} onPress={() => run(googleSignIn)}><Text style={styles.buttonText}>Continue with Google</Text></Pressable>
+          <Pressable style={styles.button} accessibilityRole="button" disabled={busy} onPress={() => run(async () => { const result = await googleSignIn(); if (result) router.replace('/'); })}><Text style={styles.buttonText}>Continue with Google</Text></Pressable>
           <Text style={styles.message}>On mobile, Google opens securely in this window and returns you here.</Text>
         </> : null}
       {busy && <ActivityIndicator />}

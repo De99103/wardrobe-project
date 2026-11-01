@@ -94,9 +94,9 @@ export async function googleSignIn() {
   try {
     if (mobileWebBrowser()) {
       await signInWithRedirect(services.auth, provider);
-      return;
+      return null;
     }
-    await signInWithPopup(services.auth, provider);
+    return await signInWithPopup(services.auth, provider);
   } catch (error) {
     throw authError(error);
   }
@@ -104,9 +104,9 @@ export async function googleSignIn() {
 
 export async function finishGoogleSignIn() {
   const services = firebaseServices();
-  if (!services || !mobileWebBrowser()) return;
+  if (!services || !mobileWebBrowser()) return null;
   try {
-    await getRedirectResult(services.auth);
+    return await getRedirectResult(services.auth);
   } catch (error) {
     throw authError(error);
   }

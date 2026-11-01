@@ -75,30 +75,34 @@ export default function WardrobeScreen() {
   }
   const sections = collectionSections(items, status, category, sort);
   const count = sections.reduce((total, section) => total + section.data.length, 0);
+  const collectionHeader = <View style={styles.listHeader}>
+    <Text style={styles.eyebrow}>{status === 'owned' ? 'Your collection' : 'Saved for later'}</Text>
+    <Text style={styles.title}>{status === 'owned' ? 'My Wardrobe' : 'My Wishlist'}</Text>
+    <Text style={styles.subtitle}>{status === 'owned' ? 'Everything you own, ready to style.' : 'Pieces you are considering for your collection.'}</Text>
+    <View style={styles.row}>
+      {(['owned', 'wishlist'] as const).map(value => (
+        <Pressable key={value} style={[styles.option, status === value && styles.selected]} accessibilityRole="button" accessibilityState={{ selected: status === value }} onPress={() => { setCategory('all'); router.setParams({ status: value }); }}>
+          <Text style={status === value ? styles.optionTextSelected : styles.optionText}>{value === 'owned' ? 'Wardrobe' : 'Wishlist'}</Text>
+        </Pressable>
+      ))}
+    </View>
+    <AccountPanel onChange={refresh} />
+    <ScrollView horizontal style={styles.filters} contentContainerStyle={styles.chips} showsHorizontalScrollIndicator={false}>
+      {(['all', ...categories] as const).map(value => <Pressable key={value} style={[styles.chip, category === value && styles.selected]} accessibilityRole="button" accessibilityLabel={`Filter ${categoryLabel(value)}`} accessibilityState={{ selected: category === value }} onPress={() => setCategory(value)}><Text style={category === value ? styles.chipTextSelected : styles.chipText}>{categoryLabel(value)}</Text></Pressable>)}
+    </ScrollView>
+    <View style={styles.sortRow}>
+      <Text style={styles.message}>{count} {count === 1 ? 'item' : 'items'}</Text>
+      <Text style={styles.message}>Sort</Text>
+      {(['type', 'newest', 'name'] as const).map(value => <Pressable key={value} accessibilityRole="button" accessibilityLabel={`Sort by ${value}`} accessibilityState={{ selected: sort === value }} style={[styles.chip, sort === value && styles.selected]} onPress={() => setSort(value)}><Text style={sort === value ? styles.chipTextSelected : styles.chipText}>{value === 'type' ? 'Type' : value === 'newest' ? 'Newest' : 'Name'}</Text></Pressable>)}
+    </View>
+  </View>;
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ title: 'Collection' }} />
-      <Text style={styles.eyebrow}>{status === 'owned' ? 'Your collection' : 'Saved for later'}</Text>
-      <Text style={styles.title}>{status === 'owned' ? 'My Wardrobe' : 'My Wishlist'}</Text>
-      <Text style={styles.subtitle}>{status === 'owned' ? 'Everything you own, ready to style.' : 'Pieces you are considering for your collection.'}</Text>
-      <View style={styles.row}>
-        {(['owned', 'wishlist'] as const).map(value => (
-          <Pressable key={value} style={[styles.option, status === value && styles.selected]} accessibilityRole="button" accessibilityState={{ selected: status === value }} onPress={() => { setCategory('all'); router.setParams({ status: value }); }}>
-            <Text style={status === value ? styles.optionTextSelected : styles.optionText}>{value === 'owned' ? 'Wardrobe' : 'Wishlist'}</Text>
-          </Pressable>
-        ))}
-      </View>
-      <AccountPanel onChange={refresh} />
-      <ScrollView horizontal style={styles.filters} contentContainerStyle={styles.chips} showsHorizontalScrollIndicator={false}>
-        {(['all', ...categories] as const).map(value => <Pressable key={value} style={[styles.chip, category === value && styles.selected]} accessibilityRole="button" accessibilityLabel={`Filter ${categoryLabel(value)}`} accessibilityState={{ selected: category === value }} onPress={() => setCategory(value)}><Text style={category === value ? styles.chipTextSelected : styles.chipText}>{categoryLabel(value)}</Text></Pressable>)}
-      </ScrollView>
-      <View style={styles.sortRow}>
-        <Text style={styles.message}>{count} {count === 1 ? 'item' : 'items'}</Text>
-        <Text style={styles.message}>Sort</Text>
-        {(['type', 'newest', 'name'] as const).map(value => <Pressable key={value} accessibilityRole="button" accessibilityLabel={`Sort by ${value}`} accessibilityState={{ selected: sort === value }} style={[styles.chip, sort === value && styles.selected]} onPress={() => setSort(value)}><Text style={sort === value ? styles.chipTextSelected : styles.chipText}>{value === 'type' ? 'Type' : value === 'newest' ? 'Newest' : 'Name'}</Text></Pressable>)}
-      </View>
-      {loading ? <ActivityIndicator /> : error ? <View><Text style={styles.error}>{error}</Text><Pressable style={styles.button} accessibilityRole="button" onPress={refresh}><Text style={styles.buttonText}>Try Again</Text></Pressable></View> : (
+      {loading ? <ScrollView style={styles.collectionList} contentContainerStyle={styles.list}>{collectionHeader}<ActivityIndicator color="#5E2D4F" /></ScrollView>
+        : error ? <ScrollView style={styles.collectionList} contentContainerStyle={styles.list}>{collectionHeader}<View style={styles.errorPanel}><Text style={styles.error}>{error}</Text><Pressable style={styles.button} accessibilityRole="button" onPress={refresh}><Text style={styles.buttonText}>Try Again</Text></Pressable></View></ScrollView> : (
         <SectionList style={styles.collectionList} sections={sections} keyExtractor={item => `${item.status}:${item.sourceUrl}`} stickySectionHeadersEnabled={false} contentContainerStyle={styles.list}
+          ListHeaderComponent={collectionHeader}
           ListEmptyComponent={<View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>{category === 'all' ? `Your ${status === 'owned' ? 'wardrobe' : 'wishlist'} is ready for its first piece.` : `No ${categoryLabel(category).toLowerCase()} here yet.`}</Text>
             <Text style={styles.message}>{category === 'all' ? 'Add something manually or import it straight from a store.' : 'Try another category or add a new item.'}</Text>

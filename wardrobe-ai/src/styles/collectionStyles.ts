@@ -23,6 +23,8 @@ export const styles = StyleSheet.create({
   actionRow: { flexDirection: 'row', gap: 10 },
   collectionList: { flex: 1 },
   list: { gap: 14, paddingBottom: 20 },
+  listHeader: { gap: 14, paddingBottom: 2 },
+  errorPanel: { gap: 12 },
   card: { padding: 14, backgroundColor: '#FFFDFD', borderRadius: 22, gap: 9, borderWidth: 1, borderColor: '#E8DDE3' },
   cardEyebrow: { color: '#9D5B79', fontSize: 11, lineHeight: 15, fontWeight: '800', letterSpacing: 1.3, textTransform: 'uppercase' },
   name: { fontFamily: editorialFont, fontSize: 22, lineHeight: 28, color: '#352A33', letterSpacing: -0.2 },
