@@ -1,0 +1,35 @@
+# Secrets and local configuration
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.production.example
+**/serviceAccount*.json
+**/*.pem
+**/*.p8
+**/*.p12
+**/*.key
+
+# Dependencies and local runtimes
+**/node_modules/
+**/.venv/
+**/__pycache__/
+**/*.pyc
+
+# Generated output and caches
+**/.expo/
+**/dist/
+**/web-build/
+**/.pytest_cache/
+**/*.tsbuildinfo
+
+# Obsolete local backup source file
+wardrobe-backend/main 2.py
+
+# Preserved repository metadata from before the monorepo conversion
+.git-history/
+
+# Editors and operating systems
+.DS_Store
+**/.DS_Store
+.vscode/
+**/.vscode/

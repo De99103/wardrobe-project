@@ -1,0 +1,25 @@
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#f8f6f1' },
+  content: { padding: 20, gap: 16, paddingBottom: 48, width: '100%', maxWidth: 900, alignSelf: 'center' },
+  title: { fontSize: 34, fontWeight: '800', color: '#272321' },
+  subtitle: { fontSize: 16, lineHeight: 23, color: '#68615d' },
+  label: { fontSize: 15, fontWeight: '700', color: '#413b38' },
+  input: { borderWidth: 1, borderColor: '#cfc9c2', borderRadius: 14, padding: 14, backgroundColor: '#fff', fontSize: 16 },
+  button: { borderRadius: 14, padding: 16, backgroundColor: '#272321', alignItems: 'center' },
+  buttonDisabled: { opacity: 0.55 },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  weather: { borderRadius: 18, padding: 18, backgroundColor: '#dcebe3', gap: 5 },
+  weatherTitle: { fontSize: 18, fontWeight: '800', color: '#294838' },
+  weatherMain: { fontSize: 26, fontWeight: '800', color: '#294838' },
+  card: { borderRadius: 18, padding: 18, backgroundColor: '#fff', gap: 12 },
+  cardTitle: { fontSize: 24, fontWeight: '800', color: '#272321' },
+  item: { flexDirection: 'row', gap: 12, alignItems: 'center', borderTopWidth: 1, borderTopColor: '#ece8e2', paddingTop: 12 },
+  image: { width: 74, height: 74, borderRadius: 10, backgroundColor: '#f1efeb' },
+  itemText: { flex: 1, gap: 3 },
+  itemName: { fontSize: 17, fontWeight: '700', color: '#272321' },
+  explanation: { fontSize: 16, lineHeight: 23, color: '#49433f' },
+  tip: { borderRadius: 12, padding: 13, backgroundColor: '#f4eee2', color: '#5b4931', lineHeight: 21 },
+  error: { color: '#b42318', fontSize: 15 },
+});
