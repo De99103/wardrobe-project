@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router';
+import { AppHeaderBack, AppHeaderHome } from '../components/AppHeaderNavigation';
 
 export default function RootLayout() {
   return (
@@ -7,20 +8,24 @@ export default function RootLayout() {
       headerShadowVisible: false,
       headerTintColor: '#5E2D4F',
       headerTitleStyle: { color: '#352A33', fontWeight: '700' },
+      headerTitleAlign: 'center',
+      headerBackVisible: false,
+      headerLeft: () => <AppHeaderBack />,
+      headerRight: () => <AppHeaderHome />,
       contentStyle: { backgroundColor: '#FBF6F7' },
     }}>
-      <Stack.Screen name="add-item" options={{ title: 'Add an item' }} />
-      <Stack.Screen name="account" options={{ title: 'Your Account' }} />
-      <Stack.Screen name="browser-import" options={{ title: 'Browser Import' }} />
-      <Stack.Screen name="import-result" options={{ title: 'Import Clothing' }} />
-      <Stack.Screen name="outfit" options={{ title: 'AI Outfit Stylist' }} />
+      <Stack.Screen name="add-item" options={{ title: 'Add item' }} />
+      <Stack.Screen name="account" options={{ title: 'Account' }} />
+      <Stack.Screen name="browser-import" options={{ title: 'Browser import' }} />
+      <Stack.Screen name="import-result" options={{ title: 'Import' }} />
+      <Stack.Screen name="outfit" options={{ title: 'Outfit stylist' }} />
       <Stack.Screen
         name="index"
-        options={{ title: 'Wardrobe AI', headerShown: false }}
+        options={{ title: 'Wardrobe AI', headerShown: false, headerLeft: undefined, headerRight: undefined }}
       />
       <Stack.Screen
         name="wardrobe"
-        options={{ title: 'My Wardrobe' }}
+        options={{ title: 'Collection' }}
       />
     </Stack>
   );

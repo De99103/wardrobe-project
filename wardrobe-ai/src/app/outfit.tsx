@@ -47,7 +47,7 @@ export default function OutfitScreen() {
 
   return <View style={styles.container}>
     <Stack.Screen options={{
-      title: 'AI Outfit Stylist',
+      title: 'Outfit stylist',
       headerStyle: { backgroundColor: '#FBF6F7' },
       headerShadowVisible: false,
       headerTintColor: '#5E2D4F',
