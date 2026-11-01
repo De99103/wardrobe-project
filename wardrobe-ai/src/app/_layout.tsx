@@ -2,7 +2,13 @@ import { Stack } from 'expo-router';
 
 export default function RootLayout() {
   return (
-    <Stack>
+    <Stack screenOptions={{
+      headerStyle: { backgroundColor: '#FBF6F7' },
+      headerShadowVisible: false,
+      headerTintColor: '#5E2D4F',
+      headerTitleStyle: { color: '#352A33', fontWeight: '700' },
+      contentStyle: { backgroundColor: '#FBF6F7' },
+    }}>
       <Stack.Screen name="add-item" options={{ title: 'Add an item' }} />
       <Stack.Screen name="account" options={{ title: 'Your Account' }} />
       <Stack.Screen name="browser-import" options={{ title: 'Browser Import' }} />
@@ -10,7 +16,7 @@ export default function RootLayout() {
       <Stack.Screen name="outfit" options={{ title: 'AI Outfit Stylist' }} />
       <Stack.Screen
         name="index"
-        options={{ title: 'Wardrobe AI' }}
+        options={{ title: 'Wardrobe AI', headerShown: false }}
       />
       <Stack.Screen
         name="wardrobe"

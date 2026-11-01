@@ -1,18 +1,27 @@
-import { ScrollView, Text } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { styles } from '../styles/importResultStyles';
 
 export default function BrowserImportScreen() {
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Import from your browser</Text>
-      <Text style={styles.value}>Add products without copying descriptions. Open the product in Chrome, click the Wardrobe AI extension, then choose Import Product.</Text>
-      <Text style={styles.label}>One-time setup for the local development app</Text>
-      <Text style={styles.value}>1. Open chrome://extensions in Chrome and enable Developer mode.</Text>
-      <Text style={styles.value}>2. Choose Load unpacked and select the browser-extension folder inside wardrobe-project.</Text>
-      <Text style={styles.value}>3. Pin Wardrobe AI from the Extensions menu.</Text>
-      <Text style={styles.label}>Import a product</Text>
-      <Text style={styles.value}>Open an HTTPS product page, let it finish loading, click Wardrobe AI, and select Wardrobe or Wishlist. Review the extracted details in the app and save.</Text>
-      <Text style={styles.message}>Keep the local backend and app running. The extension reads product text and image links only when you click Import Product. Pages requiring sign-in or verification must be opened normally first.</Text>
+      <View style={styles.header}>
+        <Text style={styles.eyebrow}>CHROME HELPER</Text>
+        <Text style={styles.title}>Save a piece while you shop.</Text>
+        <Text style={styles.subtitle}>The Wardrobe AI extension reads the open product page for you—no copying descriptions by hand.</Text>
+      </View>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>One-time setup</Text>
+        <View style={styles.step}><Text style={styles.stepNumber}>1</Text><View style={styles.stepContent}><Text style={styles.stepTitle}>Open extensions</Text><Text style={styles.value}>Visit chrome://extensions in Chrome and enable Developer mode.</Text></View></View>
+        <View style={styles.divider} />
+        <View style={styles.step}><Text style={styles.stepNumber}>2</Text><View style={styles.stepContent}><Text style={styles.stepTitle}>Load Wardrobe AI</Text><Text style={styles.value}>Choose Load unpacked and select the browser-extension folder inside wardrobe-project.</Text></View></View>
+        <View style={styles.divider} />
+        <View style={styles.step}><Text style={styles.stepNumber}>3</Text><View style={styles.stepContent}><Text style={styles.stepTitle}>Keep it close</Text><Text style={styles.value}>Pin Wardrobe AI from the Extensions menu.</Text></View></View>
+      </View>
+      <View style={styles.recoveryCard}>
+        <Text style={styles.cardTitle}>Import while shopping</Text>
+        <Text style={styles.value}>Open any HTTPS product page, let it finish loading, click Wardrobe AI, then choose Wardrobe or Wishlist. You can review everything before saving.</Text>
+        <Text style={styles.mutedNote}>For local development, keep the backend and app running. Pages requiring sign-in or verification must be opened normally first.</Text>
+      </View>
     </ScrollView>
   );
 }

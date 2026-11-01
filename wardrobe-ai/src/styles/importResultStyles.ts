@@ -1,158 +1,77 @@
+import { Platform, StyleSheet } from 'react-native';
 
-import { StyleSheet } from 'react-native';
+const palette = {
+  ivory: '#FBF6F7', paper: '#FFFDFD', forest: '#5E2D4F', ink: '#352A33',
+  terracotta: '#D98CA3', muted: '#766B74', line: '#E8DDE3', sage: '#F1E4EC',
+};
+const editorialFont = Platform.OS === 'ios' ? 'Georgia' : 'serif';
 
 export const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: palette.ivory },
   container: {
-    flexGrow: 1,
-    width: '100%',
-    maxWidth: 780,
-    alignSelf: 'center',
-    padding: 18,
-    paddingBottom: 48,
-    backgroundColor: '#FAF7F2',
-    gap: 16,
+    flexGrow: 1, width: '100%', maxWidth: 780, alignSelf: 'center',
+    padding: 24, paddingTop: 32, paddingBottom: 56, gap: 24,
   },
-
   centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-    backgroundColor: '#FAF7F2',
-    gap: 20,
+    flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32,
+    backgroundColor: palette.ivory, gap: 22,
   },
-
-  title: {
-    fontSize: 30,
-    lineHeight: 36,
-    fontWeight: '800',
-    color: '#292524',
-  },
-
-  subtitle: {
-    fontSize: 15,
-    color: '#78716C',
-  },
-
+  eyebrow: { fontSize: 11, fontWeight: '700', letterSpacing: 2.4, color: palette.forest },
+  header: { gap: 12 },
+  title: { fontFamily: editorialFont, fontSize: 38, lineHeight: 44, color: palette.forest },
+  subtitle: { fontSize: 15, lineHeight: 23, color: palette.muted, maxWidth: 540 },
   imageContainer: {
-    width: '100%',
-    aspectRatio: 4 / 3,
-    maxHeight: 420,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
+    width: '100%', aspectRatio: 1, maxHeight: 440, backgroundColor: '#F5E4E8',
+    borderRadius: 22, justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
   },
-
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-
+  image: { width: '100%', height: '100%' },
+  imagePlaceholder: { alignItems: 'center', gap: 12, padding: 28 },
+  placeholderMark: { color: palette.forest, fontSize: 44, fontFamily: editorialFont },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 18,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: '#EEEAE4',
+    backgroundColor: palette.paper, borderRadius: 22, padding: 24, gap: 20,
+    borderWidth: 1, borderColor: palette.line,
   },
-
-  productName: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#292524',
+  recoveryCard: {
+    backgroundColor: palette.paper, borderRadius: 22, padding: 24, gap: 18,
+    borderWidth: 1, borderColor: palette.line, borderTopWidth: 3, borderTopColor: palette.terracotta,
   },
-
-  price: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#54745D',
-    marginBottom: 12,
-  },
-
-  label: {
-    fontSize: 14,
-    color: '#78716C',
-    marginTop: 8,
-  },
-
-  value: {
-    fontSize: 16,
-    color: '#292524',
-  },
-
+  cardTitle: { fontFamily: editorialFont, fontSize: 27, lineHeight: 34, color: palette.forest },
+  productName: { fontFamily: editorialFont, fontSize: 30, lineHeight: 37, color: palette.ink },
+  price: { fontSize: 22, fontWeight: '600', color: palette.forest },
+  productHeader: { gap: 12 },
+  detailGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 20, borderTopWidth: 1, borderTopColor: palette.line, paddingTop: 20 },
+  detail: { flexGrow: 1, flexBasis: 140, gap: 7 },
+  label: { fontSize: 11, fontWeight: '700', letterSpacing: 1.3, textTransform: 'uppercase', color: palette.muted },
+  value: { fontSize: 15, lineHeight: 23, color: palette.ink },
   statusBox: {
-    backgroundColor: '#D9E8DD',
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: palette.sage, padding: 20, borderRadius: 16,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16,
   },
-
-  message: {
-    fontSize: 16,
-    color: '#78716C',
-    textAlign: 'center',
-  },
-
+  statusCopy: { flex: 1, gap: 7 },
+  statusMark: { color: palette.forest, fontSize: 25 },
+  message: { fontSize: 15, lineHeight: 23, color: palette.muted, textAlign: 'center', maxWidth: 440 },
   button: {
-    backgroundColor: '#292524',
-    minHeight: 52,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: palette.forest, minHeight: 54, paddingHorizontal: 20, paddingVertical: 16,
+    borderRadius: 14, alignItems: 'center', justifyContent: 'center',
   },
-
-  buttonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-
+  buttonText: { color: palette.paper, fontWeight: '600', fontSize: 15, textAlign: 'center' },
   secondaryButton: {
-    borderWidth: 1,
-    borderColor: '#54745D',
-    borderRadius: 12,
-    padding: 14,
-    alignItems: 'center',
+    minHeight: 52, borderWidth: 1, borderColor: palette.line, borderRadius: 14,
+    padding: 15, alignItems: 'center', justifyContent: 'center',
   },
-
-  secondaryButtonText: {
-    color: '#54745D',
-    fontWeight: '600',
+  secondaryButtonText: { color: palette.forest, fontWeight: '600', fontSize: 15, textAlign: 'center' },
+  backText: { color: palette.forest, fontWeight: '600', fontSize: 14, lineHeight: 22, paddingVertical: 10 },
+  storeLink: { color: palette.forest, fontWeight: '600', fontSize: 14, lineHeight: 22, paddingVertical: 8, textDecorationLine: 'underline' },
+  descriptionInput: {
+    backgroundColor: palette.paper, borderWidth: 1, borderColor: palette.line,
+    borderRadius: 14, padding: 16, minHeight: 140, fontSize: 16, lineHeight: 24, color: palette.ink,
   },
-
-  rawJson: {
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 12,
-    fontSize: 12,
-    fontFamily: 'monospace',
-    color: '#292524',
-  },
-
-  backText: {
-    color: '#54745D',
-    fontWeight: '600',
-  },
-
-
-descriptionInput: {
-  backgroundColor: '#FFFFFF',
-  borderWidth: 1,
-  borderColor: '#D6D3D1',
-  borderRadius: 12,
-  padding: 16,
-  minHeight: 140,
-  fontSize: 16,
-  color: '#292524',
-},
-
-errorText: {
-  color: '#B91C1C',
-  fontSize: 14,
-  lineHeight: 20,
-},
+  errorText: { color: '#A14657', fontSize: 14, lineHeight: 22 },
+  mutedNote: { color: palette.muted, fontSize: 13, lineHeight: 21 },
+  actions: { gap: 12 },
+  step: { flexDirection: 'row', alignItems: 'flex-start', gap: 16 },
+  stepNumber: { fontFamily: editorialFont, fontSize: 25, color: palette.forest, width: 32 },
+  stepContent: { flex: 1, gap: 6 },
+  stepTitle: { fontSize: 16, fontWeight: '600', lineHeight: 23, color: palette.ink },
+  divider: { height: 1, backgroundColor: palette.line },
 });

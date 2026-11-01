@@ -10,7 +10,8 @@ export function AccountPanel({ onChange }: { onChange?: () => void }) {
   useEffect(() => observeAccount(value => { setUser(value); onChange?.(); }), [onChange]);
   return (
     <View style={styles.accountRow}>
-      <Text style={styles.message}>{user ? `Cloud collection · ${user.displayName ?? user.email ?? 'Signed in'}` : 'Saved on this device'}</Text>
+      <View style={styles.statusBadge}><Text style={styles.statusBadgeText}>{user ? 'Cloud synced' : 'Saved on device'}</Text></View>
+      <Text style={styles.message}>{user ? user.displayName ?? user.email ?? 'Signed in' : 'Your collection stays on this device'}</Text>
       {cloudEnabled && <Link href="/account" asChild><Pressable accessibilityRole="button"><Text style={styles.storeLink}>{user ? 'Account' : 'Sign in with Google'}</Text></Pressable></Link>}
     </View>
   );

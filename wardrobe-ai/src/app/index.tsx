@@ -43,71 +43,56 @@ export default function HomeScreen() {
 
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Wardrobe AI</Text>
-      <Text style={styles.subtitle}>Add a clothing item</Text>
-
-      <Pressable style={[styles.option, styles.navOption]} onPress={() => router.push({ pathname: '/wardrobe', params: { status } })}>
-        <Text>View My Wardrobe & Wishlist</Text>
-      </Pressable>
-
-      <AccountPanel />
-
-      <Pressable style={styles.button} accessibilityRole="button" onPress={() => router.push({ pathname: '/add-item', params: { status } })}>
-        <Text style={styles.buttonText}>Add item manually</Text>
-      </Pressable>
-
-      <Link href="/browser-import" style={styles.summary}>Import directly from your browser</Link>
-
-      {/* Import clothing through URL */}
-      <Text style={styles.label}>Or paste a store link</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="https://www.example.com/product"
-        value={productUrl}
-        onChangeText={setProductUrl}
-        autoCapitalize="none"
-        autoCorrect={false}
-        keyboardType="url"
-      />
-
-      {urlError ? (
-        <Text style={styles.error}>{urlError}</Text>
-      ) : null}
-
-      {/* Choose clothing collection */}
-      <Text style={styles.label}>Where should we save it?</Text>
-
-      <View style={styles.row}>
-        <Pressable
-          style={[
-            styles.option,
-            status === 'owned' && styles.selected,
-          ]}
-          accessibilityRole="button" onPress={() => router.setParams({ status: 'owned' })}
-        >
-          <Text>My Wardrobe</Text>
+      <View style={styles.brandRow}>
+        <View style={styles.brandMark}><Text style={styles.brandMarkText}>W</Text></View>
+        <View><Text style={styles.brandName}>WARDROBE AI</Text><Text style={styles.brandTagline}>Your personal styling studio</Text></View>
+      </View>
+      <View style={styles.hero}>
+        <View pointerEvents="none" style={styles.heroOrb} />
+        <View pointerEvents="none" style={styles.heroOrbSmall} />
+        <Text style={styles.eyebrow}>Styled for you</Text>
+        <Text style={styles.heroTitle}>Your closet,{`\n`}beautifully styled.</Text>
+        <Text style={styles.heroSubtitle}>Curate the pieces you love and discover polished, weather-aware outfits made only from your wardrobe.</Text>
+        <Pressable style={[styles.button, styles.accentButton]} accessibilityRole="button" onPress={() => router.push('/outfit')}>
+          <Text style={styles.accentButtonText}>Create today’s look  →</Text>
         </Pressable>
+        <Text style={styles.heroFootnote}>PERSONAL · WEATHER-AWARE · EFFORTLESS</Text>
+      </View>
 
-        <Pressable
-          style={[
-            styles.option,
-            status === 'wishlist' && styles.selected,
-          ]}
-          accessibilityRole="button" onPress={() => router.setParams({ status: 'wishlist' })}
-        >
-          <Text>Wishlist</Text>
+      <View style={styles.quickGrid}>
+        <Pressable style={styles.quickCard} accessibilityRole="button" onPress={() => router.push({ pathname: '/wardrobe', params: { status: 'owned' } })}>
+          <View style={styles.quickTop}><Text style={styles.quickCardLabel}>Collection</Text><Text style={styles.quickArrow}>↗</Text></View>
+          <View><Text style={styles.quickCardTitle}>My Wardrobe</Text><Text style={styles.quickCardMeta}>Browse everything you own →</Text></View>
+        </Pressable>
+        <Pressable style={[styles.quickCard, styles.quickCardAccent]} accessibilityRole="button" onPress={() => router.push({ pathname: '/wardrobe', params: { status: 'wishlist' } })}>
+          <View style={styles.quickTop}><Text style={styles.quickCardLabel}>Saved for later</Text><Text style={styles.quickArrow}>♡</Text></View>
+          <View><Text style={styles.quickCardTitle}>Wishlist</Text><Text style={styles.quickCardMeta}>Keep an eye on future finds →</Text></View>
         </Pressable>
       </View>
 
-      <Text style={styles.summary}>
-        Selected: {status === 'owned' ? 'My Wardrobe' : 'Wishlist'}
-      </Text>
+      <AccountPanel />
 
-      {/* Open AI import results */}
-      <Pressable style={styles.button} onPress={handleImport}>
-        <Text style={styles.buttonText}>Import from Store</Text>
-      </Pressable>
+      <View style={styles.panel}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.iconBadge}><Text style={styles.iconBadgeText}>+</Text></View>
+          <View style={{ flex: 1 }}><Text style={styles.sectionTitle}>Add a new piece</Text><Text style={styles.subtitle}>Save it manually or import it from any store.</Text></View>
+        </View>
+        <Pressable style={styles.button} accessibilityRole="button" onPress={() => router.push({ pathname: '/add-item', params: { status } })}>
+          <Text style={styles.buttonText}>Add an item manually</Text>
+        </Pressable>
+        <View style={styles.divider} />
+        <Text style={styles.label}>Store product link</Text>
+        <TextInput style={styles.input} placeholder="https://store.com/product" value={productUrl} onChangeText={setProductUrl}
+          autoCapitalize="none" autoCorrect={false} keyboardType="url" />
+        {urlError ? <Text style={styles.error}>{urlError}</Text> : null}
+        <Text style={styles.label}>Save to</Text>
+        <View style={styles.row}>
+          <Pressable style={[styles.option, status === 'owned' && styles.selected]} accessibilityRole="button" onPress={() => router.setParams({ status: 'owned' })}><Text>Wardrobe</Text></Pressable>
+          <Pressable style={[styles.option, status === 'wishlist' && styles.selected]} accessibilityRole="button" onPress={() => router.setParams({ status: 'wishlist' })}><Text>Wishlist</Text></Pressable>
+        </View>
+        <Pressable style={styles.button} accessibilityRole="button" onPress={handleImport}><Text style={styles.buttonText}>Import from store  →</Text></Pressable>
+        <Link href="/browser-import" style={styles.subtleLink}>Use the Chrome extension instead</Link>
+      </View>
     </ScrollView>
   );
 }

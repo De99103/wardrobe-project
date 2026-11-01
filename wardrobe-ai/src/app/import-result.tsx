@@ -146,10 +146,9 @@ export default function ImportResultScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#54745D" />
-        <Text style={styles.message}>
-          Analyzing clothing with AI...
-        </Text>
+        <Text style={styles.placeholderMark}>W</Text>
+        <ActivityIndicator size="large" color="#5E2D4F" />
+        <Text style={styles.message}>Reading the product page and preparing the details…</Text>
       </View>
     );
   }
@@ -158,72 +157,39 @@ export default function ImportResultScreen() {
   if (error || !product) {
     return (
       <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Import Clothing</Text>
+        <View style={styles.header}>
+          <Text style={styles.eyebrow}>IMPORT ASSISTANT</Text>
+          <Text style={styles.title}>Let’s try that again.</Text>
+          <Text style={styles.subtitle}>Some stores protect their pages. You can retry, use the browser helper, or paste the product details below.</Text>
+        </View>
 
-        <Text style={styles.message}>
-          Import the open product page with the browser extension, or use product text below.
-        </Text>
-
-        {error && (
-          <Text style={styles.errorText}>
-            {error}
-          </Text>
-        )}
-
-        <Link href="/browser-import" style={styles.backText}>Set up browser importing — no typing needed</Link>
-
-        <Text style={styles.label}>
-          Copy the product name, price, color and description from the store page, then paste them here.
-        </Text>
-
-        <TextInput
-          style={styles.descriptionInput}
-          placeholder="Example: Black knitted dress with belt, Zara, 559 SEK..."
-          value={manualDescription}
-          onChangeText={setManualDescription}
-          maxLength={5000}
-          editable={!manualLoading}
-          multiline
-          textAlignVertical="top"
-        />
-
-        {manualError && (
-          <Text style={styles.errorText}>
-            {manualError}
-          </Text>
-        )}
-
-        <Pressable
-          accessibilityRole="button"
-          style={styles.button}
-          onPress={handleManualImport}
-          disabled={manualLoading}
-        >
-          {manualLoading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.buttonText}>
-              Analyze with AI
-            </Text>
-          )}
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          style={styles.secondaryButton}
-          onPress={() => setRetryCount(count => count + 1)}
-          disabled={manualLoading}
-        >
-          <Text style={styles.secondaryButtonText}>
-            Retry Automatic Import
-          </Text>
-        </Pressable>
-
-        <Pressable accessibilityRole="button" onPress={() => router.back()}>
-          <Text style={styles.backText}>
-            Back to Import
-          </Text>
-        </Pressable>
+        <View style={styles.recoveryCard}>
+          <Text style={styles.cardTitle}>Automatic import paused</Text>
+          {error && <Text style={styles.errorText}>{error}</Text>}
+          <Pressable accessibilityRole="button" style={styles.button} onPress={() => setRetryCount(count => count + 1)} disabled={manualLoading}>
+            <Text style={styles.buttonText}>Retry automatic import  →</Text>
+          </Pressable>
+          <Link href="/browser-import" style={styles.storeLink}>Use the Chrome extension instead</Link>
+          <View style={styles.divider} />
+          <Text style={styles.label}>Paste product details</Text>
+          <Text style={styles.mutedNote}>Copy the product name, price, color, and description from the store page.</Text>
+          <TextInput
+            style={styles.descriptionInput}
+            placeholder="Example: Black knitted dress with belt, Zara, 559 SEK…"
+            placeholderTextColor="#9A8B95"
+            value={manualDescription}
+            onChangeText={setManualDescription}
+            maxLength={5000}
+            editable={!manualLoading}
+            multiline
+            textAlignVertical="top"
+          />
+          {manualError && <Text style={styles.errorText}>{manualError}</Text>}
+          <Pressable accessibilityRole="button" style={styles.secondaryButton} onPress={handleManualImport} disabled={manualLoading}>
+            {manualLoading ? <ActivityIndicator color="#5E2D4F" /> : <Text style={styles.secondaryButtonText}>Analyze pasted details with AI</Text>}
+          </Pressable>
+        </View>
+        <Pressable accessibilityRole="button" onPress={() => router.back()}><Text style={styles.backText}>← Back to import</Text></Pressable>
       </ScrollView>
     );
   }
@@ -232,10 +198,11 @@ export default function ImportResultScreen() {
   // Successful product import
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Product Details</Text>
-      <Text style={styles.subtitle}>
-        Information extracted by Wardrobe AI
-      </Text>
+      <View style={styles.header}>
+        <Text style={styles.eyebrow}>READY TO SAVE</Text>
+        <Text style={styles.title}>We found your piece.</Text>
+        <Text style={styles.subtitle}>Review the details before adding it to your collection.</Text>
+      </View>
 
       {/* Product image */}
       <View style={styles.imageContainer}>
@@ -246,78 +213,47 @@ export default function ImportResultScreen() {
             resizeMode="contain"
           />
         ) : (
-          <Text style={styles.message}>
-            No product image available
-          </Text>
+          <View style={styles.imagePlaceholder}><Text style={styles.placeholderMark}>◇</Text><Text style={styles.message}>No product image available</Text></View>
         )}
       </View>
 
       {/* Product information */}
       <View style={styles.card}>
-        <Text style={styles.productName}>
-          {product.name ?? 'Unknown product'}
-        </Text>
-
-        <Text style={styles.price}>
-          {product.price != null
-            ? `${product.price} ${product.currency ?? ''}`
-            : 'Price unavailable'}
-        </Text>
-
-        <Text style={styles.label}>Brand</Text>
-        <Text style={styles.value}>
-          {product.brand ?? 'Not available'}
-        </Text>
-
-        <Text style={styles.label}>Category</Text>
-        <Text style={styles.value}>
-          {product.category ?? 'Not available'}
-        </Text>
-
-        <Text style={styles.label}>Clothing Type</Text>
-        <Text style={styles.value}>
-          {product.subcategory ?? 'Not available'}
-        </Text>
-
-        <Text style={styles.label}>Color</Text>
-        <Text style={styles.value}>
-          {product.color ?? 'Not available'}
-        </Text>
-
-        <Text style={styles.label}>Material</Text>
-        <Text style={styles.value}>
-          {product.material ?? 'Not available'}
-        </Text>
-
-        <Text style={styles.label}>Store Link</Text>
-        <Text style={styles.value}>
-          {product.sourceUrl}
-        </Text>
+        <View style={styles.productHeader}>
+          <Text style={styles.productName}>{product.name ?? 'Unknown product'}</Text>
+          <Text style={styles.price}>{product.price != null ? `${product.price} ${product.currency ?? ''}` : 'Price unavailable'}</Text>
+        </View>
+        <View style={styles.detailGrid}>
+          <View style={styles.detail}><Text style={styles.label}>Brand</Text><Text style={styles.value}>{product.brand ?? 'Not available'}</Text></View>
+          <View style={styles.detail}><Text style={styles.label}>Category</Text><Text style={styles.value}>{product.category ?? 'Not available'}</Text></View>
+          <View style={styles.detail}><Text style={styles.label}>Type</Text><Text style={styles.value}>{product.subcategory ?? 'Not available'}</Text></View>
+          <View style={styles.detail}><Text style={styles.label}>Color</Text><Text style={styles.value}>{product.color ?? 'Not available'}</Text></View>
+          <View style={styles.detail}><Text style={styles.label}>Material</Text><Text style={styles.value}>{product.material ?? 'Not available'}</Text></View>
+        </View>
+        <Link href={product.sourceUrl as `https://${string}`} target="_blank" rel="noopener noreferrer" style={styles.storeLink}>Open original product ↗</Link>
       </View>
 
       {/* Selected destination */}
       <View style={styles.statusBox}>
-        <Text style={styles.label}>Selected collection</Text>
-        <Text style={styles.value}>
-          {status === 'wishlist' ? 'My Wishlist' : 'My Wardrobe'}
-        </Text>
+        <View style={styles.statusCopy}><Text style={styles.label}>Selected collection</Text><Text style={styles.value}>{status === 'wishlist' ? 'My Wishlist' : 'My Wardrobe'}</Text></View>
+        <Text style={styles.statusMark}>{status === 'wishlist' ? '♡' : '✓'}</Text>
       </View>
 
       {saveError && <Text style={styles.errorText}>{saveError}</Text>}
       <Pressable accessibilityRole="button" style={styles.button} onPress={handleSave} disabled={saving}>
-        {saving ? <ActivityIndicator color="#FFFFFF" /> : (
+        {saving ? <ActivityIndicator color="#FFF9FB" /> : (
           <Text style={styles.buttonText}>
-            {collection === 'wishlist' ? 'Save to Wishlist' : 'Save to Wardrobe'}
+            {collection === 'wishlist' ? 'Save to Wishlist  →' : 'Save to Wardrobe  →'}
           </Text>
         )}
       </Pressable>
 
       <Pressable
           accessibilityRole="button"
-        style={styles.button}
+        style={styles.secondaryButton}
         onPress={() => router.back()}
       >
-        <Text style={styles.buttonText}>Back to Import</Text>
+        <Text style={styles.secondaryButtonText}>Back to import</Text>
       </Pressable>
     </ScrollView>
   );

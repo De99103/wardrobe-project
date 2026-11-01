@@ -6,7 +6,7 @@ import { categories, categoryLabel, type Category } from '../services/collection
 import { emptyDetails, manualProduct, type ManualDetails } from '../services/manualClothing';
 import { chooseClothingPhoto } from '../services/clothingPhoto';
 import { saveClothing } from '../services/wardrobeStorage';
-import { styles } from '../styles/homeStyles';
+import { styles } from '../styles/addItemStyles';
 
 const questions: { key: keyof ManualDetails; label: string; placeholder: string }[] = [
   { key: 'name', label: 'What would you like to call it?', placeholder: 'My favourite sweater' },
@@ -58,41 +58,70 @@ export default function AddItemScreen() {
     } finally { busy.current = false; setSaving(false); }
   }
 
+  const disabled = saving || picking;
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-    <Text style={styles.title}>Add an item</Text>
-    <Text style={styles.subtitle}>Choose a category. Everything else is optional.</Text>
-    <Text>Saving to {collection === 'owned' ? 'My Wardrobe' : 'My Wishlist'}</Text>
-    <Text style={styles.label}>Which category fits? · Required</Text>
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-      {categories.map(value => <Pressable key={value} disabled={saving || picking} accessibilityRole="radio" accessibilityState={{ checked: category === value }}
-        style={[styles.input, category === value && styles.selected]} onPress={() => { setCategory(value); setError(''); }}>
-        <Text>{categoryLabel(value)}</Text>
-      </Pressable>)}
+    <Text style={styles.eyebrow}>Add to your collection</Text>
+    <Text style={styles.title}>Tell us about this piece.</Text>
+    <Text style={styles.subtitle}>Start with a category. A photo and the details are completely optional.</Text>
+    <View style={styles.collectionPill}><Text style={styles.collectionPillText}>Saving to {collection === 'owned' ? 'My Wardrobe' : 'My Wishlist'}</Text></View>
+
+    <View style={styles.card}>
+      <View style={styles.sectionHeader}>
+        <View style={styles.stepBadge}><Text style={styles.stepBadgeText}>1</Text></View>
+        <View><Text style={styles.sectionTitle}>Category</Text><Text style={styles.optional}>Required</Text></View>
+      </View>
+      <Text style={styles.helper}>Choose the best match so we can organize and style it correctly.</Text>
+      <View style={styles.categoryGrid}>
+        {categories.map(value => <Pressable key={value} disabled={disabled} accessibilityRole="radio" accessibilityState={{ checked: category === value }}
+          style={[styles.categoryPill, category === value && styles.categoryPillSelected, disabled && styles.disabled]} onPress={() => { setCategory(value); setError(''); }}>
+          <Text style={styles.categoryText}>{categoryLabel(value)}</Text>
+        </Pressable>)}
+      </View>
+      <Text style={styles.helper}>Not sure? Uncategorized is always a safe choice.</Text>
     </View>
-    <Text>Not sure? Choose Uncategorized. “All” shows every category in your collection.</Text>
-    <Text style={styles.label}>Photo · Optional</Text>
-    <Pressable style={styles.input} accessibilityRole="button" disabled={saving || picking} onPress={pickPhoto}>
-      <Text>{picking ? 'Preparing photo…' : photo ? 'Replace photo' : 'Choose photo from device'}</Text>
-    </Pressable>
-    {photo && <View style={{ gap: 12 }}>
-      <Image source={{ uri: photo }} style={styles.image} resizeMode="contain" accessibilityLabel="Selected clothing photo" />
-      <Pressable accessibilityRole="button" disabled={saving || picking} onPress={() => setPhoto(null)}><Text>Remove photo</Text></Pressable>
-      <Text>Your photo will be saved even if you skip the details.</Text>
-    </View>}
-    {!showDetails ? <Pressable style={styles.input} disabled={saving || picking} accessibilityRole="button" onPress={() => setShowDetails(true)}><Text>Add optional details</Text></Pressable>
-      : questions.map(({ key, label, placeholder }) => <View key={key} style={{ gap: 8 }}>
-        <Text style={styles.label}>{label} · Optional</Text>
+
+    <View style={styles.card}>
+      <View style={styles.sectionHeader}>
+        <View style={styles.stepBadge}><Text style={styles.stepBadgeText}>2</Text></View>
+        <View><Text style={styles.sectionTitle}>Photo</Text><Text style={styles.optional}>Optional</Text></View>
+      </View>
+      {photo ? <>
+        <Image source={{ uri: photo }} style={styles.photo} resizeMode="contain" accessibilityLabel="Selected clothing photo" />
+        <View style={styles.photoActions}>
+          <Pressable accessibilityRole="button" disabled={disabled} onPress={pickPhoto}><Text style={styles.textLink}>Replace photo</Text></Pressable>
+          <Pressable accessibilityRole="button" disabled={disabled} onPress={() => setPhoto(null)}><Text style={styles.dangerLink}>Remove</Text></Pressable>
+        </View>
+        <Text style={styles.helper}>This photo will be saved even if you skip the details.</Text>
+      </> : <Pressable style={[styles.uploadArea, disabled && styles.disabled]} accessibilityRole="button" disabled={disabled} onPress={pickPhoto}>
+        <Text style={styles.uploadIcon}>＋</Text>
+        <Text style={styles.uploadTitle}>{picking ? 'Preparing photo…' : 'Choose from your device'}</Text>
+        <Text style={styles.uploadHint}>Add a clear photo to make your wardrobe easier to browse.</Text>
+      </Pressable>}
+    </View>
+
+    <View style={styles.card}>
+      <View style={styles.sectionHeader}>
+        <View style={styles.stepBadge}><Text style={styles.stepBadgeText}>3</Text></View>
+        <View><Text style={styles.sectionTitle}>Details</Text><Text style={styles.optional}>Optional</Text></View>
+      </View>
+      {!showDetails ? <>
+        <Text style={styles.helper}>A name, color, and material help the stylist create stronger outfit matches.</Text>
+        <Pressable style={[styles.secondaryButton, disabled && styles.disabled]} disabled={disabled} accessibilityRole="button" onPress={() => setShowDetails(true)}><Text style={styles.secondaryButtonText}>Add optional details</Text></Pressable>
+      </> : questions.map(({ key, label, placeholder }) => <View key={key} style={styles.question}>
+        <Text style={styles.label}>{label}</Text>
         <TextInput style={styles.input} accessibilityLabel={label} value={details[key]} placeholder={placeholder} editable={!saving}
           maxLength={key === 'currency' ? 3 : 2000} keyboardType={key === 'price' ? 'decimal-pad' : key === 'imageUrl' ? 'url' : 'default'}
           autoCapitalize={key === 'imageUrl' ? 'none' : key === 'currency' ? 'characters' : 'sentences'}
           onChangeText={value => setDetails(previous => ({ ...previous, [key]: value }))} />
-        <Pressable disabled={saving || picking} accessibilityRole="button" accessibilityLabel={`Skip: ${label}`} onPress={() => setDetails(previous => ({ ...previous, [key]: '' }))}><Text>Skip this question</Text></Pressable>
+        <Pressable disabled={disabled} accessibilityRole="button" accessibilityLabel={`Skip: ${label}`} onPress={() => setDetails(previous => ({ ...previous, [key]: '' }))}><Text style={styles.textLink}>Skip this question</Text></Pressable>
       </View>)}
+    </View>
+
     {error ? <Text style={styles.error} accessibilityRole="alert">{error}</Text> : null}
-    {saving ? <ActivityIndicator /> : null}
-    {showDetails && <Pressable style={styles.button} disabled={saving || picking} accessibilityRole="button" onPress={() => save(false)}><Text style={styles.buttonText}>Save item</Text></Pressable>}
-    <Pressable style={showDetails ? styles.input : styles.button} disabled={saving || picking} accessibilityRole="button" onPress={() => save(true)}>
-      <Text style={!showDetails ? styles.buttonText : undefined}>Skip details & save</Text>
+    {saving ? <ActivityIndicator color="#5E2D4F" /> : null}
+    {showDetails && <Pressable style={[styles.primaryButton, disabled && styles.disabled]} disabled={disabled} accessibilityRole="button" onPress={() => save(false)}><Text style={styles.primaryButtonText}>Save item  →</Text></Pressable>}
+    <Pressable style={[showDetails ? styles.secondaryButton : styles.primaryButton, disabled && styles.disabled]} disabled={disabled} accessibilityRole="button" onPress={() => save(true)}>
+      <Text style={showDetails ? styles.secondaryButtonText : styles.primaryButtonText}>Skip details & save</Text>
     </Pressable>
   </ScrollView>;
 }
