@@ -27,21 +27,13 @@ export const styles = StyleSheet.create({
     backgroundColor: '#5E2D4F',
     borderRadius: 30,
     padding: 26,
-    gap: 13,
+    minHeight: 156,
+    justifyContent: 'center',
     overflow: 'hidden',
   },
 
   heroOrb: { position: 'absolute', width: 210, height: 210, borderRadius: 105, backgroundColor: '#B96C88', opacity: 0.24, right: -82, top: -70 },
   heroOrbSmall: { position: 'absolute', width: 82, height: 82, borderRadius: 41, backgroundColor: '#F1BACB', opacity: 0.18, right: 56, bottom: -32 },
-
-  eyebrow: {
-    color: '#F3C7D5',
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '800',
-    letterSpacing: 1.6,
-    textTransform: 'uppercase',
-  },
 
   heroTitle: {
     color: '#FFF9FB',
@@ -49,12 +41,6 @@ export const styles = StyleSheet.create({
     fontSize: 41,
     lineHeight: 47,
     letterSpacing: -0.8,
-  },
-
-  heroSubtitle: {
-    color: '#F3E8ED',
-    fontSize: 16,
-    lineHeight: 24,
   },
 
   title: {
@@ -94,20 +80,6 @@ export const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.1,
   },
-
-  accentButton: {
-    backgroundColor: '#F2CAD7',
-    alignSelf: 'flex-start',
-    marginTop: 4,
-  },
-
-  accentButtonText: {
-    color: '#4D243F',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-
-  heroFootnote: { color: '#DDB2C1', fontSize: 10, lineHeight: 14, fontWeight: '800', letterSpacing: 1.4, marginTop: 2 },
 
   image: {
     width: '100%',

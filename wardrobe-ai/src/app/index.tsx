@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { Link, router, useLocalSearchParams } from 'expo-router';
 import { AccountPanel } from '../components/AccountPanel';
 import { styles } from '../styles/homeStyles';
 import { validateStoreUrl } from '../services/productValidation';
+import { observeAccount } from '../services/firebaseClient';
 import type { ClothingStatus } from '../types/clothing';
 
 export default function HomeScreen() {
@@ -19,6 +20,11 @@ export default function HomeScreen() {
   const { status: selectedStatus } = useLocalSearchParams<{ status?: string }>();
   const status: ClothingStatus = selectedStatus === 'wishlist' ? 'wishlist' : 'owned';
   const [urlError, setUrlError] = useState('');
+  const [userName, setUserName] = useState<string | null>(null);
+
+  useEffect(() => observeAccount(user => {
+    setUserName(user?.displayName?.trim() || user?.email?.split('@')[0] || null);
+  }), []);
 
   // Navigate to the results page
   const handleImport = () => {
@@ -50,13 +56,7 @@ export default function HomeScreen() {
       <View style={styles.hero}>
         <View pointerEvents="none" style={styles.heroOrb} />
         <View pointerEvents="none" style={styles.heroOrbSmall} />
-        <Text style={styles.eyebrow}>Styled for you</Text>
-        <Text style={styles.heroTitle}>Your closet,{`\n`}beautifully styled.</Text>
-        <Text style={styles.heroSubtitle}>Curate the pieces you love and discover polished, weather-aware outfits made only from your wardrobe.</Text>
-        <Pressable style={[styles.button, styles.accentButton]} accessibilityRole="button" onPress={() => router.push('/outfit')}>
-          <Text style={styles.accentButtonText}>Create today’s look  →</Text>
-        </Pressable>
-        <Text style={styles.heroFootnote}>PERSONAL · WEATHER-AWARE · EFFORTLESS</Text>
+        <Text style={styles.heroTitle}>{userName ? `Welcome,\n${userName}` : 'Welcome'}</Text>
       </View>
 
       <View style={styles.quickGrid}>
