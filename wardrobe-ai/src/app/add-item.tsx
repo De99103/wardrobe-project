@@ -58,7 +58,7 @@ export default function AddItemScreen() {
     } finally { busy.current = false; setSaving(false); }
   }
 
-  return <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+  return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
     <Text style={styles.title}>Add an item</Text>
     <Text style={styles.subtitle}>Choose a category. Everything else is optional.</Text>
     <Text>Saving to {collection === 'owned' ? 'My Wardrobe' : 'My Wishlist'}</Text>

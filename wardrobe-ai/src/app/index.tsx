@@ -42,11 +42,11 @@ export default function HomeScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={styles.container}>
       <Text style={styles.title}>Wardrobe AI</Text>
       <Text style={styles.subtitle}>Add a clothing item</Text>
 
-      <Pressable style={styles.option} onPress={() => router.push({ pathname: '/wardrobe', params: { status } })}>
+      <Pressable style={[styles.option, styles.navOption]} onPress={() => router.push({ pathname: '/wardrobe', params: { status } })}>
         <Text>View My Wardrobe & Wishlist</Text>
       </Pressable>
 

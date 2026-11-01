@@ -4,8 +4,11 @@ import { StyleSheet } from 'react-native';
 export const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 24,
-    paddingBottom: 50,
+    width: '100%',
+    maxWidth: 780,
+    alignSelf: 'center',
+    padding: 18,
+    paddingBottom: 48,
     backgroundColor: '#FAF7F2',
     gap: 16,
   },
@@ -20,8 +23,9 @@ export const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: '800',
     color: '#292524',
   },
 
@@ -31,7 +35,9 @@ export const styles = StyleSheet.create({
   },
 
   imageContainer: {
-    height: 290,
+    width: '100%',
+    aspectRatio: 4 / 3,
+    maxHeight: 420,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     justifyContent: 'center',
@@ -47,8 +53,10 @@ export const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 20,
+    padding: 18,
     gap: 8,
+    borderWidth: 1,
+    borderColor: '#EEEAE4',
   },
 
   productName: {
@@ -89,9 +97,12 @@ export const styles = StyleSheet.create({
 
   button: {
     backgroundColor: '#292524',
-    padding: 16,
-    borderRadius: 12,
+    minHeight: 52,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderRadius: 14,
     alignItems: 'center',
+    justifyContent: 'center',
   },
 
   buttonText: {

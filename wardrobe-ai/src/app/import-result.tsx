@@ -157,7 +157,7 @@ export default function ImportResultScreen() {
   // Error screen with AI-assisted import
   if (error || !product) {
     return (
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={styles.container}>
         <Text style={styles.title}>Import Clothing</Text>
 
         <Text style={styles.message}>
@@ -231,7 +231,7 @@ export default function ImportResultScreen() {
 
   // Successful product import
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container}>
       <Text style={styles.title}>Product Details</Text>
       <Text style={styles.subtitle}>
         Information extracted by Wardrobe AI

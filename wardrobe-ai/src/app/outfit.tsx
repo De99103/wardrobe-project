@@ -43,7 +43,7 @@ export default function OutfitScreen() {
 
   return <View style={styles.container}>
     <Stack.Screen options={{ title: 'AI Outfit Stylist' }} />
-    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>What should I wear?</Text>
       <Text style={styles.subtitle}>Your AI stylist uses today’s weather and only the clothes saved in your Wardrobe. Wishlist items are never included.</Text>
       <Text style={styles.label}>Your city or postcode</Text>

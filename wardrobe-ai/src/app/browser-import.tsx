@@ -3,7 +3,7 @@ import { styles } from '../styles/importResultStyles';
 
 export default function BrowserImportScreen() {
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container}>
       <Text style={styles.title}>Import from your browser</Text>
       <Text style={styles.value}>Add products without copying descriptions. Open the product in Chrome, click the Wardrobe AI extension, then choose Import Product.</Text>
       <Text style={styles.label}>One-time setup for the local development app</Text>

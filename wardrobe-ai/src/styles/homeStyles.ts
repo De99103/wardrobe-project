@@ -4,20 +4,27 @@ import { StyleSheet } from 'react-native';
 export const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 24,
-    paddingTop: 70,
+    width: '100%',
+    maxWidth: 760,
+    alignSelf: 'center',
+    padding: 18,
+    paddingTop: 28,
+    paddingBottom: 48,
     backgroundColor: '#FAF7F2',
-    gap: 16,
+    gap: 14,
   },
 
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 34,
+    lineHeight: 40,
+    fontWeight: '800',
+    color: '#292524',
   },
 
   subtitle: {
-    fontSize: 18,
-    color: '#666',
+    fontSize: 17,
+    lineHeight: 24,
+    color: '#78716C',
   },
 
   label: {
@@ -27,9 +34,12 @@ export const styles = StyleSheet.create({
 
   button: {
     backgroundColor: '#333',
-    padding: 16,
-    borderRadius: 12,
+    minHeight: 52,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderRadius: 14,
     alignItems: 'center',
+    justifyContent: 'center',
   },
 
   buttonText: {
@@ -39,15 +49,20 @@ export const styles = StyleSheet.create({
 
   image: {
     width: '100%',
-    height: 240,
-    borderRadius: 12,
+    height: 260,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
   },
 
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: 14,
+    minHeight: 50,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    fontSize: 16,
   },
 
   row: {
@@ -57,11 +72,20 @@ export const styles = StyleSheet.create({
 
   option: {
     flex: 1,
-    padding: 16,
+    minHeight: 50,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+
+  navOption: {
+    flex: 0,
+    minHeight: 54,
   },
 
   selected: {
@@ -75,7 +99,8 @@ export const styles = StyleSheet.create({
   },
 
   summary: {
-    marginTop: 12,
-    fontSize: 16,
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#57534E',
   },
 });

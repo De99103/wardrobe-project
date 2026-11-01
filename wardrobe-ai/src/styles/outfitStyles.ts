@@ -2,12 +2,12 @@ import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f6f1' },
-  content: { padding: 20, gap: 16, paddingBottom: 48, width: '100%', maxWidth: 900, alignSelf: 'center' },
-  title: { fontSize: 34, fontWeight: '800', color: '#272321' },
+  content: { padding: 18, gap: 14, paddingBottom: 48, width: '100%', maxWidth: 780, alignSelf: 'center' },
+  title: { fontSize: 32, lineHeight: 38, fontWeight: '800', color: '#272321' },
   subtitle: { fontSize: 16, lineHeight: 23, color: '#68615d' },
   label: { fontSize: 15, fontWeight: '700', color: '#413b38' },
-  input: { borderWidth: 1, borderColor: '#cfc9c2', borderRadius: 14, padding: 14, backgroundColor: '#fff', fontSize: 16 },
-  button: { borderRadius: 14, padding: 16, backgroundColor: '#272321', alignItems: 'center' },
+  input: { borderWidth: 1, borderColor: '#cfc9c2', borderRadius: 14, minHeight: 50, paddingHorizontal: 14, paddingVertical: 12, backgroundColor: '#fff', fontSize: 16 },
+  button: { borderRadius: 14, minHeight: 52, paddingHorizontal: 18, paddingVertical: 14, backgroundColor: '#272321', alignItems: 'center', justifyContent: 'center' },
   buttonDisabled: { opacity: 0.55 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   weather: { borderRadius: 18, padding: 18, backgroundColor: '#dcebe3', gap: 5 },

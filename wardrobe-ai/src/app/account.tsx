@@ -18,7 +18,7 @@ export default function AccountScreen() {
     } finally { setBusy(false); }
   };
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container}>
       <Text style={styles.title}>Your account</Text>
       {!firebaseConfigured ? <Text>Firebase is not connected yet. Collections are currently saved on this device.</Text>
         : Platform.OS !== 'web' ? <Text>Google sign-in is currently available in the web app. Native mobile sign-in needs its platform configuration.</Text>
