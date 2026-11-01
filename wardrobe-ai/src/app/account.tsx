@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, Text, View } from 'react-native';
-import { cloudEnabled, firebaseConfigured, googleSignIn, logOut, observeAccount } from '../services/firebaseClient';
+import { cloudEnabled, finishGoogleSignIn, firebaseConfigured, googleSignIn, logOut, observeAccount } from '../services/firebaseClient';
 import { uploadDeviceClothing } from '../services/wardrobeStorage';
 import type { User } from 'firebase/auth';
 import { styles } from '../styles/collectionStyles';
@@ -10,7 +10,14 @@ export default function AccountScreen() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
-  useEffect(() => observeAccount(value => { setUser(value); setLoading(false); }, () => { setMessage('Your account name could not be saved. Publish the updated user-profile Firestore rules, then reload this page.'); }), []);
+  useEffect(() => {
+    let active = true;
+    void finishGoogleSignIn().catch(error => {
+      if (active) setMessage(error instanceof Error ? error.message : 'Google sign-in could not be completed.');
+    });
+    const unsubscribe = observeAccount(value => { setUser(value); setLoading(false); }, () => { setMessage('Your account name could not be saved. Publish the updated user-profile Firestore rules, then reload this page.'); });
+    return () => { active = false; unsubscribe(); };
+  }, []);
   const run = async (operation: () => Promise<void>) => {
     setBusy(true); setMessage('');
     try { await operation(); } catch (error) {
@@ -38,7 +45,10 @@ export default function AccountScreen() {
             <Pressable style={styles.tertiaryButton} accessibilityRole="button" disabled={busy} onPress={() => run(async () => { const count = await uploadDeviceClothing(); setMessage(`${count} device items uploaded.`); })}><Text style={styles.tertiaryButtonText}>Upload device items</Text></Pressable>
           </View>
           <Pressable style={styles.dangerAction} accessibilityRole="button" disabled={busy} onPress={() => run(logOut)}><Text style={styles.dangerText}>Sign out</Text></Pressable>
-        </> : cloudEnabled ? <Pressable style={styles.button} accessibilityRole="button" disabled={busy} onPress={() => run(googleSignIn)}><Text style={styles.buttonText}>Continue with Google</Text></Pressable> : null}
+        </> : cloudEnabled ? <>
+          <Pressable style={styles.button} accessibilityRole="button" disabled={busy} onPress={() => run(googleSignIn)}><Text style={styles.buttonText}>Continue with Google</Text></Pressable>
+          <Text style={styles.message}>On mobile, Google opens securely in this window and returns you here.</Text>
+        </> : null}
       {busy && <ActivityIndicator />}
       {!!message && <Text accessibilityRole="alert" style={styles.message}>{message}</Text>}
     </ScrollView>

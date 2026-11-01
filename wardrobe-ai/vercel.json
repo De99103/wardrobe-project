@@ -3,5 +3,15 @@
   "buildCommand": "npm run build:web",
   "outputDirectory": "dist",
   "cleanUrls": true,
-  "framework": null
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/__/auth/:path*",
+      "destination": "https://wardrobe-project-ac378.firebaseapp.com/__/auth/:path*"
+    },
+    {
+      "source": "/__/firebase/:path*",
+      "destination": "https://wardrobe-project-ac378.firebaseapp.com/__/firebase/:path*"
+    }
+  ]
 }
