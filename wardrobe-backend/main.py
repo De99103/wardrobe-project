@@ -33,6 +33,11 @@ def health():
     return {'status': 'ok'}
 
 
+@app.get('/')
+def root():
+    return {'service': 'Wardrobe AI API', 'status': 'ok', 'docs': '/docs'}
+
+
 @app.post('/recommend-outfit', response_model=OutfitResult)
 def recommend_weather_outfit(request: OutfitRequest):
     return recommend_outfit(request, get_client(), os.getenv('GROQ_MODEL', 'openai/gpt-oss-20b'))
