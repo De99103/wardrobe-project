@@ -86,7 +86,8 @@ export default function WardrobeScreen() {
         </Pressable>
       ))}
     </View>
-    <AccountPanel onChange={refresh} />
+    {/* <AccountPanel onChange={refresh} /> */}
+    <AccountPanel /> 
     <ScrollView horizontal style={styles.filters} contentContainerStyle={styles.chips} showsHorizontalScrollIndicator={false}>
       {(['all', ...categories] as const).map(value => <Pressable key={value} style={[styles.chip, category === value && styles.selected]} accessibilityRole="button" accessibilityLabel={`Filter ${categoryLabel(value)}`} accessibilityState={{ selected: category === value }} onPress={() => setCategory(value)}><Text style={category === value ? styles.chipTextSelected : styles.chipText}>{categoryLabel(value)}</Text></Pressable>)}
     </ScrollView>
