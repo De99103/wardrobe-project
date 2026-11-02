@@ -91,7 +91,7 @@ export default function OutfitScreen() {
       setResult(recommendation);
       setChangeMode(null);
       setReplaceUrl(null);
-      setPreviousLooks(previous => [...previous, ...(variation ? [] : []), ...rankedOutfits.map(look => look.sourceUrls), ...recommendation.outfits?.map(look => look.sourceUrls) ?? [recommendation.outfit.sourceUrls]].slice(-20));
+      setPreviousLooks(previous => [...previous, ...rankedOutfits.map(look => look.sourceUrls), ...(recommendation.outfits?.map(look => look.sourceUrls) ?? [recommendation.outfit.sourceUrls])].slice(-20));
       setSavedRanks([]);
       setResultOccasion(occasion.trim() || 'Everyday');
       setSelectedRank(recommendation.outfits?.[0]?.rank ?? 1);
