@@ -65,20 +65,24 @@ export function translate(value: string): string { return language === 'ar' ? ar
 export function getLanguage(): AppLanguage { return language; }
 export async function setLanguage(value: AppLanguage) {
   language = value;
-  try { if (typeof window !== 'undefined') window.localStorage.setItem(KEY, value); } catch { /* storage may be unavailable */ }
-  await AsyncStorage.setItem(KEY, value);
+  // Update the UI immediately. Persistence happens in the background and
+  // must never delay or overwrite the user's explicit selection.
   listeners.forEach(listener => listener(language));
+  try { if (typeof window !== 'undefined') window.localStorage.setItem(KEY, value); } catch { /* storage may be unavailable */ }
+  try { await AsyncStorage.setItem(KEY, value); } catch { /* storage may be unavailable */ }
 }
 export function useLanguage() {
   const [value, setValue] = useState(language);
   useEffect(() => {
     let active = true;
+    const initialLanguage = language;
+    listeners.add(setValue);
     AsyncStorage.getItem(KEY).then(saved => {
       if (!active) return;
-      if (saved === 'ar' || saved === 'en') language = saved;
+      // Do not apply a stale storage read after the user has already toggled.
+      if (language === initialLanguage && (saved === 'ar' || saved === 'en')) language = saved;
       setValue(language);
-      listeners.add(setValue);
-    });
+    }).catch(() => { /* storage may be unavailable */ });
     return () => { active = false; listeners.delete(setValue); };
   }, []);
   return { language: value, setLanguage };
