@@ -30,6 +30,10 @@ export const cloudEnabled = firebaseConfigured && Platform.OS === 'web';
 
 function mobileWebBrowser() {
   if (Platform.OS !== 'web' || typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+  // Local development is commonly run inside a narrow desktop preview. Use
+  // the popup there so the callback does not depend on a partitioned
+  // localhost session; real phone browsers still use the redirect flow.
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return false;
   return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
     || window.matchMedia?.('(max-width: 760px)').matches;
 }

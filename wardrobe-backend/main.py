@@ -23,8 +23,22 @@ from outfit_recommendation import OutfitRequest, OutfitResult, recommend_outfit
 
 load_dotenv()
 app = FastAPI()
+# Keep the local development origins configurable, but always allow the two
+# public app domains.  Without this, browsers report a generic "Failed to
+# fetch" even though the recommendation endpoint itself is healthy.
+configured_origins = {
+    origin.strip().rstrip('/')
+    for origin in os.getenv('CORS_ORIGINS', '').split(',')
+    if origin.strip()
+}
+configured_origins.update({
+    'http://localhost:8081',
+    'http://127.0.0.1:8081',
+    'https://wearly-closet-app.vercel.app',
+    'https://wardrobe-ai-six.vercel.app',
+})
 app.add_middleware(CORSMiddleware,
-    allow_origins=[origin.strip() for origin in os.getenv('CORS_ORIGINS', 'http://localhost:8081,http://127.0.0.1:8081').split(',') if origin.strip()],
+    allow_origins=sorted(configured_origins),
     allow_methods=['GET', 'POST'], allow_headers=['Content-Type'])
 
 
