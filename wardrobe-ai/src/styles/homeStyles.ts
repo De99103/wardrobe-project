@@ -7,41 +7,39 @@ export const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     width: '100%',
-    maxWidth: 760,
+    maxWidth: 880,
     alignSelf: 'center',
     padding: 18,
     paddingTop: 28,
     paddingBottom: 48,
     backgroundColor: BrandColors.ivory,
-    gap: 18,
+    gap: 24,
   },
 
-  brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 11, paddingHorizontal: 2 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingBottom: 18, borderBottomWidth: 1, borderBottomColor: BrandColors.charcoal },
   brandIdentity: { flexDirection: 'row', alignItems: 'center', flexShrink: 1, gap: 11 },
-  brandName: { color: BrandColors.charcoal, fontFamily: appFontFamily, fontSize: 18, lineHeight: 22, fontWeight: '500', letterSpacing: 5.5 },
-  brandTagline: { color: BrandColors.mutedText, fontSize: 12, lineHeight: 17 },
-  infoButton: { minHeight: 40, justifyContent: 'center', borderRadius: 999, borderWidth: 1, borderColor: BrandColors.stone, backgroundColor: BrandColors.ivory, paddingHorizontal: 13 },
-  infoButtonText: { color: BrandColors.charcoal, fontSize: 13, fontWeight: '800' },
+  brandName: { color: BrandColors.charcoal, fontFamily: appFontFamily, fontSize: 19, lineHeight: 24, fontWeight: '500', letterSpacing: 6.5 },
+  infoButton: { minHeight: 40, justifyContent: 'center', borderRadius: 0, borderBottomWidth: 1, borderColor: BrandColors.charcoal, paddingHorizontal: 0 },
+  infoButtonText: { color: BrandColors.charcoal, fontSize: 12, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
 
   hero: {
-    position: 'relative',
-    backgroundColor: BrandColors.charcoal,
-    borderRadius: 30,
-    padding: 26,
-    minHeight: 156,
+    backgroundColor: BrandColors.ivory,
+    borderRadius: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: BrandColors.charcoal,
+    paddingHorizontal: 0,
+    paddingVertical: 34,
+    minHeight: 176,
     justifyContent: 'center',
-    overflow: 'hidden',
   },
 
-  heroOrb: { position: 'absolute', width: 210, height: 210, borderRadius: 105, backgroundColor: BrandColors.warmBeige, opacity: 0.2, right: -82, top: -70 },
-  heroOrbSmall: { position: 'absolute', width: 82, height: 82, borderRadius: 41, backgroundColor: BrandColors.stone, opacity: 0.18, right: 56, bottom: -32 },
-
   heroTitle: {
-    color: BrandColors.ivory,
+    color: BrandColors.charcoal,
     fontFamily: appFontFamily,
-    fontSize: 41,
-    lineHeight: 47,
-    letterSpacing: -0.8,
+    fontSize: 50,
+    lineHeight: 54,
+    fontWeight: '400',
+    letterSpacing: -1.4,
   },
 
   title: {
@@ -71,7 +69,7 @@ export const styles = StyleSheet.create({
     minHeight: 52,
     paddingHorizontal: 18,
     paddingVertical: 14,
-    borderRadius: 16,
+    borderRadius: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -85,18 +83,19 @@ export const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: 260,
-    borderRadius: 16,
+    borderRadius: 2,
     backgroundColor: BrandColors.white,
   },
 
   input: {
-    borderWidth: 1,
-    borderColor: BrandColors.stone,
-    borderRadius: 15,
+    borderWidth: 0,
+    borderBottomWidth: 1,
+    borderColor: BrandColors.charcoal,
+    borderRadius: 0,
     minHeight: 50,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.ivory,
     color: BrandColors.charcoal,
     fontSize: 16,
   },
@@ -111,12 +110,13 @@ export const styles = StyleSheet.create({
     minHeight: 50,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderWidth: 1,
+    borderWidth: 0,
+    borderBottomWidth: 1,
     borderColor: BrandColors.stone,
-    borderRadius: 15,
+    borderRadius: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.ivory,
   },
 
   navOption: {
@@ -125,35 +125,38 @@ export const styles = StyleSheet.create({
   },
 
   selected: {
-    backgroundColor: BrandColors.warmBeige,
+    backgroundColor: BrandColors.ivory,
+    borderBottomWidth: 2,
     borderColor: BrandColors.charcoal,
   },
 
   quickGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 0,
   },
 
   quickCard: {
     flex: 1,
-    flexBasis: 160,
+    flexBasis: 260,
     minHeight: 126,
-    padding: 16,
-    borderRadius: 20,
-    backgroundColor: BrandColors.white,
-    borderWidth: 1,
+    paddingLeft: 0,
+    paddingRight: 18,
+    paddingVertical: 18,
+    borderRadius: 0,
+    backgroundColor: BrandColors.ivory,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
     borderColor: BrandColors.stone,
     justifyContent: 'space-between',
   },
 
   quickCardAccent: {
-    backgroundColor: BrandColors.warmBeige,
+    backgroundColor: BrandColors.ivory,
     borderColor: BrandColors.stone,
   },
 
   quickTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  quickArrow: { color: BrandColors.charcoal, fontFamily: appFontFamily, fontSize: 19 },
 
   quickCardLabel: {
     color: BrandColors.charcoal,
@@ -178,12 +181,14 @@ export const styles = StyleSheet.create({
   },
 
   panel: {
-    backgroundColor: BrandColors.white,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: BrandColors.stone,
-    padding: 18,
-    gap: 14,
+    backgroundColor: BrandColors.ivory,
+    borderRadius: 0,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: BrandColors.charcoal,
+    paddingHorizontal: 0,
+    paddingVertical: 24,
+    gap: 18,
   },
 
   sectionHeader: {
@@ -193,18 +198,17 @@ export const styles = StyleSheet.create({
   },
 
   iconBadge: {
-    width: 40,
+    width: 28,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: BrandColors.warmBeige,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   iconBadgeText: {
     color: BrandColors.charcoal,
-    fontSize: 22,
-    fontWeight: '500',
+    fontSize: 26,
+    fontWeight: '300',
   },
 
   sectionTitle: {

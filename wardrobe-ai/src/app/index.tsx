@@ -50,23 +50,21 @@ export default function HomeScreen() {
     <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={styles.container}>
       <View style={styles.brandRow}>
         <View style={styles.brandIdentity}>
-          <View><Text style={styles.brandName}>WEARLY</Text><Text style={styles.brandTagline}>Your personal styling studio</Text></View>
+          <Text style={styles.brandName}>WEARLY</Text>
         </View>
         <Link href="/information" asChild><Pressable accessibilityRole="button" style={styles.infoButton}><Text style={styles.infoButtonText}>Information</Text></Pressable></Link>
       </View>
       <View style={styles.hero}>
-        <View pointerEvents="none" style={styles.heroOrb} />
-        <View pointerEvents="none" style={styles.heroOrbSmall} />
         <Text style={styles.heroTitle}>{userName ? `Welcome,\n${userName}` : 'Welcome'}</Text>
       </View>
 
       <View style={styles.quickGrid}>
         <Pressable style={styles.quickCard} accessibilityRole="button" onPress={() => router.push({ pathname: '/wardrobe', params: { status: 'owned' } })}>
-          <View style={styles.quickTop}><Text style={styles.quickCardLabel}>Collection</Text><Text style={styles.quickArrow}>↗</Text></View>
+          <View style={styles.quickTop}><Text style={styles.quickCardLabel}>Collection</Text></View>
           <View><Text style={styles.quickCardTitle}>My Wardrobe</Text><Text style={styles.quickCardMeta}>Browse everything you own →</Text></View>
         </Pressable>
         <Pressable style={[styles.quickCard, styles.quickCardAccent]} accessibilityRole="button" onPress={() => router.push({ pathname: '/wardrobe', params: { status: 'wishlist' } })}>
-          <View style={styles.quickTop}><Text style={styles.quickCardLabel}>Saved for later</Text><Text style={styles.quickArrow}>♡</Text></View>
+          <View style={styles.quickTop}><Text style={styles.quickCardLabel}>Saved for later</Text></View>
           <View><Text style={styles.quickCardTitle}>Wishlist</Text><Text style={styles.quickCardMeta}>Keep an eye on future finds →</Text></View>
         </Pressable>
       </View>

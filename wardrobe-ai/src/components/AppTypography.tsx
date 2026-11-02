@@ -2,9 +2,10 @@ import { Platform, Text as NativeText, TextInput as NativeTextInput } from 'reac
 import type { TextInputProps, TextProps } from 'react-native';
 
 export const appFontFamily = Platform.select({
-  ios: 'Georgia',
-  android: 'serif',
-  web: 'Georgia',
+  ios: 'Helvetica Neue',
+  android: 'sans-serif',
+  web: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+  default: 'sans-serif',
 });
 
 export function Text({ style, ...props }: TextProps) {
