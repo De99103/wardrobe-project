@@ -11,12 +11,40 @@ export function isImportedProduct(value: unknown): value is ImportedProduct {
 }
 
 export function validateStoreUrl(value: string): string {
-  const url = new URL(value.trim());
+  // Remove Markdown escaping from copied links
+  const cleaned = value.trim().replace(/\\([&_])/g, '$1');
+
+  const url = new URL(cleaned);
   const host = url.hostname.toLowerCase().replace(/\.$/, '');
-  const local = host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') || host.endsWith('.internal');
-  if (url.protocol !== 'https:' || (url.port && url.port !== '443') || url.username || url.password
-      || local || !host || value.trim().length > 2048) {
+
+  const local =
+    host === 'localhost' ||
+    host.endsWith('.localhost') ||
+    host.endsWith('.local') ||
+    host.endsWith('.internal');
+
+  if (
+    url.protocol !== 'https:' ||
+    (url.port && url.port !== '443') ||
+    url.username ||
+    url.password ||
+    local ||
+    !host ||
+    cleaned.length > 2048 ||
+    cleaned.includes('\\')
+  ) {
     throw new Error('Use a public HTTPS product link from a store.');
   }
+
+  // Remove page navigation fragments
+  url.hash = '';
+
+  // Remove advertising tracking parameters
+  for (const key of [...url.searchParams.keys()]) {
+    if (/^(utm_|_gl$|gclid$|gbraid$|wbraid$|fbclid$)/i.test(key)) {
+      url.searchParams.delete(key);
+    }
+  }
+
   return url.href;
 }

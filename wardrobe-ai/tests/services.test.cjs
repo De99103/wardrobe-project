@@ -202,7 +202,7 @@ test('profile updates preserve stable ownership when a display name changes', ()
   const next = service.profileData({ uid: 'owner-a', displayName: 'New name' });
   assert.equal(first.uid, next.uid);
   assert.equal(next.displayName, 'New name');
-  assert.equal(service.profileData({ uid: 'owner-a', displayName: null }).displayName, 'Wardrobe user');
+  assert.equal(service.profileData({ uid: 'owner-a', displayName: null }).displayName, 'Wearly user');
 });
 
 test('repeat collection imports share price but variants and missing prices are refetched', async () => {

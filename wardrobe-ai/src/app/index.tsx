@@ -50,8 +50,7 @@ export default function HomeScreen() {
     <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={styles.container}>
       <View style={styles.brandRow}>
         <View style={styles.brandIdentity}>
-          <View style={styles.brandMark}><Text style={styles.brandMarkText}>W</Text></View>
-          <View><Text style={styles.brandName}>WARDROBE AI</Text><Text style={styles.brandTagline}>Your personal styling studio</Text></View>
+          <View><Text style={styles.brandName}>WEARLY</Text><Text style={styles.brandTagline}>Your personal styling studio</Text></View>
         </View>
         <Link href="/information" asChild><Pressable accessibilityRole="button" style={styles.infoButton}><Text style={styles.infoButtonText}>Information</Text></Pressable></Link>
       </View>

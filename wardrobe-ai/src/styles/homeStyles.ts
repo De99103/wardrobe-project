@@ -1,6 +1,7 @@
 
 import { StyleSheet } from 'react-native';
-import { appFontFamily as editorialFont } from '../components/AppTypography';
+import { appFontFamily } from '../components/AppTypography';
+import { BrandColors } from '../constants/brand';
 
 export const styles = StyleSheet.create({
   container: {
@@ -11,22 +12,20 @@ export const styles = StyleSheet.create({
     padding: 18,
     paddingTop: 28,
     paddingBottom: 48,
-    backgroundColor: '#FBF6F7',
+    backgroundColor: BrandColors.ivory,
     gap: 18,
   },
 
   brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 11, paddingHorizontal: 2 },
   brandIdentity: { flexDirection: 'row', alignItems: 'center', flexShrink: 1, gap: 11 },
-  brandMark: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#5E2D4F', alignItems: 'center', justifyContent: 'center' },
-  brandMarkText: { color: '#FFF9FB', fontFamily: editorialFont, fontSize: 22, lineHeight: 27 },
-  brandName: { color: '#5E2D4F', fontSize: 13, lineHeight: 17, fontWeight: '800', letterSpacing: 2.2 },
-  brandTagline: { color: '#8A7B85', fontSize: 12, lineHeight: 17 },
-  infoButton: { minHeight: 40, justifyContent: 'center', borderRadius: 999, borderWidth: 1, borderColor: '#E8DDE3', backgroundColor: '#FFFDFD', paddingHorizontal: 13 },
-  infoButtonText: { color: '#5E2D4F', fontSize: 13, fontWeight: '800' },
+  brandName: { color: BrandColors.charcoal, fontFamily: appFontFamily, fontSize: 18, lineHeight: 22, fontWeight: '500', letterSpacing: 5.5 },
+  brandTagline: { color: BrandColors.mutedText, fontSize: 12, lineHeight: 17 },
+  infoButton: { minHeight: 40, justifyContent: 'center', borderRadius: 999, borderWidth: 1, borderColor: BrandColors.stone, backgroundColor: BrandColors.ivory, paddingHorizontal: 13 },
+  infoButtonText: { color: BrandColors.charcoal, fontSize: 13, fontWeight: '800' },
 
   hero: {
     position: 'relative',
-    backgroundColor: '#5E2D4F',
+    backgroundColor: BrandColors.charcoal,
     borderRadius: 30,
     padding: 26,
     minHeight: 156,
@@ -34,12 +33,12 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  heroOrb: { position: 'absolute', width: 210, height: 210, borderRadius: 105, backgroundColor: '#B96C88', opacity: 0.24, right: -82, top: -70 },
-  heroOrbSmall: { position: 'absolute', width: 82, height: 82, borderRadius: 41, backgroundColor: '#F1BACB', opacity: 0.18, right: 56, bottom: -32 },
+  heroOrb: { position: 'absolute', width: 210, height: 210, borderRadius: 105, backgroundColor: BrandColors.warmBeige, opacity: 0.2, right: -82, top: -70 },
+  heroOrbSmall: { position: 'absolute', width: 82, height: 82, borderRadius: 41, backgroundColor: BrandColors.stone, opacity: 0.18, right: 56, bottom: -32 },
 
   heroTitle: {
-    color: '#FFF9FB',
-    fontFamily: editorialFont,
+    color: BrandColors.ivory,
+    fontFamily: appFontFamily,
     fontSize: 41,
     lineHeight: 47,
     letterSpacing: -0.8,
@@ -49,26 +48,26 @@ export const styles = StyleSheet.create({
     fontSize: 32,
     lineHeight: 38,
     fontWeight: '800',
-    color: '#352A33',
-    fontFamily: editorialFont,
+    color: BrandColors.charcoal,
+    fontFamily: appFontFamily,
     letterSpacing: -0.6,
   },
 
   subtitle: {
     fontSize: 17,
     lineHeight: 24,
-    color: '#766B74',
+    color: BrandColors.mutedText,
   },
 
   label: {
     fontSize: 14,
     lineHeight: 20,
-    color: '#5B4856',
+    color: BrandColors.charcoal,
     fontWeight: '700',
   },
 
   button: {
-    backgroundColor: '#5E2D4F',
+    backgroundColor: BrandColors.charcoal,
     minHeight: 52,
     paddingHorizontal: 18,
     paddingVertical: 14,
@@ -78,7 +77,7 @@ export const styles = StyleSheet.create({
   },
 
   buttonText: {
-    color: '#FFF9FB',
+    color: BrandColors.ivory,
     fontWeight: '800',
     letterSpacing: 0.1,
   },
@@ -87,18 +86,18 @@ export const styles = StyleSheet.create({
     width: '100%',
     height: 260,
     borderRadius: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: BrandColors.white,
   },
 
   input: {
     borderWidth: 1,
-    borderColor: '#E8DDE3',
+    borderColor: BrandColors.stone,
     borderRadius: 15,
     minHeight: 50,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    backgroundColor: '#FFFDFD',
-    color: '#352A33',
+    backgroundColor: BrandColors.white,
+    color: BrandColors.charcoal,
     fontSize: 16,
   },
 
@@ -113,11 +112,11 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#E8DDE3',
+    borderColor: BrandColors.stone,
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFDFD',
+    backgroundColor: BrandColors.white,
   },
 
   navOption: {
@@ -126,36 +125,38 @@ export const styles = StyleSheet.create({
   },
 
   selected: {
-    backgroundColor: '#F1E4EC',
-    borderColor: '#B57490',
+    backgroundColor: BrandColors.warmBeige,
+    borderColor: BrandColors.charcoal,
   },
 
   quickGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
   },
 
   quickCard: {
     flex: 1,
+    flexBasis: 160,
     minHeight: 126,
     padding: 16,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: BrandColors.white,
     borderWidth: 1,
-    borderColor: '#E8DDE3',
+    borderColor: BrandColors.stone,
     justifyContent: 'space-between',
   },
 
   quickCardAccent: {
-    backgroundColor: '#EEE8F4',
-    borderColor: '#E5DCEC',
+    backgroundColor: BrandColors.warmBeige,
+    borderColor: BrandColors.stone,
   },
 
   quickTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  quickArrow: { color: '#8E5874', fontFamily: editorialFont, fontSize: 19 },
+  quickArrow: { color: BrandColors.charcoal, fontFamily: appFontFamily, fontSize: 19 },
 
   quickCardLabel: {
-    color: '#9D5B79',
+    color: BrandColors.charcoal,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1.1,
@@ -163,24 +164,24 @@ export const styles = StyleSheet.create({
   },
 
   quickCardTitle: {
-    color: '#352A33',
-    fontFamily: editorialFont,
+    color: BrandColors.charcoal,
+    fontFamily: appFontFamily,
     fontSize: 20,
     lineHeight: 24,
     fontWeight: '800',
   },
 
   quickCardMeta: {
-    color: '#766B74',
+    color: BrandColors.mutedText,
     fontSize: 13,
     lineHeight: 18,
   },
 
   panel: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: BrandColors.white,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#E8DDE3',
+    borderColor: BrandColors.stone,
     padding: 18,
     gap: 14,
   },
@@ -195,44 +196,44 @@ export const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5E4E8',
+    backgroundColor: BrandColors.warmBeige,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   iconBadgeText: {
-    color: '#8E4968',
+    color: BrandColors.charcoal,
     fontSize: 22,
     fontWeight: '500',
   },
 
   sectionTitle: {
-    color: '#352A33',
-    fontFamily: editorialFont,
+    color: BrandColors.charcoal,
+    fontFamily: appFontFamily,
     fontSize: 20,
     fontWeight: '800',
   },
 
   divider: {
     height: 1,
-    backgroundColor: '#F0E7EC',
+    backgroundColor: BrandColors.stone,
   },
 
   subtleLink: {
-    color: '#8E4968',
-    fontFamily: editorialFont,
+    color: BrandColors.charcoal,
+    fontFamily: appFontFamily,
     fontWeight: '700',
     paddingVertical: 4,
   },
 
   error: {
-    color: '#A14657',
+    color: BrandColors.error,
     fontSize: 14,
   },
 
   summary: {
     fontSize: 15,
     lineHeight: 22,
-    color: '#6D606A',
+    color: BrandColors.mutedText,
   },
 });

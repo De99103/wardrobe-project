@@ -73,7 +73,7 @@ button.addEventListener('click', async () => {
     target.searchParams.set('importId', data.importId);
     target.searchParams.set('status', document.getElementById('collection').value);
     await chrome.tabs.create({ url: target.href });
-    message.textContent = 'Product ready. Review it in Wardrobe AI.';
+    message.textContent = 'Product ready. Review it in Wearly.';
   } catch (error) {
     message.textContent = `${error.message || 'Import failed.'} Check that the backend is running.`;
   } finally { button.disabled = false; }

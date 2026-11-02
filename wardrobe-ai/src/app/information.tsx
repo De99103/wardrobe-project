@@ -28,7 +28,7 @@ const steps = [
 export default function InformationScreen() {
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container}>
     <Text style={styles.eyebrow}>Information</Text>
-    <Text style={styles.title}>How Wardrobe works</Text>
+    <Text style={styles.title}>How Wearly works</Text>
     <Text style={styles.subtitle}>A quick guide to adding clothes, organizing them, and creating outfits.</Text>
 
     <View style={styles.steps}>

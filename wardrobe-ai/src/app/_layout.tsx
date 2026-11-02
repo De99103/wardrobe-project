@@ -1,19 +1,20 @@
 import { Stack } from 'expo-router';
 import { AppHeaderBack, AppHeaderHome } from '../components/AppHeaderNavigation';
 import { appFontFamily } from '../components/AppTypography';
+import { BrandColors } from '../constants/brand';
 
 export default function RootLayout() {
   return (
     <Stack screenOptions={{
-      headerStyle: { backgroundColor: '#FBF6F7' },
+      headerStyle: { backgroundColor: BrandColors.ivory },
       headerShadowVisible: false,
-      headerTintColor: '#5E2D4F',
-      headerTitleStyle: { color: '#352A33', fontFamily: appFontFamily, fontWeight: '700' },
+      headerTintColor: BrandColors.charcoal,
+      headerTitleStyle: { color: BrandColors.charcoal, fontFamily: appFontFamily, fontWeight: '700' },
       headerTitleAlign: 'center',
       headerBackVisible: false,
       headerLeft: () => <AppHeaderBack />,
       headerRight: () => <AppHeaderHome />,
-      contentStyle: { backgroundColor: '#FBF6F7' },
+      contentStyle: { backgroundColor: BrandColors.ivory },
     }}>
       <Stack.Screen name="add-item" options={{ title: 'Add item' }} />
       <Stack.Screen name="account" options={{ title: 'Account' }} />
@@ -23,7 +24,7 @@ export default function RootLayout() {
       <Stack.Screen name="outfit" options={{ title: 'Outfit stylist' }} />
       <Stack.Screen
         name="index"
-        options={{ title: 'Wardrobe AI', headerShown: false, headerLeft: undefined, headerRight: undefined }}
+        options={{ title: 'Wearly', headerShown: false, headerLeft: undefined, headerRight: undefined }}
       />
       <Stack.Screen
         name="wardrobe"

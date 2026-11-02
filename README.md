@@ -1,6 +1,6 @@
-# Wardrobe AI
+# Wearly
 
-Wardrobe AI is an Expo application for iOS, Android, and web. Users can save owned clothing or wishlist items manually or from store links, synchronize collections with Firebase, and receive AI outfit recommendations based on their wardrobe and current weather.
+Wearly is an Expo application for iOS, Android, and web. Users can save owned clothing or wishlist items manually or from store links, synchronize collections with Firebase, and receive AI outfit recommendations based on their wardrobe and current weather.
 
 ## Projects
 

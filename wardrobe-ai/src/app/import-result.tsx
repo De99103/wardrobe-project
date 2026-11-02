@@ -29,6 +29,7 @@ import type {
 
 import { styles } from '../styles/importResultStyles';
 import { Text, TextInput } from '../components/AppTypography';
+import { BrandColors } from '../constants/brand';
 
 const editQuestions: { key: keyof ImportedProductEditDraft; label: string; placeholder: string }[] = [
   { key: 'name', label: 'Name', placeholder: 'Product name' },
@@ -198,7 +199,7 @@ export default function ImportResultScreen() {
     return (
       <View style={styles.centered}>
         <Text style={styles.placeholderMark}>W</Text>
-        <ActivityIndicator size="large" color="#5E2D4F" />
+        <ActivityIndicator size="large" color={BrandColors.charcoal} />
         <Text style={styles.message}>Reading the product page and preparing the details…</Text>
       </View>
     );
@@ -230,7 +231,7 @@ export default function ImportResultScreen() {
           <TextInput
             style={styles.descriptionInput}
             placeholder="Example: Black knitted dress with belt, Zara, 559 SEK…"
-            placeholderTextColor="#9A8B95"
+            placeholderTextColor={BrandColors.softGrey}
             value={manualDescription}
             onChangeText={setManualDescription}
             maxLength={5000}
@@ -240,7 +241,7 @@ export default function ImportResultScreen() {
           />
           {manualError && <Text style={styles.errorText}>{manualError}</Text>}
           <Pressable accessibilityRole="button" style={styles.secondaryButton} onPress={handleManualImport} disabled={manualLoading}>
-            {manualLoading ? <ActivityIndicator color="#5E2D4F" /> : <Text style={styles.secondaryButtonText}>Analyze pasted details with AI</Text>}
+            {manualLoading ? <ActivityIndicator color={BrandColors.charcoal} /> : <Text style={styles.secondaryButtonText}>Analyze pasted details with AI</Text>}
           </Pressable>
         </View>
         <Pressable accessibilityRole="button" onPress={() => router.back()}><Text style={styles.backText}>← Back to import</Text></Pressable>
@@ -293,7 +294,7 @@ export default function ImportResultScreen() {
             accessibilityLabel={label}
             value={editDetails[key]}
             placeholder={placeholder}
-            placeholderTextColor="#9A8B95"
+            placeholderTextColor={BrandColors.softGrey}
             maxLength={key === 'currency' ? 3 : 2000}
             keyboardType={key === 'price' ? 'decimal-pad' : 'default'}
             autoCapitalize={key === 'currency' ? 'characters' : 'sentences'}
@@ -331,7 +332,7 @@ export default function ImportResultScreen() {
       {!editing && <>
         {saveError && <Text style={styles.errorText}>{saveError}</Text>}
         <Pressable accessibilityRole="button" style={styles.button} onPress={handleSave} disabled={saving}>
-          {saving ? <ActivityIndicator color="#FFF9FB" /> : (
+          {saving ? <ActivityIndicator color={BrandColors.ivory} /> : (
             <Text style={styles.buttonText}>
               {collection === 'wishlist' ? 'Save to Wishlist  →' : 'Save to Wardrobe  →'}
             </Text>

@@ -8,6 +8,7 @@ import { chooseClothingPhoto } from '../services/clothingPhoto';
 import { saveClothing } from '../services/wardrobeStorage';
 import { styles } from '../styles/addItemStyles';
 import { Text, TextInput } from '../components/AppTypography';
+import { BrandColors } from '../constants/brand';
 
 const questions: { key: keyof ManualDetails; label: string; placeholder: string }[] = [
   { key: 'name', label: 'What would you like to call it?', placeholder: 'My favourite sweater' },
@@ -119,7 +120,7 @@ export default function AddItemScreen() {
     </View>
 
     {error ? <Text style={styles.error} accessibilityRole="alert">{error}</Text> : null}
-    {saving ? <ActivityIndicator color="#5E2D4F" /> : null}
+    {saving ? <ActivityIndicator color={BrandColors.charcoal} /> : null}
     {showDetails && <Pressable style={[styles.primaryButton, disabled && styles.disabled]} disabled={disabled} accessibilityRole="button" onPress={() => save(false)}><Text style={styles.primaryButtonText}>Save item  →</Text></Pressable>}
     <Pressable style={[showDetails ? styles.secondaryButton : styles.primaryButton, disabled && styles.disabled]} disabled={disabled} accessibilityRole="button" onPress={() => save(true)}>
       <Text style={showDetails ? styles.secondaryButtonText : styles.primaryButtonText}>Skip details & save</Text>

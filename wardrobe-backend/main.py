@@ -35,7 +35,7 @@ def health():
 
 @app.get('/')
 def root():
-    return {'service': 'Wardrobe AI API', 'status': 'ok', 'docs': '/docs'}
+    return {'service': 'Wearly API', 'status': 'ok', 'docs': '/docs'}
 
 
 @app.post('/recommend-outfit', response_model=OutfitResult)

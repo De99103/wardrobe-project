@@ -1,4 +1,4 @@
-# Wardrobe AI
+# Wearly
 
 Expo 57 / React Native frontend with a FastAPI and Groq product importer in the sibling `wardrobe-backend` folder.
 

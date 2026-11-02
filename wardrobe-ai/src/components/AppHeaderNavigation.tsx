@@ -1,6 +1,7 @@
 import { router, useNavigation } from 'expo-router';
 import { Pressable, StyleSheet } from 'react-native';
 import { Text } from './AppTypography';
+import { BrandColors } from '../constants/brand';
 
 function HeaderButton({ label, symbol, onPress }: { label: string; symbol: string; onPress: () => void }) {
   return (
@@ -39,9 +40,11 @@ const styles = StyleSheet.create({
     gap: 5,
     paddingHorizontal: 9,
     borderRadius: 999,
-    backgroundColor: '#F1E4EC',
+    backgroundColor: BrandColors.warmBeige,
+    borderWidth: 1,
+    borderColor: BrandColors.stone,
   },
   pressed: { opacity: 0.7 },
-  symbol: { color: '#5E2D4F', fontSize: 17, lineHeight: 20, fontWeight: '700' },
-  label: { color: '#5E2D4F', fontSize: 13, lineHeight: 18, fontWeight: '800' },
+  symbol: { color: BrandColors.charcoal, fontSize: 17, lineHeight: 20, fontWeight: '700' },
+  label: { color: BrandColors.charcoal, fontSize: 13, lineHeight: 18, fontWeight: '800' },
 });

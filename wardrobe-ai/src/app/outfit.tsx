@@ -10,6 +10,7 @@ import type { SavedOutfit } from '../services/outfitStorage';
 import type { SavedClothing } from '../types/clothing';
 import { styles } from '../styles/outfitStyles';
 import { Text, TextInput } from '../components/AppTypography';
+import { BrandColors } from '../constants/brand';
 
 const occasionOptions = ['Everyday', 'Work', 'Dinner', 'Going out'] as const;
 
@@ -85,9 +86,9 @@ export default function OutfitScreen() {
   return <View style={styles.container}>
     <Stack.Screen options={{
       title: 'Outfit stylist',
-      headerStyle: { backgroundColor: '#FBF6F7' },
+      headerStyle: { backgroundColor: BrandColors.ivory },
       headerShadowVisible: false,
-      headerTintColor: '#5E2D4F',
+      headerTintColor: BrandColors.charcoal,
     }} />
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <View style={styles.hero}>
@@ -109,7 +110,7 @@ export default function OutfitScreen() {
             value={location}
             onChangeText={setLocation}
             placeholder="Stockholm"
-            placeholderTextColor="#9A958E"
+            placeholderTextColor={BrandColors.softGrey}
             autoCapitalize="words"
             maxLength={200}
             returnKeyType="next"
@@ -138,7 +139,7 @@ export default function OutfitScreen() {
             value={occasion}
             onChangeText={setOccasion}
             placeholder="Or describe your plans…"
-            placeholderTextColor="#9A958E"
+            placeholderTextColor={BrandColors.softGrey}
             maxLength={200}
             returnKeyType="done"
           />
@@ -156,7 +157,7 @@ export default function OutfitScreen() {
           style={[styles.button, (busy || !owned.length) && styles.buttonDisabled]}
           onPress={createOutfit}
         >
-          {loading ? <ActivityIndicator color="#FFF9FB" /> : null}
+          {loading ? <ActivityIndicator color={BrandColors.ivory} /> : null}
           <Text style={styles.buttonText}>{loading ? 'Styling your outfit…' : result ? 'Style another outfit  →' : 'Recommend an outfit  →'}</Text>
         </Pressable>
       </View>
@@ -209,7 +210,7 @@ export default function OutfitScreen() {
             style={[styles.saveButton, (savingOutfit || savedCurrent) && styles.buttonDisabled]}
             onPress={saveCurrentOutfit}
           >
-            {savingOutfit ? <ActivityIndicator color="#5E2D4F" /> : null}
+            {savingOutfit ? <ActivityIndicator color={BrandColors.charcoal} /> : null}
             <Text style={styles.saveButtonText}>{savedCurrent ? 'Outfit saved  ✓' : 'Save this outfit'}</Text>
           </Pressable>
         </View>
@@ -223,7 +224,7 @@ export default function OutfitScreen() {
           </View>
           <View style={styles.savedCount}><Text style={styles.savedCountText}>{savedOutfits.length}</Text></View>
         </View>
-        {loadingSaved ? <ActivityIndicator color="#5E2D4F" /> : savedOutfits.length === 0 ? <Text style={styles.emptySaved}>Your saved outfits will appear here.</Text> : savedOutfits.map(saved => {
+        {loadingSaved ? <ActivityIndicator color={BrandColors.charcoal} /> : savedOutfits.length === 0 ? <Text style={styles.emptySaved}>Your saved outfits will appear here.</Text> : savedOutfits.map(saved => {
           const pieceNames = saved.outfit.sourceUrls.map(sourceUrl => {
             const item = owned.find(value => value.sourceUrl === sourceUrl);
             return item?.name ?? item?.subcategory ?? 'Wardrobe item';

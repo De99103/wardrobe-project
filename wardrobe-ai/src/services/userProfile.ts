@@ -5,7 +5,7 @@ import type { User } from 'firebase/auth';
 export function profileData(user: Pick<User, 'uid' | 'displayName'>) {
   return {
     uid: user.uid,
-    displayName: user.displayName?.trim().slice(0, 200) || 'Wardrobe user',
+    displayName: user.displayName?.trim().slice(0, 200) || 'Wearly user',
     updatedAt: new Date().toISOString(),
   };
 }
