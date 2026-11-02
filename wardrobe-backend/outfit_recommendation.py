@@ -49,6 +49,32 @@ class OutfitResult(BaseModel):
     outfit: OutfitChoice
 
 
+def _fallback_choice(items, weather, occasion):
+    """Return a safe local look when the AI provider is temporarily unavailable."""
+    grouped = {}
+    for item in items:
+        grouped.setdefault(item.category or 'other', []).append(item)
+    selected = []
+    if grouped.get('dresses'):
+        selected.append(grouped['dresses'][0])
+    else:
+        for category in ('tops', 'bottoms'):
+            if grouped.get(category):
+                selected.append(grouped[category][0])
+    for category in ('outerwear', 'shoes', 'accessories'):
+        if grouped.get(category):
+            selected.append(grouped[category][0])
+    if not selected:
+        selected = items[:1]
+    rain_note = ' Consider waterproof footwear or an umbrella.' if (weather.chanceOfRain or 0) >= 40 else ''
+    return OutfitChoice(
+        sourceUrls=[item.sourceUrl for item in selected],
+        title=f'{occasion.title()} wardrobe look',
+        explanation='A simple outfit assembled from the pieces you already own, balanced for the current temperature and plan.',
+        weatherTip=f'It is {round(weather.temperatureC)}°C in {weather.location}; dress for the feels-like temperature.{rain_note}',
+    )
+
+
 def _weather_key():
     return (os.getenv('WEATHER_API_KEY') or os.getenv('weather_api_key') or '').strip()
 
@@ -114,9 +140,17 @@ def recommend_outfit(request, groq_client, model):
                 {'role': 'user', 'content': prompt}],
             response_format={'type': 'json_schema', 'json_schema': {
                 'name': 'weather_outfit', 'strict': True, 'schema': schema}})
-        choice = OutfitChoice.model_validate_json(response.choices[0].message.content)
+        raw_choice = response.choices[0].message.content
     except Exception:
-        raise HTTPException(502, 'The stylist is temporarily unavailable. Please try again.') from None
+        # Keep recommendations useful during a transient Groq timeout, quota
+        # error, or model rollout. The fallback is still grounded entirely in
+        # the user's owned items and current weather.
+        choice = _fallback_choice(request.items, weather, request.occasion)
+    else:
+        try:
+            choice = OutfitChoice.model_validate_json(raw_choice)
+        except Exception:
+            raise HTTPException(502, 'The stylist returned an invalid outfit. Please try again.') from None
     allowed = {item.sourceUrl for item in request.items}
     selected = list(dict.fromkeys(choice.sourceUrls))
     if not selected or any(url not in allowed for url in selected):

@@ -73,6 +73,15 @@ class OutfitRecommendationTests(unittest.TestCase):
             recommend_outfit(OutfitRequest(location='Stockholm', items=ITEMS), client, 'test-model')
         self.assertEqual(error.exception.status_code, 502)
 
+    def test_provider_failure_uses_owned_item_fallback(self):
+        client = Mock()
+        client.chat.completions.create.side_effect = RuntimeError('temporary quota')
+        with patch.dict(os.environ, {'weather_api_key': 'secret'}, clear=True), \
+             patch('outfit_recommendation.requests.get', return_value=weather_response()):
+            result = recommend_outfit(OutfitRequest(location='Stockholm', items=ITEMS), client, 'test-model')
+        self.assertEqual(result.outfit.sourceUrls, ['manual:top', 'manual:bottom'])
+        self.assertIn('Stockholm', result.outfit.weatherTip)
+
 
 if __name__ == '__main__':
     unittest.main()
