@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
 import { cloudEnabled, finishGoogleSignIn, firebaseConfigured, googleSignIn, logOut, observeAccount } from '../services/firebaseClient';
 import { uploadDeviceClothing } from '../services/wardrobeStorage';
+import { Text } from '../components/AppTypography';
 import type { User } from 'firebase/auth';
 import { styles } from '../styles/collectionStyles';
 

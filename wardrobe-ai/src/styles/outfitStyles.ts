@@ -1,6 +1,5 @@
-import { Platform, StyleSheet } from 'react-native';
-
-const editorialFont = Platform.select({ ios: 'Georgia', android: 'serif', web: 'Georgia' });
+import { StyleSheet } from 'react-native';
+import { appFontFamily as editorialFont } from '../components/AppTypography';
 
 export const styles = StyleSheet.create({
   container: {
@@ -333,4 +332,42 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
   },
+  saveButton: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 9,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#C889A2',
+    backgroundColor: '#F5E4E8',
+    paddingHorizontal: 18,
+    paddingVertical: 13,
+  },
+  saveButtonText: { color: '#5E2D4F', fontSize: 15, fontWeight: '800' },
+  savedSection: {
+    borderWidth: 1,
+    borderColor: '#E8DDE3',
+    borderRadius: 24,
+    backgroundColor: '#FFFDFD',
+    padding: 18,
+    gap: 14,
+  },
+  savedHeading: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  savedCount: { minWidth: 34, height: 34, borderRadius: 17, backgroundColor: '#F1E4EC', alignItems: 'center', justifyContent: 'center' },
+  savedCountText: { color: '#5E2D4F', fontWeight: '800' },
+  emptySaved: { color: '#766B74', fontSize: 14, lineHeight: 21, paddingVertical: 8 },
+  savedCard: { borderTopWidth: 1, borderTopColor: '#EEE3E8', paddingTop: 14, gap: 8 },
+  savedCardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  savedTitle: { color: '#352A33', fontFamily: editorialFont, fontSize: 20, lineHeight: 26, fontWeight: '800' },
+  savedMeta: { color: '#766B74', fontSize: 13, lineHeight: 19 },
+  savedDate: { color: '#8E4968', fontSize: 12, lineHeight: 18 },
+  savedPieces: { color: '#5B4856', fontSize: 14, lineHeight: 20 },
+  savedTip: { color: '#766B74', fontSize: 13, lineHeight: 20 },
+  confirmPanel: { backgroundColor: '#FAECEF', borderRadius: 14, padding: 12, gap: 9 },
+  confirmRow: { flexDirection: 'row', gap: 8 },
+  smallButton: { minHeight: 38, justifyContent: 'center', paddingHorizontal: 13, borderRadius: 999, borderWidth: 1, borderColor: '#E8DDE3', backgroundColor: '#FFFFFF' },
+  smallButtonText: { color: '#5B4856', fontWeight: '700' },
+  removeText: { color: '#A14657', fontWeight: '700', paddingVertical: 7 },
 });

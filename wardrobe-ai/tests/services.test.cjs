@@ -441,3 +441,146 @@ test('cloud Bought it atomically moves the latest source without overwriting a w
   await assert.rejects(service.moveCloudClothingToWardrobe('owner', product.sourceUrl), /no longer available/);
   await assert.rejects(service.moveCloudClothingToWardrobe('other', product.sourceUrl), /account changed/);
 });
+
+test('imported product edits preserve the store identity and normalize manual corrections', () => {
+  const view = load('collectionView');
+  const editor = load('importedProductEditor', {
+    './collectionView': view,
+    './productValidation': load('productValidation'),
+  });
+  const original = { ...product, name: null, category: 'unknown', imageUrl: 'https://shop.example/image.jpg' };
+  const editable = editor.editableProductDetails(original);
+  assert.equal(editable.category, 'uncategorized');
+  const updated = editor.applyImportedProductEdits(original, 'bottoms', {
+    ...editable.details,
+    name: '  Wide trousers  ',
+    brand: '  Bik Bok ',
+    color: ' ',
+    price: '349,50',
+    currency: 'sek',
+  });
+  assert.equal(updated.name, 'Wide trousers');
+  assert.equal(updated.brand, 'Bik Bok');
+  assert.equal(updated.color, null);
+  assert.equal(updated.category, 'bottoms');
+  assert.equal(updated.price, 349.5);
+  assert.equal(updated.currency, 'SEK');
+  assert.equal(updated.sourceUrl, original.sourceUrl);
+  assert.equal(updated.imageUrl, original.imageUrl);
+  assert.equal(original.name, null);
+  assert.throws(() => editor.applyImportedProductEdits(original, 'all', editable.details), /category/);
+  assert.throws(() => editor.applyImportedProductEdits(original, 'tops', { ...editable.details, price: '-1' }), /price/);
+  assert.throws(() => editor.applyImportedProductEdits(original, 'tops', { ...editable.details, currency: 'kr' }), /currency/);
+  assert.throws(() => editor.applyImportedProductEdits(original, 'tops', { ...editable.details, name: 'a'.repeat(2001) }), /2,000/);
+  const empty = editor.emptyImportedProduct('https://shop.example/item');
+  assert.equal(empty.category, 'uncategorized');
+  assert.equal(empty.name, null);
+  assert.equal(empty.sourceUrl, 'https://shop.example/item');
+});
+
+test('saved outfits persist locally, reload safely and can be removed', async () => {
+  let raw = null;
+  const model = load('outfitModel');
+  const storage = load('outfitStorage', {
+    '@react-native-async-storage/async-storage': {
+      getItem: async () => raw,
+      setItem: async (_, value) => { raw = value; },
+    },
+    'expo-crypto': { randomUUID: () => '11111111-1111-4111-8111-111111111111' },
+    './firebaseClient': { storageAccount: async () => null },
+    './cloudOutfits': {},
+    './outfitModel': model,
+  });
+  const recommendation = {
+    weather: {
+      location: 'Stockholm', localTime: '2026-11-02 10:00', condition: 'Cloudy',
+      temperatureC: 8, feelsLikeC: 6, precipitationMm: 0, chanceOfRain: 20,
+      windKph: 12, humidity: 70, isDay: true,
+    },
+    outfit: {
+      sourceUrls: [product.sourceUrl], title: 'Soft layers',
+      explanation: 'A comfortable layered outfit.', weatherTip: 'Bring a light coat.',
+    },
+  };
+  const saved = await storage.saveOutfit(recommendation, ' Work ');
+  assert.equal(saved.occasion, 'Work');
+  assert.equal((await storage.loadSavedOutfits()).length, 1);
+  assert.equal((await storage.loadSavedOutfits())[0].outfit.title, 'Soft layers');
+  await storage.deleteSavedOutfit(saved.id);
+  assert.equal((await storage.loadSavedOutfits()).length, 0);
+  raw = JSON.stringify([{ broken: true }]);
+  await assert.rejects(storage.loadSavedOutfits(), /preserved/);
+});
+
+test('signed-in outfits use the private cloud collection', async () => {
+  const writes = [];
+  const deletes = [];
+  const model = load('outfitModel');
+  const recommendation = {
+    weather: {
+      location: 'Stockholm', localTime: '2026-11-02 10:00', condition: 'Cloudy',
+      temperatureC: 8, feelsLikeC: 6, precipitationMm: 0, chanceOfRain: null,
+      windKph: 12, humidity: 70, isDay: true,
+    },
+    outfit: {
+      sourceUrls: [product.sourceUrl], title: 'Soft layers',
+      explanation: 'A comfortable layered outfit.', weatherTip: 'Bring a light coat.',
+    },
+  };
+  const storage = load('outfitStorage', {
+    '@react-native-async-storage/async-storage': { setItem: () => assert.fail('Must not write device data') },
+    'expo-crypto': { randomUUID: () => '22222222-2222-4222-8222-222222222222' },
+    './firebaseClient': { storageAccount: async () => ({ uid: 'owner' }) },
+    './cloudOutfits': {
+      saveCloudOutfit: async (uid, value) => writes.push({ uid, value }),
+      loadCloudOutfits: async uid => { assert.equal(uid, 'owner'); return writes.map(entry => entry.value); },
+      deleteCloudOutfit: async (uid, id) => deletes.push({ uid, id }),
+    },
+    './outfitModel': model,
+  });
+  const saved = await storage.saveOutfit(recommendation, 'Dinner');
+  assert.equal(writes[0].uid, 'owner');
+  assert.equal((await storage.loadSavedOutfits())[0].id, saved.id);
+  await storage.deleteSavedOutfit(saved.id);
+  assert.deepEqual(deletes[0], { uid: 'owner', id: saved.id });
+});
+
+test('cloud outfits use owner-scoped Firestore documents and validate reads', async () => {
+  const model = load('outfitModel');
+  const saved = model.makeSavedOutfit({
+    weather: {
+      location: 'Stockholm', localTime: '2026-11-02 10:00', condition: 'Cloudy',
+      temperatureC: 8, feelsLikeC: 6, precipitationMm: 0, chanceOfRain: null,
+      windKph: 12, humidity: 70, isDay: true,
+    },
+    outfit: {
+      sourceUrls: [product.sourceUrl], title: 'Soft layers',
+      explanation: 'A comfortable layered outfit.', weatherTip: 'Bring a light coat.',
+    },
+  }, 'Dinner', 'outfit-id', '2026-11-02T10:00:00.000Z');
+  const writes = [];
+  const deletes = [];
+  let readValue = saved;
+  const service = load('cloudOutfits', {
+    './firebaseClient': { firebaseServices: () => ({ db: {}, auth: { currentUser: { uid: 'owner' } } }) },
+    './outfitModel': model,
+    'firebase/firestore': {
+      collection: (_, ...parts) => parts.join('/'),
+      doc: (_, ...parts) => parts.join('/'),
+      getDocs: async path => {
+        assert.equal(path, 'users/owner/outfits');
+        return { docs: [{ data: () => readValue }] };
+      },
+      setDoc: async (path, value) => writes.push({ path, value }),
+      deleteDoc: async path => deletes.push(path),
+    },
+  });
+  await service.saveCloudOutfit('owner', saved);
+  assert.equal(writes[0].path, 'users/owner/outfits/outfit-id');
+  assert.equal((await service.loadCloudOutfits('owner'))[0].id, 'outfit-id');
+  await service.deleteCloudOutfit('owner', 'outfit-id');
+  assert.equal(deletes[0], 'users/owner/outfits/outfit-id');
+  await assert.rejects(service.loadCloudOutfits('other'), /account changed/);
+  readValue = { broken: true };
+  await assert.rejects(service.loadCloudOutfits('owner'), /could not be read/);
+});

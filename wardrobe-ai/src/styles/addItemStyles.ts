@@ -1,6 +1,5 @@
-import { Platform, StyleSheet } from 'react-native';
-
-const editorialFont = Platform.select({ ios: 'Georgia', android: 'serif', web: 'Georgia' });
+import { StyleSheet } from 'react-native';
+import { appFontFamily as editorialFont } from '../components/AppTypography';
 
 export const styles = StyleSheet.create({
   container: {

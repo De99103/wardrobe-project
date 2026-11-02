@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Platform, Pressable, ScrollView, SectionList, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Platform, Pressable, ScrollView, SectionList, View } from 'react-native';
 import { Link, Stack, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { loadClothing, deleteClothing, moveToWardrobe } from '../services/wardrobeStorage';
 import { categories, categoryLabel, collectionSections, storeLink } from '../services/collectionView';
 import type { Category, CollectionSort } from '../services/collectionView';
 import { AccountPanel } from '../components/AccountPanel';
+import { Text } from '../components/AppTypography';
 import type { ClothingStatus, SavedClothing } from '../types/clothing';
 import { styles } from '../styles/collectionStyles';
 

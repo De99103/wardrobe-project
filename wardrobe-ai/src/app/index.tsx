@@ -2,14 +2,13 @@
 import { useEffect, useState } from 'react';
 import {
   View,
-  Text,
-  TextInput,
   Pressable,
   ScrollView,
 } from 'react-native';
 import { Link, router, useLocalSearchParams } from 'expo-router';
 
 import { AccountPanel } from '../components/AccountPanel';
+import { Text, TextInput } from '../components/AppTypography';
 import { styles } from '../styles/homeStyles';
 import { validateStoreUrl } from '../services/productValidation';
 import { observeAccount } from '../services/firebaseClient';
@@ -50,8 +49,11 @@ export default function HomeScreen() {
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={styles.container}>
       <View style={styles.brandRow}>
-        <View style={styles.brandMark}><Text style={styles.brandMarkText}>W</Text></View>
-        <View><Text style={styles.brandName}>WARDROBE AI</Text><Text style={styles.brandTagline}>Your personal styling studio</Text></View>
+        <View style={styles.brandIdentity}>
+          <View style={styles.brandMark}><Text style={styles.brandMarkText}>W</Text></View>
+          <View><Text style={styles.brandName}>WARDROBE AI</Text><Text style={styles.brandTagline}>Your personal styling studio</Text></View>
+        </View>
+        <Link href="/information" asChild><Pressable accessibilityRole="button" style={styles.infoButton}><Text style={styles.infoButtonText}>Information</Text></Pressable></Link>
       </View>
       <View style={styles.hero}>
         <View pointerEvents="none" style={styles.heroOrb} />

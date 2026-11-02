@@ -1,5 +1,6 @@
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { styles } from '../styles/importResultStyles';
+import { Text } from '../components/AppTypography';
 
 export default function BrowserImportScreen() {
   return (

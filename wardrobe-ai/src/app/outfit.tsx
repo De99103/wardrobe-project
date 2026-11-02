@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native';
 import { Stack } from 'expo-router';
 
 import { getOutfitRecommendation } from '../services/outfitApi';
 import type { OutfitRecommendation } from '../services/outfitApi';
 import { loadClothing } from '../services/wardrobeStorage';
+import { deleteSavedOutfit, loadSavedOutfits, saveOutfit } from '../services/outfitStorage';
+import type { SavedOutfit } from '../services/outfitStorage';
 import type { SavedClothing } from '../types/clothing';
 import { styles } from '../styles/outfitStyles';
+import { Text, TextInput } from '../components/AppTypography';
 
 const occasionOptions = ['Everyday', 'Work', 'Dinner', 'Going out'] as const;
 
@@ -18,12 +21,22 @@ export default function OutfitScreen() {
   const [loadingWardrobe, setLoadingWardrobe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [savedOutfits, setSavedOutfits] = useState<SavedOutfit[]>([]);
+  const [loadingSaved, setLoadingSaved] = useState(true);
+  const [savingOutfit, setSavingOutfit] = useState(false);
+  const [savedCurrent, setSavedCurrent] = useState(false);
+  const [savedError, setSavedError] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     loadClothing().then(value => { if (active) setItems(value); })
       .catch(() => { if (active) setError('Could not load your wardrobe.'); })
       .finally(() => { if (active) setLoadingWardrobe(false); });
+    loadSavedOutfits().then(value => { if (active) setSavedOutfits(value); })
+      .catch(reason => { if (active) setSavedError(savedOutfitError(reason, 'load')); })
+      .finally(() => { if (active) setLoadingSaved(false); });
     return () => { active = false; };
   }, []);
 
@@ -35,12 +48,36 @@ export default function OutfitScreen() {
 
   async function createOutfit() {
     if (!location.trim()) { setError('Enter a city or postcode.'); return; }
-    setLoading(true); setError(''); setResult(null);
+    setLoading(true); setError(''); setResult(null); setSavedCurrent(false); setSavedError('');
     try {
       setResult(await getOutfitRecommendation(location, occasion, owned));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Could not create an outfit.');
     } finally { setLoading(false); }
+  }
+
+  async function saveCurrentOutfit() {
+    if (!result || savingOutfit || savedCurrent) return;
+    setSavingOutfit(true); setSavedError('');
+    try {
+      const saved = await saveOutfit(result, occasion);
+      setSavedOutfits(previous => [saved, ...previous]);
+      setSavedCurrent(true);
+    } catch (reason) {
+      setSavedError(savedOutfitError(reason, 'save'));
+    } finally { setSavingOutfit(false); }
+  }
+
+  async function removeSavedOutfit(id: string) {
+    if (deleting) return;
+    setDeleting(id); setSavedError('');
+    try {
+      await deleteSavedOutfit(id);
+      setSavedOutfits(previous => previous.filter(outfit => outfit.id !== id));
+      setConfirmDelete(null);
+    } catch (reason) {
+      setSavedError(savedOutfitError(reason, 'delete'));
+    } finally { setDeleting(null); }
   }
 
   const busy = loading || loadingWardrobe;
@@ -165,8 +202,60 @@ export default function OutfitScreen() {
             <Text style={styles.tipLabel}>Stylist’s weather note</Text>
             <Text style={styles.tipText}>{result.outfit.weatherTip}</Text>
           </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ disabled: savingOutfit || savedCurrent }}
+            disabled={savingOutfit || savedCurrent}
+            style={[styles.saveButton, (savingOutfit || savedCurrent) && styles.buttonDisabled]}
+            onPress={saveCurrentOutfit}
+          >
+            {savingOutfit ? <ActivityIndicator color="#5E2D4F" /> : null}
+            <Text style={styles.saveButtonText}>{savedCurrent ? 'Outfit saved  ✓' : 'Save this outfit'}</Text>
+          </Pressable>
         </View>
       </>}
+
+      <View style={styles.savedSection}>
+        <View style={styles.savedHeading}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.sectionTitle}>Saved outfits</Text>
+            <Text style={styles.sectionSubtitle}>Keep looks you want to wear again.</Text>
+          </View>
+          <View style={styles.savedCount}><Text style={styles.savedCountText}>{savedOutfits.length}</Text></View>
+        </View>
+        {loadingSaved ? <ActivityIndicator color="#5E2D4F" /> : savedOutfits.length === 0 ? <Text style={styles.emptySaved}>Your saved outfits will appear here.</Text> : savedOutfits.map(saved => {
+          const pieceNames = saved.outfit.sourceUrls.map(sourceUrl => {
+            const item = owned.find(value => value.sourceUrl === sourceUrl);
+            return item?.name ?? item?.subcategory ?? 'Wardrobe item';
+          });
+          return <View key={saved.id} style={styles.savedCard}>
+            <View style={styles.savedCardTop}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.savedTitle}>{saved.outfit.title}</Text>
+                <Text style={styles.savedMeta}>{saved.occasion} · {saved.weather.location} · {Math.round(saved.weather.temperatureC)}°C</Text>
+              </View>
+              <Text style={styles.savedDate}>{new Date(saved.savedAt).toLocaleDateString()}</Text>
+            </View>
+            <Text style={styles.savedPieces}>{pieceNames.join(' · ')}</Text>
+            <Text style={styles.savedTip}>{saved.outfit.weatherTip}</Text>
+            {confirmDelete === saved.id ? <View style={styles.confirmPanel}>
+              <Text style={styles.savedMeta}>Remove this saved outfit?</Text>
+              <View style={styles.confirmRow}>
+                <Pressable accessibilityRole="button" disabled={!!deleting} style={styles.smallButton} onPress={() => setConfirmDelete(null)}><Text style={styles.smallButtonText}>Cancel</Text></Pressable>
+                <Pressable accessibilityRole="button" disabled={!!deleting} style={styles.smallButton} onPress={() => removeSavedOutfit(saved.id)}><Text style={styles.removeText}>{deleting === saved.id ? 'Removing…' : 'Remove'}</Text></Pressable>
+              </View>
+            </View> : <Pressable accessibilityRole="button" accessibilityLabel={`Remove saved outfit ${saved.outfit.title}`} onPress={() => setConfirmDelete(saved.id)}><Text style={styles.removeText}>Remove saved outfit</Text></Pressable>}
+          </View>;
+        })}
+      </View>
+      {!!savedError && <View style={styles.errorBox}><Text accessibilityRole="alert" style={styles.error}>{savedError}</Text></View>}
     </ScrollView>
   </View>;
+}
+
+function savedOutfitError(reason: unknown, operation: 'load' | 'save' | 'delete') {
+  const code = reason && typeof reason === 'object' && 'code' in reason ? reason.code : '';
+  if (code === 'permission-denied') return 'Saved outfits need the updated Firestore rules. Publish firestore.rules, then try again.';
+  if (reason instanceof Error) return reason.message;
+  return operation === 'load' ? 'Could not load saved outfits.' : operation === 'save' ? 'Could not save this outfit.' : 'Could not remove this outfit.';
 }

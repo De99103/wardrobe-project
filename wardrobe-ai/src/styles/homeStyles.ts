@@ -1,7 +1,6 @@
 
-import { Platform, StyleSheet } from 'react-native';
-
-const editorialFont = Platform.select({ ios: 'Georgia', android: 'serif', web: 'Georgia' });
+import { StyleSheet } from 'react-native';
+import { appFontFamily as editorialFont } from '../components/AppTypography';
 
 export const styles = StyleSheet.create({
   container: {
@@ -16,11 +15,14 @@ export const styles = StyleSheet.create({
     gap: 18,
   },
 
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 2 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 11, paddingHorizontal: 2 },
+  brandIdentity: { flexDirection: 'row', alignItems: 'center', flexShrink: 1, gap: 11 },
   brandMark: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#5E2D4F', alignItems: 'center', justifyContent: 'center' },
   brandMarkText: { color: '#FFF9FB', fontFamily: editorialFont, fontSize: 22, lineHeight: 27 },
   brandName: { color: '#5E2D4F', fontSize: 13, lineHeight: 17, fontWeight: '800', letterSpacing: 2.2 },
   brandTagline: { color: '#8A7B85', fontSize: 12, lineHeight: 17 },
+  infoButton: { minHeight: 40, justifyContent: 'center', borderRadius: 999, borderWidth: 1, borderColor: '#E8DDE3', backgroundColor: '#FFFDFD', paddingHorizontal: 13 },
+  infoButtonText: { color: '#5E2D4F', fontSize: 13, fontWeight: '800' },
 
   hero: {
     position: 'relative',
@@ -218,6 +220,7 @@ export const styles = StyleSheet.create({
 
   subtleLink: {
     color: '#8E4968',
+    fontFamily: editorialFont,
     fontWeight: '700',
     paddingVertical: 4,
   },

@@ -1,11 +1,10 @@
-import { Platform, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { appFontFamily as editorialFont } from '../components/AppTypography';
 
 const palette = {
   ivory: '#FBF6F7', paper: '#FFFDFD', forest: '#5E2D4F', ink: '#352A33',
   terracotta: '#D98CA3', muted: '#766B74', line: '#E8DDE3', sage: '#F1E4EC',
 };
-const editorialFont = Platform.OS === 'ios' ? 'Georgia' : 'serif';
-
 export const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: palette.ivory },
   container: {
@@ -35,6 +34,24 @@ export const styles = StyleSheet.create({
     backgroundColor: palette.paper, borderRadius: 22, padding: 24, gap: 18,
     borderWidth: 1, borderColor: palette.line, borderTopWidth: 3, borderTopColor: palette.terracotta,
   },
+  editCard: {
+    backgroundColor: palette.paper, borderRadius: 22, padding: 24, gap: 18,
+    borderWidth: 1, borderColor: palette.line, borderTopWidth: 3, borderTopColor: '#B57490',
+  },
+  editField: { gap: 8 },
+  editActions: { gap: 10 },
+  categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  categoryPill: {
+    minHeight: 40, justifyContent: 'center', borderWidth: 1, borderColor: palette.line,
+    borderRadius: 999, backgroundColor: '#FFFFFF', paddingHorizontal: 13, paddingVertical: 8,
+  },
+  categoryPillSelected: { borderColor: '#B57490', backgroundColor: palette.sage },
+  categoryText: { color: palette.forest, fontWeight: '600' },
+  input: {
+    minHeight: 50, borderWidth: 1, borderColor: palette.line, borderRadius: 14,
+    paddingHorizontal: 14, paddingVertical: 12, backgroundColor: '#FFFFFF', color: palette.ink, fontSize: 16,
+  },
+  incompleteNotice: { backgroundColor: '#FAECEF', borderRadius: 13, padding: 12 },
   cardTitle: { fontFamily: editorialFont, fontSize: 27, lineHeight: 34, color: palette.forest },
   productName: { fontFamily: editorialFont, fontSize: 30, lineHeight: 37, color: palette.ink },
   price: { fontSize: 22, fontWeight: '600', color: palette.forest },
@@ -61,7 +78,7 @@ export const styles = StyleSheet.create({
   },
   secondaryButtonText: { color: palette.forest, fontWeight: '600', fontSize: 15, textAlign: 'center' },
   backText: { color: palette.forest, fontWeight: '600', fontSize: 14, lineHeight: 22, paddingVertical: 10 },
-  storeLink: { color: palette.forest, fontWeight: '600', fontSize: 14, lineHeight: 22, paddingVertical: 8, textDecorationLine: 'underline' },
+  storeLink: { color: palette.forest, fontFamily: editorialFont, fontWeight: '600', fontSize: 14, lineHeight: 22, paddingVertical: 8, textDecorationLine: 'underline' },
   descriptionInput: {
     backgroundColor: palette.paper, borderWidth: 1, borderColor: palette.line,
     borderRadius: 14, padding: 16, minHeight: 140, fontSize: 16, lineHeight: 24, color: palette.ink,

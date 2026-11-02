@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 import { AppHeaderBack, AppHeaderHome } from '../components/AppHeaderNavigation';
+import { appFontFamily } from '../components/AppTypography';
 
 export default function RootLayout() {
   return (
@@ -7,7 +8,7 @@ export default function RootLayout() {
       headerStyle: { backgroundColor: '#FBF6F7' },
       headerShadowVisible: false,
       headerTintColor: '#5E2D4F',
-      headerTitleStyle: { color: '#352A33', fontWeight: '700' },
+      headerTitleStyle: { color: '#352A33', fontFamily: appFontFamily, fontWeight: '700' },
       headerTitleAlign: 'center',
       headerBackVisible: false,
       headerLeft: () => <AppHeaderBack />,
@@ -18,6 +19,7 @@ export default function RootLayout() {
       <Stack.Screen name="account" options={{ title: 'Account' }} />
       <Stack.Screen name="browser-import" options={{ title: 'Browser import' }} />
       <Stack.Screen name="import-result" options={{ title: 'Import' }} />
+      <Stack.Screen name="information" options={{ title: 'Information' }} />
       <Stack.Screen name="outfit" options={{ title: 'Outfit stylist' }} />
       <Stack.Screen
         name="index"

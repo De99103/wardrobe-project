@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Crypto from 'expo-crypto';
 import { categories, categoryLabel, type Category } from '../services/collectionView';
@@ -7,6 +7,7 @@ import { emptyDetails, manualProduct, type ManualDetails } from '../services/man
 import { chooseClothingPhoto } from '../services/clothingPhoto';
 import { saveClothing } from '../services/wardrobeStorage';
 import { styles } from '../styles/addItemStyles';
+import { Text, TextInput } from '../components/AppTypography';
 
 const questions: { key: keyof ManualDetails; label: string; placeholder: string }[] = [
   { key: 'name', label: 'What would you like to call it?', placeholder: 'My favourite sweater' },

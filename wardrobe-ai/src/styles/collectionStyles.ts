@@ -1,6 +1,5 @@
-import { Platform, StyleSheet } from 'react-native';
-
-const editorialFont = Platform.select({ ios: 'Georgia', android: 'serif', web: 'Georgia' });
+import { StyleSheet } from 'react-native';
+import { appFontFamily as editorialFont } from '../components/AppTypography';
 
 export const styles = StyleSheet.create({
   container: { flex: 1, width: '100%', maxWidth: 780, alignSelf: 'center', padding: 18, paddingTop: 24, paddingBottom: 24, backgroundColor: '#FBF6F7', gap: 14 },
@@ -38,7 +37,7 @@ export const styles = StyleSheet.create({
   chipTextSelected: { color: '#5E2D4F', fontWeight: '800' },
   sortRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
   sectionTitle: { fontSize: 13, lineHeight: 18, fontWeight: '800', color: '#8E4968', marginTop: 8, letterSpacing: 1.2, textTransform: 'uppercase' },
-  storeLink: { color: '#8E4968', fontWeight: '700', paddingVertical: 7, textDecorationLine: 'underline' },
+  storeLink: { color: '#8E4968', fontFamily: editorialFont, fontWeight: '700', paddingVertical: 7, textDecorationLine: 'underline' },
   image: { width: '100%', height: 320, borderRadius: 16, backgroundColor: '#F5F3F0' },
   moveButton: { minHeight: 50, paddingHorizontal: 16, paddingVertical: 13, backgroundColor: '#D98CA3', borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   moveButtonText: { color: '#4D243F', fontWeight: '800' },

@@ -3,12 +3,10 @@ import { useEffect, useState } from 'react';
 
 import {
   View,
-  Text,
   Image,
   ScrollView,
   Pressable,
   ActivityIndicator,
-  TextInput,
 } from 'react-native';
 
 import {
@@ -19,6 +17,10 @@ import {
 
 import { importProduct, importProductManual, getImportedProduct } from '../services/productApi';
 import { saveClothing } from '../services/wardrobeStorage';
+import { categories, categoryLabel } from '../services/collectionView';
+import type { Category } from '../services/collectionView';
+import { applyImportedProductEdits, editableProductDetails, emptyImportedProduct } from '../services/importedProductEditor';
+import type { ImportedProductEditDraft } from '../services/importedProductEditor';
 
 import type {
   ClothingStatus,
@@ -26,7 +28,17 @@ import type {
 } from '../types/clothing';
 
 import { styles } from '../styles/importResultStyles';
+import { Text, TextInput } from '../components/AppTypography';
 
+const editQuestions: { key: keyof ImportedProductEditDraft; label: string; placeholder: string }[] = [
+  { key: 'name', label: 'Name', placeholder: 'Product name' },
+  { key: 'brand', label: 'Brand', placeholder: 'Brand' },
+  { key: 'subcategory', label: 'Type', placeholder: 'Sweater, jeans, boots…' },
+  { key: 'color', label: 'Color', placeholder: 'Navy blue' },
+  { key: 'material', label: 'Material', placeholder: 'Cotton, wool…' },
+  { key: 'price', label: 'Price', placeholder: '349.50' },
+  { key: 'currency', label: 'Currency', placeholder: 'SEK' },
+];
 
 export default function ImportResultScreen() {
   const { url, status, importId } = useLocalSearchParams<{
@@ -46,6 +58,10 @@ export default function ImportResultScreen() {
   const [manualDescription, setManualDescription] = useState('');
   const [manualLoading, setManualLoading] = useState(false);
   const [manualError, setManualError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editCategory, setEditCategory] = useState<Category>('uncategorized');
+  const [editDetails, setEditDetails] = useState<ImportedProductEditDraft | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
 
   // Fetch product information from FastAPI
   useEffect(() => {
@@ -57,6 +73,9 @@ export default function ImportResultScreen() {
       setProduct(null);
       setManualError(null);
       setSaveError(null);
+      setEditing(false);
+      setEditDetails(null);
+      setEditError(null);
 
       if (!url && !importId) {
         setError('No product link was provided.');
@@ -127,6 +146,38 @@ export default function ImportResultScreen() {
     }
   };
 
+  const beginEditing = (value: ImportedProduct) => {
+    const editable = editableProductDetails(value);
+    setEditCategory(editable.category);
+    setEditDetails(editable.details);
+    setEditError(null);
+    setSaveError(null);
+    setEditing(true);
+  };
+
+  const handleManualEntry = () => {
+    if (!url) return;
+    try {
+      const empty = emptyImportedProduct(url);
+      setProduct(empty);
+      setError(null);
+      beginEditing(empty);
+    } catch (reason) {
+      setManualError(reason instanceof Error ? reason.message : 'Could not open manual editing.');
+    }
+  };
+
+  const handleApplyEdits = () => {
+    if (!product || !editDetails) return;
+    try {
+      setProduct(applyImportedProductEdits(product, editCategory, editDetails));
+      setEditError(null);
+      setEditing(false);
+    } catch (reason) {
+      setEditError(reason instanceof Error ? reason.message : 'Could not apply these changes.');
+    }
+  };
+
 
   const handleSave = async () => {
     if (!product || saving) return;
@@ -169,6 +220,9 @@ export default function ImportResultScreen() {
           <Pressable accessibilityRole="button" style={styles.button} onPress={() => setRetryCount(count => count + 1)} disabled={manualLoading}>
             <Text style={styles.buttonText}>Retry automatic import  →</Text>
           </Pressable>
+          {url && <Pressable accessibilityRole="button" style={styles.secondaryButton} onPress={handleManualEntry} disabled={manualLoading}>
+            <Text style={styles.secondaryButtonText}>Enter product details manually</Text>
+          </Pressable>}
           <Link href="/browser-import" style={styles.storeLink}>Use the Chrome extension instead</Link>
           <View style={styles.divider} />
           <Text style={styles.label}>Paste product details</Text>
@@ -194,10 +248,12 @@ export default function ImportResultScreen() {
     );
   }
 
+  const missingDetails = [product.name, product.brand, product.category, product.subcategory, product.color, product.material, product.price, product.currency]
+    .some(value => value === null || value === '');
 
   // Successful product import
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container}>
+    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <View style={styles.header}>
         <Text style={styles.eyebrow}>READY TO SAVE</Text>
         <Text style={styles.title}>We found your piece.</Text>
@@ -218,7 +274,38 @@ export default function ImportResultScreen() {
       </View>
 
       {/* Product information */}
-      <View style={styles.card}>
+      {editing && editDetails ? <View style={styles.editCard}>
+        <Text style={styles.cardTitle}>Edit product details</Text>
+        <Text style={styles.mutedNote}>Add what you know. Any field except category can be left blank.</Text>
+        <View style={styles.editField}>
+          <Text style={styles.label}>Category</Text>
+          <View style={styles.categoryGrid}>
+            {categories.map(value => <Pressable key={value} accessibilityRole="radio" accessibilityState={{ checked: editCategory === value }}
+              style={[styles.categoryPill, editCategory === value && styles.categoryPillSelected]} onPress={() => setEditCategory(value)}>
+              <Text style={styles.categoryText}>{categoryLabel(value)}</Text>
+            </Pressable>)}
+          </View>
+        </View>
+        {editQuestions.map(({ key, label, placeholder }) => <View key={key} style={styles.editField}>
+          <Text style={styles.label}>{label}</Text>
+          <TextInput
+            style={styles.input}
+            accessibilityLabel={label}
+            value={editDetails[key]}
+            placeholder={placeholder}
+            placeholderTextColor="#9A8B95"
+            maxLength={key === 'currency' ? 3 : 2000}
+            keyboardType={key === 'price' ? 'decimal-pad' : 'default'}
+            autoCapitalize={key === 'currency' ? 'characters' : 'sentences'}
+            onChangeText={value => setEditDetails(previous => previous ? { ...previous, [key]: value } : previous)}
+          />
+        </View>)}
+        {editError && <Text style={styles.errorText}>{editError}</Text>}
+        <View style={styles.editActions}>
+          <Pressable accessibilityRole="button" style={styles.button} onPress={handleApplyEdits}><Text style={styles.buttonText}>Save changes</Text></Pressable>
+          <Pressable accessibilityRole="button" style={styles.secondaryButton} onPress={() => { setEditing(false); setEditError(null); }}><Text style={styles.secondaryButtonText}>Cancel</Text></Pressable>
+        </View>
+      </View> : <View style={styles.card}>
         <View style={styles.productHeader}>
           <Text style={styles.productName}>{product.name ?? 'Unknown product'}</Text>
           <Text style={styles.price}>{product.price != null ? `${product.price} ${product.currency ?? ''}` : 'Price unavailable'}</Text>
@@ -230,8 +317,10 @@ export default function ImportResultScreen() {
           <View style={styles.detail}><Text style={styles.label}>Color</Text><Text style={styles.value}>{product.color ?? 'Not available'}</Text></View>
           <View style={styles.detail}><Text style={styles.label}>Material</Text><Text style={styles.value}>{product.material ?? 'Not available'}</Text></View>
         </View>
+        {missingDetails && <View style={styles.incompleteNotice}><Text style={styles.mutedNote}>Some details are missing. Add what you know before saving.</Text></View>}
+        <Pressable accessibilityRole="button" style={styles.secondaryButton} onPress={() => beginEditing(product)}><Text style={styles.secondaryButtonText}>Edit product details</Text></Pressable>
         <Link href={product.sourceUrl as `https://${string}`} target="_blank" rel="noopener noreferrer" style={styles.storeLink}>Open original product ↗</Link>
-      </View>
+      </View>}
 
       {/* Selected destination */}
       <View style={styles.statusBox}>
@@ -239,14 +328,16 @@ export default function ImportResultScreen() {
         <Text style={styles.statusMark}>{status === 'wishlist' ? '♡' : '✓'}</Text>
       </View>
 
-      {saveError && <Text style={styles.errorText}>{saveError}</Text>}
-      <Pressable accessibilityRole="button" style={styles.button} onPress={handleSave} disabled={saving}>
-        {saving ? <ActivityIndicator color="#FFF9FB" /> : (
-          <Text style={styles.buttonText}>
-            {collection === 'wishlist' ? 'Save to Wishlist  →' : 'Save to Wardrobe  →'}
-          </Text>
-        )}
-      </Pressable>
+      {!editing && <>
+        {saveError && <Text style={styles.errorText}>{saveError}</Text>}
+        <Pressable accessibilityRole="button" style={styles.button} onPress={handleSave} disabled={saving}>
+          {saving ? <ActivityIndicator color="#FFF9FB" /> : (
+            <Text style={styles.buttonText}>
+              {collection === 'wishlist' ? 'Save to Wishlist  →' : 'Save to Wardrobe  →'}
+            </Text>
+          )}
+        </Pressable>
+      </>}
 
       <Pressable
           accessibilityRole="button"

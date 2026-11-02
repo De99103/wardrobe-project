@@ -37,5 +37,35 @@ service cloud.firestore {
       allow read, delete: if owner();
       allow create, update: if owner() && validItem();
     }
+    match /users/{uid}/outfits/{outfitId} {
+      function owner() { return request.auth != null && request.auth.uid == uid; }
+      function validOutfit() {
+        let d = request.resource.data;
+        return d.keys().hasAll(['id','savedAt','occasion','weather','outfit'])
+          && d.keys().hasOnly(['id','savedAt','occasion','weather','outfit'])
+          && d.id == outfitId && d.id is string && d.id.size() > 0 && d.id.size() <= 100
+          && d.savedAt is string && d.savedAt.size() <= 40
+          && d.occasion is string && d.occasion.size() <= 200
+          && d.weather is map
+          && d.weather.keys().hasAll(['location','localTime','condition','temperatureC','feelsLikeC','precipitationMm','chanceOfRain','windKph','humidity','isDay'])
+          && d.weather.keys().hasOnly(['location','localTime','condition','temperatureC','feelsLikeC','precipitationMm','chanceOfRain','windKph','humidity','isDay'])
+          && d.weather.location is string && d.weather.location.size() <= 500
+          && d.weather.localTime is string && d.weather.localTime.size() <= 100
+          && d.weather.condition is string && d.weather.condition.size() <= 500
+          && d.weather.temperatureC is number && d.weather.feelsLikeC is number
+          && d.weather.precipitationMm is number
+          && (d.weather.chanceOfRain == null || d.weather.chanceOfRain is number)
+          && d.weather.windKph is number && d.weather.humidity is number && d.weather.isDay is bool
+          && d.outfit is map
+          && d.outfit.keys().hasAll(['sourceUrls','title','explanation','weatherTip'])
+          && d.outfit.keys().hasOnly(['sourceUrls','title','explanation','weatherTip'])
+          && d.outfit.sourceUrls is list && d.outfit.sourceUrls.size() > 0 && d.outfit.sourceUrls.size() <= 100
+          && d.outfit.title is string && d.outfit.title.size() <= 2000
+          && d.outfit.explanation is string && d.outfit.explanation.size() <= 5000
+          && d.outfit.weatherTip is string && d.outfit.weatherTip.size() <= 2000;
+      }
+      allow read, delete: if owner();
+      allow create, update: if owner() && validOutfit();
+    }
   }
 }

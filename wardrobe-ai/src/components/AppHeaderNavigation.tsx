@@ -1,5 +1,6 @@
 import { router, useNavigation } from 'expo-router';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
+import { Text } from './AppTypography';
 
 function HeaderButton({ label, symbol, onPress }: { label: string; symbol: string; onPress: () => void }) {
   return (

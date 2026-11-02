@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'expo-router';
-import { Text, View, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { cloudEnabled, observeAccount } from '../services/firebaseClient';
 import type { User } from 'firebase/auth';
 import { styles } from '../styles/collectionStyles';
+import { Text } from './AppTypography';
 
 export function AccountPanel({ onChange }: { onChange?: () => void }) {
   const [user, setUser] = useState<User | null>(null);

@@ -25,7 +25,7 @@ export type OutfitRecommendation = {
   };
 };
 
-function isRecommendation(value: unknown): value is OutfitRecommendation {
+export function isRecommendation(value: unknown): value is OutfitRecommendation {
   if (!value || typeof value !== 'object') return false;
   const result = value as OutfitRecommendation;
   return !!result.weather && typeof result.weather.location === 'string'

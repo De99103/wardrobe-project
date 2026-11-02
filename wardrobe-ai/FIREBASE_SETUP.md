@@ -67,5 +67,14 @@ Firestore Indexes > Single field settings, exempt clothing.imageUrl from indexin
 (collection group `clothing`, field `imageUrl`); the app never queries by image.
 Original full-resolution photos are not uploaded. Guests remain on local storage.
 
+## Saved outfits
+
+Publish the current `firestore.rules` before saving outfit recommendations while
+signed in. Saved outfits use `/users/{uid}/outfits/{outfitId}` and include the
+occasion, weather snapshot, explanation, weather note, and the source URLs of the
+wardrobe pieces. The owner-only rules validate every saved field. Guests store
+outfits on their current device instead. Outfit saves never contain clothing
+photos, so they do not require Firebase Storage or a billing upgrade.
+
 Native Google authentication still remains separate work. Rebuild native development
 clients after adding the Expo ImageManipulator dependency/plugin configuration.
