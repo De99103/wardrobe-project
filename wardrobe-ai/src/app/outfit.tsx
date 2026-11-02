@@ -25,6 +25,7 @@ export default function OutfitScreen() {
   const [occasion, setOccasion] = useState('everyday');
   const [plannedDate, setPlannedDate] = useState('');
   const [plannedClock, setPlannedClock] = useState('');
+  const [plannedDay, setPlannedDay] = useState<'today' | 'tomorrow' | ''>('');
   const [environment, setEnvironment] = useState<OutfitEnvironment>('mixed');
   const [result, setResult] = useState<OutfitRecommendation | null>(null);
   const [resultOccasion, setResultOccasion] = useState('Everyday');
@@ -151,27 +152,33 @@ export default function OutfitScreen() {
 
         <View style={styles.field}>
           <Text style={styles.label}>When will you wear it?</Text>
-          <Text style={styles.fieldHint}>Leave both fields empty for now. Enter the date and time where you will be.</Text>
+          <Text style={styles.fieldHint}>Pick a day and add an approximate time, or leave it blank for current weather.</Text>
+          <View style={styles.occasionRow}>
+            {(['today', 'tomorrow'] as const).map(day => <Pressable
+              key={day}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: plannedDay === day }}
+              disabled={loading}
+              style={[styles.occasionPill, plannedDay === day && styles.occasionPillSelected]}
+              onPress={() => {
+                setPlannedDay(day);
+                setPlannedDate(dateForOffset(day === 'tomorrow' ? 1 : 0));
+              }}
+            >
+              <Text style={[styles.occasionText, plannedDay === day && styles.occasionTextSelected]}>{day === 'today' ? 'Today' : 'Tomorrow'}</Text>
+            </Pressable>)}
+          </View>
           <View style={styles.timeRow}>
-            <TextInput
-              style={[styles.input, styles.timeInput]}
-              value={plannedDate}
-              onChangeText={setPlannedDate}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor={BrandColors.softGrey}
-              maxLength={10}
-              autoCapitalize="none"
-              accessibilityLabel="Planned date"
-            />
             <TextInput
               style={[styles.input, styles.timeInput]}
               value={plannedClock}
               onChangeText={setPlannedClock}
-              placeholder="HH:mm"
+              placeholder="Around what time? e.g. 18:30"
               placeholderTextColor={BrandColors.softGrey}
               maxLength={5}
               autoCapitalize="none"
-              accessibilityLabel="Planned time"
+              keyboardType="numbers-and-punctuation"
+              accessibilityLabel="Approximate time"
             />
           </View>
         </View>
@@ -366,7 +373,7 @@ function normalizePlannedTime(dateValue: string, clockValue: string): string | n
   const date = dateValue.trim();
   const clock = clockValue.trim();
   if (!date && !clock) return null;
-  if (!date || !clock) throw new Error('Enter both the planned date and time, or leave both empty for now.');
+  if (!date || !clock) throw new Error('Pick Today or Tomorrow and add an approximate time, or leave both blank.');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(clock)) {
     throw new Error('Use YYYY-MM-DD for the date and HH:mm for the time.');
   }
@@ -376,4 +383,14 @@ function normalizePlannedTime(dateValue: string, clockValue: string): string | n
     throw new Error('Enter a real calendar date.');
   }
   return `${date}T${clock}`;
+}
+
+function dateForOffset(offset: number): string {
+  const date = new Date();
+  date.setHours(12, 0, 0, 0);
+  date.setDate(date.getDate() + offset);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
