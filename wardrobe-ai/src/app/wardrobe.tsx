@@ -138,7 +138,7 @@ export default function WardrobeScreen() {
         {status === 'owned' && <Pressable style={styles.button} accessibilityRole="button" onPress={() => router.push('/outfit')}><Text style={styles.primaryButtonText}>Style an outfit  →</Text></Pressable>}
         <View style={styles.actionRow}>
           <Pressable style={styles.secondaryButton} accessibilityRole="button" onPress={() => router.push({ pathname: '/add-item', params: { status } })}><Text style={styles.secondaryButtonText}>Add manually</Text></Pressable>
-          <Pressable style={styles.secondaryButton} accessibilityRole="button" onPress={() => router.navigate({ pathname: '/', params: { status } })}><Text style={styles.secondaryButtonText}>Import a link</Text></Pressable>
+          <Pressable style={styles.secondaryButton} accessibilityRole="button" onPress={() => router.push({ pathname: '/browser-import', params: { status } })}><Text style={styles.secondaryButtonText}>Import a link</Text></Pressable>
         </View>
       </View>
     </View>

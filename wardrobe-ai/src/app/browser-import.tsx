@@ -1,27 +1,67 @@
-import { ScrollView, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
 import { styles } from '../styles/importResultStyles';
-import { Text } from '../components/AppTypography';
+import { Text, TextInput } from '../components/AppTypography';
 
 export default function BrowserImportScreen() {
+  const { status: requestedStatus } = useLocalSearchParams<{ status?: string }>();
+  const [status, setStatus] = useState<'owned' | 'wishlist'>(
+    requestedStatus === 'wishlist' ? 'wishlist' : 'owned',
+  );
+  const [url, setUrl] = useState('');
+  const [error, setError] = useState('');
+
+  function continueToReview() {
+    const productUrl = url.trim();
+    if (!/^https:\/\/.+/i.test(productUrl)) {
+      setError('Paste a public product link that starts with https://');
+      return;
+    }
+
+    setError('');
+    router.push({
+      pathname: '/import-result',
+      params: { url: productUrl, status },
+    });
+  }
+
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>CHROME HELPER</Text>
-        <Text style={styles.title}>Save a piece while you shop.</Text>
-        <Text style={styles.subtitle}>The Wearly extension reads the open product page for you—no copying descriptions by hand.</Text>
+        <Text style={styles.eyebrow}>STORE IMPORT</Text>
+        <Text style={styles.title}>Add from a product link.</Text>
+        <Text style={styles.subtitle}>Paste a public clothing-product page. Wearly will read the details, then let you review and edit them before saving.</Text>
       </View>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>One-time setup</Text>
-        <View style={styles.step}><Text style={styles.stepNumber}>1</Text><View style={styles.stepContent}><Text style={styles.stepTitle}>Open extensions</Text><Text style={styles.value}>Visit chrome://extensions in Chrome and enable Developer mode.</Text></View></View>
-        <View style={styles.divider} />
-        <View style={styles.step}><Text style={styles.stepNumber}>2</Text><View style={styles.stepContent}><Text style={styles.stepTitle}>Load Wearly</Text><Text style={styles.value}>Choose Load unpacked and select the browser-extension folder inside wardrobe-project.</Text></View></View>
-        <View style={styles.divider} />
-        <View style={styles.step}><Text style={styles.stepNumber}>3</Text><View style={styles.stepContent}><Text style={styles.stepTitle}>Keep it close</Text><Text style={styles.value}>Pin Wearly from the Extensions menu.</Text></View></View>
-      </View>
-      <View style={styles.recoveryCard}>
-        <Text style={styles.cardTitle}>Import while shopping</Text>
-        <Text style={styles.value}>Open any HTTPS product page, let it finish loading, click Wearly, then choose Wardrobe or Wishlist. You can review everything before saving.</Text>
-        <Text style={styles.mutedNote}>For local development, keep the backend and app running. Pages requiring sign-in or verification must be opened normally first.</Text>
+        <Text style={styles.cardTitle}>Paste a link</Text>
+        <TextInput
+          style={styles.input}
+          value={url}
+          onChangeText={value => { setUrl(value); setError(''); }}
+          placeholder="https://store.com/product"
+          accessibilityLabel="Store product link"
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+        />
+        <View style={styles.categoryGrid}>
+          {(['owned', 'wishlist'] as const).map(value => (
+            <Pressable
+              key={value}
+              style={[styles.categoryPill, status === value && styles.categoryPillSelected]}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: status === value }}
+              onPress={() => setStatus(value)}
+            >
+              <Text style={styles.categoryText}>{value === 'owned' ? 'My Wardrobe' : 'Wishlist'}</Text>
+            </Pressable>
+          ))}
+        </View>
+        {error ? <Text accessibilityRole="alert" style={styles.errorText}>{error}</Text> : null}
+        <Pressable style={styles.button} accessibilityRole="button" onPress={continueToReview}>
+          <Text style={styles.buttonText}>Read product details  →</Text>
+        </Pressable>
       </View>
     </ScrollView>
   );

@@ -389,6 +389,7 @@ test('device photo picker persists JPEG bytes and cancellation leaves selection 
   let cancelled = false;
   const released = [];
   const picker = load('clothingPhoto', {
+    'react-native': { Image: { getSize: async () => ({ width: 2000, height: 3000 }) } },
     'expo-image-picker': { launchImageLibraryAsync: async () => cancelled ? { canceled: true } : { canceled: false, assets: [{ uri: 'blob:temporary', width: 2000, height: 3000 }] } },
     'expo-image-manipulator': { SaveFormat: { JPEG: 'jpeg' }, ImageManipulator: { manipulate: () => ({
       resize: size => assert.equal(size.height, 1000),

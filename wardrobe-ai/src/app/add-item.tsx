@@ -100,6 +100,9 @@ export default function AddItemScreen() {
     <Text style={styles.title}>Tell us about this piece.</Text>
     <Text style={styles.subtitle}>Start with a category. A photo and the details are completely optional.</Text>
     <View style={styles.collectionPill}><Text style={styles.collectionPillText}>Saving to {collection === 'owned' ? 'My Wardrobe' : 'My Wishlist'}</Text></View>
+    <Pressable accessibilityRole="link" disabled={disabled} onPress={() => router.push({ pathname: '/browser-import', params: { status: collection } })}>
+      <Text style={styles.textLink}>Or import a public store link instead</Text>
+    </Pressable>
 
     <View style={styles.card}>
       <View style={styles.sectionHeader}>
