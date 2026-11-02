@@ -17,6 +17,8 @@ function load(name, overrides = {}, globals = {}) {
       if (key in overrides) return overrides[key];
       if (key === './cloudWardrobe') return { storageAccount: async () => null };
       if (key === './productValidation') return load('productValidation');
+      if (key === './stylingTags') return load('stylingTags');
+      if (key === './apiConfig') return { API_URL: 'https://api.example.com' };
       throw new Error(`Unexpected import: ${key}`);
     }, process: { env: { EXPO_PUBLIC_API_URL: 'https://api.example.com/' } },
     AbortController, setTimeout, clearTimeout, URL, ...globals,
@@ -108,6 +110,69 @@ test('browser handoff fetches once across repeated callers and uses GET', async 
   } });
   await Promise.all([service.getImportedProduct('token'), service.getImportedProduct('token')]);
   assert.equal(calls, 1);
+});
+
+test('outfit API sends planned context and structured styling, then accepts ranked owned looks', async () => {
+  const styling = {
+    version: 1, colors: ['black'], pattern: 'solid', warmth: 4, formality: 3,
+    layerRole: 'outer', styleTags: ['minimal'], seasonTags: ['winter'],
+    waterproof: false, windproof: true, fit: 'regular',
+  };
+  const weather = {
+    location: 'Stockholm, Sweden', localTime: '2026-11-03 19:00', condition: 'Cloudy',
+    temperatureC: 6, feelsLikeC: 3, precipitationMm: 0, chanceOfRain: 20,
+    windKph: 14, humidity: 75, isDay: false,
+  };
+  const coatUrl = 'manual:coat';
+  const outfits = [
+    { rank: 1, label: 'Best match', sourceUrls: [product.sourceUrl], title: 'Clean evening', explanation: 'A balanced look.', weatherTip: 'Add a layer outside.' },
+    { rank: 2, label: 'Warmer option', sourceUrls: [coatUrl], title: 'Warm layer', explanation: 'The warmer choice.', weatherTip: 'Keep the coat closed.' },
+    { rank: 3, label: 'Alternative style', sourceUrls: [product.sourceUrl, coatUrl], title: 'Layered contrast', explanation: 'A different silhouette.', weatherTip: 'Remove the coat indoors.' },
+  ];
+  let request;
+  const service = load('outfitApi', {
+    './stylingTags': { inferClothingStyling: () => styling },
+  }, { fetch: async (url, options) => {
+    request = { url, options, body: JSON.parse(options.body) };
+    return { ok: true, json: async () => ({
+      weather, outfit: outfits[0], outfits,
+      context: { plannedTime: '2026-11-03T19:00', environment: 'outdoors' }, notice: null,
+    }) };
+  } });
+  const items = [
+    { ...product, status: 'owned', savedAt: '2026-11-01' },
+    { ...product, sourceUrl: coatUrl, category: 'outerwear', status: 'owned', savedAt: '2026-11-01' },
+    { ...product, sourceUrl: 'manual:wish', status: 'wishlist', savedAt: '2026-11-01' },
+  ];
+  const result = await service.getOutfitRecommendation(' Stockholm ', ' Dinner ', items, {
+    plannedTime: '2026-11-03T19:00', environment: 'outdoors',
+  });
+  assert.equal(request.url, 'https://api.example.com/recommend-outfit');
+  assert.equal(request.body.location, 'Stockholm');
+  assert.equal(request.body.occasion, 'Dinner');
+  assert.equal(request.body.plannedTime, '2026-11-03T19:00');
+  assert.equal(request.body.environment, 'outdoors');
+  assert.equal(request.body.items.length, 2);
+  assert.equal(request.body.items[0].styling.warmth, 4);
+  assert.equal(result.outfits.length, 3);
+  assert.equal(result.outfits[2].label, 'Alternative style');
+});
+
+test('outfit API rejects duplicate ranked looks and unknown items in every returned choice', async () => {
+  const weather = {
+    location: 'Stockholm', localTime: '2026-11-03 19:00', condition: 'Cloudy',
+    temperatureC: 6, feelsLikeC: 3, precipitationMm: 0, chanceOfRain: null,
+    windKph: 14, humidity: 75, isDay: false,
+  };
+  const choice = { sourceUrls: [product.sourceUrl], title: 'Look', explanation: 'Grounded.', weatherTip: 'Layer.' };
+  const ranked = [1, 2, 3].map(rank => ({ ...choice, rank, label: `Option ${rank}` }));
+  const item = { ...product, status: 'owned', savedAt: '2026-11-01', styling: null };
+  const styling = { inferClothingStyling: () => ({ version: 1, colors: [], pattern: null, warmth: null, formality: null, layerRole: null, styleTags: [], seasonTags: [], waterproof: null, windproof: null, fit: null }) };
+  let payload = { weather, outfit: choice, outfits: ranked, context: { plannedTime: null, environment: 'mixed' }, notice: null };
+  const service = load('outfitApi', { './stylingTags': styling }, { fetch: async () => ({ ok: true, json: async () => payload }) });
+  await assert.rejects(service.getOutfitRecommendation('Stockholm', 'Work', [item]), /invalid outfit/);
+  payload = { ...payload, outfits: undefined, outfit: { ...choice, sourceUrls: ['manual:unknown'] } };
+  await assert.rejects(service.getOutfitRecommendation('Stockholm', 'Work', [item]), /unknown wardrobe item/);
 });
 
 test('collections group by clothing type and retain store links', () => {

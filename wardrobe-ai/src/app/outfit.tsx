@@ -3,7 +3,7 @@ import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-nat
 import { Stack } from 'expo-router';
 
 import { getOutfitRecommendation } from '../services/outfitApi';
-import type { OutfitRecommendation } from '../services/outfitApi';
+import type { OutfitEnvironment, OutfitRecommendation, RankedOutfit } from '../services/outfitApi';
 import { loadClothing } from '../services/wardrobeStorage';
 import { deleteSavedOutfit, loadSavedOutfits, saveOutfit } from '../services/outfitStorage';
 import type { SavedOutfit } from '../services/outfitStorage';
@@ -13,19 +13,29 @@ import { Text, TextInput } from '../components/AppTypography';
 import { BrandColors } from '../constants/brand';
 
 const occasionOptions = ['Everyday', 'Work', 'Dinner', 'Going out'] as const;
+const environmentOptions: { value: OutfitEnvironment; label: string }[] = [
+  { value: 'indoors', label: 'Mostly indoors' },
+  { value: 'outdoors', label: 'Mostly outdoors' },
+  { value: 'mixed', label: 'A mix of both' },
+];
 
 export default function OutfitScreen() {
   const [items, setItems] = useState<SavedClothing[]>([]);
   const [location, setLocation] = useState('Stockholm');
   const [occasion, setOccasion] = useState('everyday');
+  const [plannedDate, setPlannedDate] = useState('');
+  const [plannedClock, setPlannedClock] = useState('');
+  const [environment, setEnvironment] = useState<OutfitEnvironment>('mixed');
   const [result, setResult] = useState<OutfitRecommendation | null>(null);
+  const [resultOccasion, setResultOccasion] = useState('Everyday');
+  const [selectedRank, setSelectedRank] = useState(1);
   const [loadingWardrobe, setLoadingWardrobe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [savedOutfits, setSavedOutfits] = useState<SavedOutfit[]>([]);
   const [loadingSaved, setLoadingSaved] = useState(true);
   const [savingOutfit, setSavingOutfit] = useState(false);
-  const [savedCurrent, setSavedCurrent] = useState(false);
+  const [savedRanks, setSavedRanks] = useState<number[]>([]);
   const [savedError, setSavedError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -42,28 +52,50 @@ export default function OutfitScreen() {
   }, []);
 
   const owned = useMemo(() => items.filter(item => item.status === 'owned'), [items]);
+  const rankedOutfits = useMemo<RankedOutfit[]>(() => {
+    if (!result) return [];
+    if (result.outfits?.length) return [...result.outfits].sort((a, b) => a.rank - b.rank);
+    return [{ ...result.outfit, rank: 1, label: 'Best match' }];
+  }, [result]);
+  const selectedOutfit = rankedOutfits.find(outfit => outfit.rank === selectedRank) ?? rankedOutfits[0] ?? null;
   const selected = useMemo(() => {
-    const urls = new Set(result?.outfit.sourceUrls ?? []);
+    const urls = new Set(selectedOutfit?.sourceUrls ?? []);
     return owned.filter(item => urls.has(item.sourceUrl));
-  }, [owned, result]);
+  }, [owned, selectedOutfit]);
+  const selectedSaved = selectedOutfit ? savedRanks.includes(selectedOutfit.rank) : false;
 
   async function createOutfit() {
+    if (savingOutfit) return;
     if (!location.trim()) { setError('Enter a city or postcode.'); return; }
-    setLoading(true); setError(''); setResult(null); setSavedCurrent(false); setSavedError('');
+    let plannedTime: string | null;
     try {
-      setResult(await getOutfitRecommendation(location, occasion, owned));
+      plannedTime = normalizePlannedTime(plannedDate, plannedClock);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Check the planned date and time.');
+      return;
+    }
+    setLoading(true); setError(''); setResult(null); setSavedRanks([]); setSavedError('');
+    try {
+      const recommendation = await getOutfitRecommendation(location, occasion, owned, { plannedTime, environment });
+      setResult(recommendation);
+      setResultOccasion(occasion.trim() || 'Everyday');
+      setSelectedRank(recommendation.outfits?.[0]?.rank ?? 1);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Could not create an outfit.');
     } finally { setLoading(false); }
   }
 
   async function saveCurrentOutfit() {
-    if (!result || savingOutfit || savedCurrent) return;
+    if (!result || !selectedOutfit || savingOutfit || selectedSaved) return;
     setSavingOutfit(true); setSavedError('');
     try {
-      const saved = await saveOutfit(result, occasion);
+      const { sourceUrls, title, explanation, weatherTip } = selectedOutfit;
+      const saved = await saveOutfit({
+        weather: result.weather,
+        outfit: { sourceUrls, title, explanation, weatherTip },
+      }, resultOccasion);
       setSavedOutfits(previous => [saved, ...previous]);
-      setSavedCurrent(true);
+      setSavedRanks(previous => previous.includes(selectedOutfit.rank) ? previous : [...previous, selectedOutfit.rank]);
     } catch (reason) {
       setSavedError(savedOutfitError(reason, 'save'));
     } finally { setSavingOutfit(false); }
@@ -81,7 +113,7 @@ export default function OutfitScreen() {
     } finally { setDeleting(null); }
   }
 
-  const busy = loading || loadingWardrobe;
+  const busy = loading || loadingWardrobe || savingOutfit;
 
   return <View style={styles.container}>
     <Stack.Screen options={{
@@ -118,6 +150,33 @@ export default function OutfitScreen() {
         </View>
 
         <View style={styles.field}>
+          <Text style={styles.label}>When will you wear it?</Text>
+          <Text style={styles.fieldHint}>Leave both fields empty for now. Enter the date and time where you will be.</Text>
+          <View style={styles.timeRow}>
+            <TextInput
+              style={[styles.input, styles.timeInput]}
+              value={plannedDate}
+              onChangeText={setPlannedDate}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={BrandColors.softGrey}
+              maxLength={10}
+              autoCapitalize="none"
+              accessibilityLabel="Planned date"
+            />
+            <TextInput
+              style={[styles.input, styles.timeInput]}
+              value={plannedClock}
+              onChangeText={setPlannedClock}
+              placeholder="HH:mm"
+              placeholderTextColor={BrandColors.softGrey}
+              maxLength={5}
+              autoCapitalize="none"
+              accessibilityLabel="Planned time"
+            />
+          </View>
+        </View>
+
+        <View style={styles.field}>
           <Text style={styles.label}>What are you dressing for?</Text>
           <View style={styles.occasionRow}>
             {occasionOptions.map(option => {
@@ -145,6 +204,22 @@ export default function OutfitScreen() {
           />
         </View>
 
+        <View style={styles.field}>
+          <Text style={styles.label}>Where will you spend most of the time?</Text>
+          <View style={styles.occasionRow}>
+            {environmentOptions.map(option => <Pressable
+              key={option.value}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: environment === option.value }}
+              disabled={loading}
+              style={[styles.occasionPill, environment === option.value && styles.occasionPillSelected]}
+              onPress={() => setEnvironment(option.value)}
+            >
+              <Text style={[styles.occasionText, environment === option.value && styles.occasionTextSelected]}>{option.label}</Text>
+            </Pressable>)}
+          </View>
+        </View>
+
         <View style={styles.wardrobeStatus}>
           <View style={styles.statusDot} />
           <Text style={styles.statusText}>{loadingWardrobe ? 'Checking your wardrobe…' : `${owned.length} owned ${owned.length === 1 ? 'piece' : 'pieces'} ready to style`}</Text>
@@ -168,9 +243,10 @@ export default function OutfitScreen() {
         <View style={styles.weather}>
           <View style={styles.weatherHeader}>
             <View style={styles.weatherCopy}>
-              <Text style={styles.weatherEyebrow}>Today’s weather</Text>
+              <Text style={styles.weatherEyebrow}>{result.context?.plannedTime ? 'Forecast for your plan' : 'Current weather'}</Text>
               <Text style={styles.weatherTitle}>{result.weather.location}</Text>
               <Text style={styles.weatherCondition}>{result.weather.condition}</Text>
+              {!!result.weather.localTime && <Text style={styles.weatherTime}>{result.weather.localTime}</Text>}
             </View>
             <Text style={styles.weatherMain}>{result.weather.temperatureC}°</Text>
           </View>
@@ -181,10 +257,35 @@ export default function OutfitScreen() {
           </View>
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.resultEyebrow}>Styled from your wardrobe</Text>
-          <Text style={styles.cardTitle}>{result.outfit.title}</Text>
-          <Text style={styles.explanation}>{result.outfit.explanation}</Text>
+        {!!result.notice && <View style={styles.noticeBox}><Text style={styles.noticeText}>{result.notice}</Text></View>}
+
+        {rankedOutfits.length > 1 && <View style={styles.optionSection}>
+          <View style={styles.sectionHeading}>
+            <Text style={styles.sectionTitle}>Choose your look</Text>
+            <Text style={styles.sectionSubtitle}>{rankedOutfits.length} ranked options, each made only from your wardrobe.</Text>
+          </View>
+          <View style={styles.optionRow}>
+            {rankedOutfits.map(outfit => {
+              const active = outfit.rank === selectedOutfit?.rank;
+              return <Pressable
+                key={`${outfit.rank}:${outfit.title}`}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: active }}
+                style={[styles.optionButton, active && styles.optionButtonSelected]}
+                onPress={() => setSelectedRank(outfit.rank)}
+              >
+                <Text style={styles.optionRank}>0{outfit.rank}</Text>
+                <Text style={[styles.optionLabel, active && styles.optionLabelSelected]}>{outfit.label}</Text>
+                <Text style={styles.optionTitle} numberOfLines={2}>{outfit.title}</Text>
+              </Pressable>;
+            })}
+          </View>
+        </View>}
+
+        {selectedOutfit && <View style={styles.card}>
+          <Text style={styles.resultEyebrow}>{selectedOutfit.label}</Text>
+          <Text style={styles.cardTitle}>{selectedOutfit.title}</Text>
+          <Text style={styles.explanation}>{selectedOutfit.explanation}</Text>
 
           {!!selected.length && <View style={styles.itemList}>
             <Text style={styles.itemListTitle}>The pieces</Text>
@@ -201,19 +302,19 @@ export default function OutfitScreen() {
 
           <View style={styles.tip}>
             <Text style={styles.tipLabel}>Stylist’s weather note</Text>
-            <Text style={styles.tipText}>{result.outfit.weatherTip}</Text>
+            <Text style={styles.tipText}>{selectedOutfit.weatherTip}</Text>
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityState={{ disabled: savingOutfit || savedCurrent }}
-            disabled={savingOutfit || savedCurrent}
-            style={[styles.saveButton, (savingOutfit || savedCurrent) && styles.buttonDisabled]}
+            accessibilityState={{ disabled: savingOutfit || selectedSaved }}
+            disabled={savingOutfit || selectedSaved}
+            style={[styles.saveButton, (savingOutfit || selectedSaved) && styles.buttonDisabled]}
             onPress={saveCurrentOutfit}
           >
             {savingOutfit ? <ActivityIndicator color={BrandColors.charcoal} /> : null}
-            <Text style={styles.saveButtonText}>{savedCurrent ? 'Outfit saved  ✓' : 'Save this outfit'}</Text>
+            <Text style={styles.saveButtonText}>{selectedSaved ? 'Outfit saved  ✓' : 'Save this outfit'}</Text>
           </Pressable>
-        </View>
+        </View>}
       </>}
 
       <View style={styles.savedSection}>
@@ -259,4 +360,20 @@ function savedOutfitError(reason: unknown, operation: 'load' | 'save' | 'delete'
   if (code === 'permission-denied') return 'Saved outfits need the updated Firestore rules. Publish firestore.rules, then try again.';
   if (reason instanceof Error) return reason.message;
   return operation === 'load' ? 'Could not load saved outfits.' : operation === 'save' ? 'Could not save this outfit.' : 'Could not remove this outfit.';
+}
+
+function normalizePlannedTime(dateValue: string, clockValue: string): string | null {
+  const date = dateValue.trim();
+  const clock = clockValue.trim();
+  if (!date && !clock) return null;
+  if (!date || !clock) throw new Error('Enter both the planned date and time, or leave both empty for now.');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(clock)) {
+    throw new Error('Use YYYY-MM-DD for the date and HH:mm for the time.');
+  }
+  const [year, month, day] = date.split('-').map(Number);
+  const check = new Date(Date.UTC(year, month - 1, day));
+  if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) {
+    throw new Error('Enter a real calendar date.');
+  }
+  return `${date}T${clock}`;
 }

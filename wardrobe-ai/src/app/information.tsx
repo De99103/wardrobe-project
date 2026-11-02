@@ -16,7 +16,7 @@ const steps = [
   {
     number: '3',
     title: 'Create an outfit',
-    body: 'Choose your location and occasion. The stylist uses current weather and only the pieces in your Wardrobe—never your Wishlist.',
+    body: 'Choose your city, occasion, planned time, and whether you will be indoors or outdoors. Compare up to three ranked looks from clothes you own, using weather for that time. Small wardrobes may have fewer distinct combinations.',
   },
   {
     number: '4',

@@ -2,6 +2,7 @@ import { collection, doc, getDocs, setDoc, deleteDoc, runTransaction } from 'fir
 import * as Crypto from 'expo-crypto';
 import { firebaseServices, storageAccount } from './firebaseClient';
 import { isImportedProduct } from './productValidation';
+import { withInferredStyling } from './stylingTags';
 import type { SavedClothing } from '../types/clothing';
 
 export { storageAccount };
@@ -31,8 +32,11 @@ export async function saveCloudClothing(uid: string, item: SavedClothing): Promi
       (item.imageUrl.length > 300023 || !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(item.imageUrl))) {
     throw new Error('This photo cannot be saved. Please choose it again.');
   }
+  const styledItem = withInferredStyling(item);
   // Save only the product fields, not temporary backend/debug properties.
-  const value = Object.fromEntries(['name', 'brand', 'category', 'subcategory', 'color', 'material', 'price', 'currency', 'imageUrl', 'sourceUrl', 'status', 'savedAt'].map(key => [key, item[key as keyof SavedClothing]]));
+  const keys: (keyof SavedClothing)[] = ['name', 'brand', 'category', 'subcategory', 'color', 'material', 'price', 'currency', 'imageUrl', 'sourceUrl', 'status', 'savedAt'];
+  if (styledItem.styling !== undefined) keys.push('styling');
+  const value = Object.fromEntries(keys.map(key => [key, styledItem[key]]));
   await setDoc(doc(services.db, 'users', uid, 'clothing', id), value);
 }
 

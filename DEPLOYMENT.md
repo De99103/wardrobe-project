@@ -36,6 +36,10 @@ During a domain migration, keep the old and new origins separated by a comma unt
 
 ## 4. Production check
 
+For the outfit upgrade, publish `wardrobe-ai/firestore.rules` before deploying the frontend. The optional `styling` map is accepted alongside older clothing documents. No data migration or Firebase Storage is required. Existing saved outfits retain their original format; each ranked choice saves separately.
+
+The recommendation API accepts optional `plannedTime` (`YYYY-MM-DDTHH:mm`, local to the destination city) and `environment` (`indoors`, `outdoors`, `mixed`). It returns ranked `outfits` plus the first choice in legacy `outfit` for older clients. Forecast availability is checked against returned hourly data; out-of-range dates produce a clear error rather than current-weather substitution.
+
 In a private browser window:
 
 1. Open the frontend URL.

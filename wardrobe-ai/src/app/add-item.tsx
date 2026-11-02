@@ -8,7 +8,9 @@ import { chooseClothingPhoto } from '../services/clothingPhoto';
 import { saveClothing } from '../services/wardrobeStorage';
 import { styles } from '../styles/addItemStyles';
 import { Text, TextInput } from '../components/AppTypography';
+import { StylingEditor } from '../components/StylingEditor';
 import { BrandColors } from '../constants/brand';
+import { stylingDraft, stylingFromDraft, type StylingDraft } from '../services/stylingTags';
 
 const questions: { key: keyof ManualDetails; label: string; placeholder: string }[] = [
   { key: 'name', label: 'What would you like to call it?', placeholder: 'My favourite sweater' },
@@ -29,6 +31,7 @@ export default function AddItemScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
+  const [stylingDetails, setStylingDetails] = useState<StylingDraft | null>(null);
   const [picking, setPicking] = useState(false);
   const id = useRef<string | null>(null);
   const busy = useRef(false);
@@ -50,7 +53,8 @@ export default function AddItemScreen() {
     try {
       id.current ??= Crypto.randomUUID();
       const item = manualProduct(category, skip ? emptyDetails : details, id.current);
-      await saveClothing({ ...item, imageUrl: photo ?? item.imageUrl }, collection);
+      const styling = !skip && stylingDetails ? stylingFromDraft(stylingDetails) : undefined;
+      await saveClothing({ ...item, imageUrl: photo ?? item.imageUrl, ...(styling ? { styling } : {}) }, collection);
       router.replace({ pathname: '/wardrobe', params: { status: collection } });
     } catch (err) {
       const code = err && typeof err === 'object' && 'code' in err ? err.code : '';
@@ -75,7 +79,7 @@ export default function AddItemScreen() {
       <Text style={styles.helper}>Choose the best match so we can organize and style it correctly.</Text>
       <View style={styles.categoryGrid}>
         {categories.map(value => <Pressable key={value} disabled={disabled} accessibilityRole="radio" accessibilityState={{ checked: category === value }}
-          style={[styles.categoryPill, category === value && styles.categoryPillSelected, disabled && styles.disabled]} onPress={() => { setCategory(value); setError(''); }}>
+          style={[styles.categoryPill, category === value && styles.categoryPillSelected, disabled && styles.disabled]} onPress={() => { setCategory(value); setStylingDetails(null); setError(''); }}>
           <Text style={styles.categoryText}>{categoryLabel(value)}</Text>
         </Pressable>)}
       </View>
@@ -109,14 +113,26 @@ export default function AddItemScreen() {
       {!showDetails ? <>
         <Text style={styles.helper}>A name, color, and material help the stylist create stronger outfit matches.</Text>
         <Pressable style={[styles.secondaryButton, disabled && styles.disabled]} disabled={disabled} accessibilityRole="button" onPress={() => setShowDetails(true)}><Text style={styles.secondaryButtonText}>Add optional details</Text></Pressable>
-      </> : questions.map(({ key, label, placeholder }) => <View key={key} style={styles.question}>
-        <Text style={styles.label}>{label}</Text>
-        <TextInput style={styles.input} accessibilityLabel={label} value={details[key]} placeholder={placeholder} editable={!saving}
-          maxLength={key === 'currency' ? 3 : 2000} keyboardType={key === 'price' ? 'decimal-pad' : key === 'imageUrl' ? 'url' : 'default'}
-          autoCapitalize={key === 'imageUrl' ? 'none' : key === 'currency' ? 'characters' : 'sentences'}
-          onChangeText={value => setDetails(previous => ({ ...previous, [key]: value }))} />
-        <Pressable disabled={disabled} accessibilityRole="button" accessibilityLabel={`Skip: ${label}`} onPress={() => setDetails(previous => ({ ...previous, [key]: '' }))}><Text style={styles.textLink}>Skip this question</Text></Pressable>
-      </View>)}
+      </> : <>
+        {questions.map(({ key, label, placeholder }) => <View key={key} style={styles.question}>
+          <Text style={styles.label}>{label}</Text>
+          <TextInput style={styles.input} accessibilityLabel={label} value={details[key]} placeholder={placeholder} editable={!saving}
+            maxLength={key === 'currency' ? 3 : 2000} keyboardType={key === 'price' ? 'decimal-pad' : key === 'imageUrl' ? 'url' : 'default'}
+            autoCapitalize={key === 'imageUrl' ? 'none' : key === 'currency' ? 'characters' : 'sentences'}
+            onChangeText={value => setDetails(previous => ({ ...previous, [key]: value }))} />
+          <Pressable disabled={disabled} accessibilityRole="button" accessibilityLabel={`Skip: ${label}`} onPress={() => setDetails(previous => ({ ...previous, [key]: '' }))}><Text style={styles.textLink}>Skip this question</Text></Pressable>
+        </View>)}
+        {stylingDetails ? <StylingEditor value={stylingDetails} onChange={setStylingDetails} disabled={disabled} />
+          : <Pressable style={[styles.secondaryButton, disabled && styles.disabled]} disabled={disabled || !category}
+            accessibilityRole="button" onPress={() => category && setStylingDetails(stylingDraft({
+              name: details.name.trim() || null, brand: details.brand.trim() || null, category,
+              subcategory: details.subcategory.trim() || null, color: details.color.trim() || null,
+              material: details.material.trim() || null, price: null, currency: null, imageUrl: null,
+              sourceUrl: 'manual:00000000-0000-4000-8000-000000000000',
+            }))}>
+            <Text style={styles.secondaryButtonText}>Review estimated styling details</Text>
+          </Pressable>}
+      </>}
     </View>
 
     {error ? <Text style={styles.error} accessibilityRole="alert">{error}</Text> : null}

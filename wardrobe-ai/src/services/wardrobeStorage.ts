@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { ClothingStatus, ImportedProduct, SavedClothing } from '../types/clothing';
 import { storageAccount, loadCloudClothing, saveCloudClothing, deleteCloudClothing, moveCloudClothingToWardrobe } from './cloudWardrobe';
 import { isImportedProduct } from './productValidation';
+import { withInferredStyling } from './stylingTags';
 
 const KEY = 'wardrobe-ai:clothing:v1';
 let pending: Promise<void> = Promise.resolve();
@@ -34,16 +35,17 @@ export async function uploadDeviceClothing(): Promise<number> {
 export function saveClothing(product: ImportedProduct, status: ClothingStatus): Promise<void> {
   const session = storageAccount();
   const operation = pending.then(async () => {
+    const styledProduct = withInferredStyling(product);
     const user = await session;
     if (user) {
-      await saveCloudClothing(user.uid, { ...product, status, savedAt: new Date().toISOString() });
+      await saveCloudClothing(user.uid, { ...styledProduct, status, savedAt: new Date().toISOString() });
       return;
     }
     const items = await loadDeviceClothing();
     // A product can belong to each collection once; re-saving updates its details.
-    const remaining = items.filter(item => item.sourceUrl !== product.sourceUrl || item.status !== status);
+    const remaining = items.filter(item => item.sourceUrl !== styledProduct.sourceUrl || item.status !== status);
     await AsyncStorage.setItem(KEY, JSON.stringify([
-      { ...product, status, savedAt: new Date().toISOString() }, ...remaining,
+      { ...styledProduct, status, savedAt: new Date().toISOString() }, ...remaining,
     ]));
   });
   pending = operation.catch(() => undefined);

@@ -29,7 +29,9 @@ import type {
 
 import { styles } from '../styles/importResultStyles';
 import { Text, TextInput } from '../components/AppTypography';
+import { StylingEditor } from '../components/StylingEditor';
 import { BrandColors } from '../constants/brand';
+import { stylingDraft, stylingFromDraft, type StylingDraft } from '../services/stylingTags';
 
 const editQuestions: { key: keyof ImportedProductEditDraft; label: string; placeholder: string }[] = [
   { key: 'name', label: 'Name', placeholder: 'Product name' },
@@ -62,6 +64,7 @@ export default function ImportResultScreen() {
   const [editing, setEditing] = useState(false);
   const [editCategory, setEditCategory] = useState<Category>('uncategorized');
   const [editDetails, setEditDetails] = useState<ImportedProductEditDraft | null>(null);
+  const [editStyling, setEditStyling] = useState<StylingDraft | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
 
   // Fetch product information from FastAPI
@@ -76,6 +79,7 @@ export default function ImportResultScreen() {
       setSaveError(null);
       setEditing(false);
       setEditDetails(null);
+      setEditStyling(null);
       setEditError(null);
 
       if (!url && !importId) {
@@ -151,6 +155,7 @@ export default function ImportResultScreen() {
     const editable = editableProductDetails(value);
     setEditCategory(editable.category);
     setEditDetails(editable.details);
+    setEditStyling(value.styling ? stylingDraft(value) : null);
     setEditError(null);
     setSaveError(null);
     setEditing(true);
@@ -171,7 +176,8 @@ export default function ImportResultScreen() {
   const handleApplyEdits = () => {
     if (!product || !editDetails) return;
     try {
-      setProduct(applyImportedProductEdits(product, editCategory, editDetails));
+      const edited = applyImportedProductEdits(product, editCategory, editDetails);
+      setProduct(editStyling ? { ...edited, styling: stylingFromDraft(editStyling) } : edited);
       setEditError(null);
       setEditing(false);
     } catch (reason) {
@@ -301,6 +307,11 @@ export default function ImportResultScreen() {
             onChangeText={value => setEditDetails(previous => previous ? { ...previous, [key]: value } : previous)}
           />
         </View>)}
+        {editStyling ? <StylingEditor value={editStyling} onChange={setEditStyling} />
+          : <Pressable accessibilityRole="button" style={styles.secondaryButton}
+            onPress={() => setEditStyling(stylingDraft(applyImportedProductEdits(product, editCategory, editDetails)))}>
+            <Text style={styles.secondaryButtonText}>Review estimated styling details</Text>
+          </Pressable>}
         {editError && <Text style={styles.errorText}>{editError}</Text>}
         <View style={styles.editActions}>
           <Pressable accessibilityRole="button" style={styles.button} onPress={handleApplyEdits}><Text style={styles.buttonText}>Save changes</Text></Pressable>
@@ -317,6 +328,14 @@ export default function ImportResultScreen() {
           <View style={styles.detail}><Text style={styles.label}>Type</Text><Text style={styles.value}>{product.subcategory ?? 'Not available'}</Text></View>
           <View style={styles.detail}><Text style={styles.label}>Color</Text><Text style={styles.value}>{product.color ?? 'Not available'}</Text></View>
           <View style={styles.detail}><Text style={styles.label}>Material</Text><Text style={styles.value}>{product.material ?? 'Not available'}</Text></View>
+          {product.styling && <>
+            <View style={styles.detail}><Text style={styles.label}>Styling colors</Text><Text style={styles.value}>{product.styling.colors.join(', ') || 'Unknown'}</Text></View>
+            <View style={styles.detail}><Text style={styles.label}>Pattern</Text><Text style={styles.value}>{product.styling.pattern ?? 'Unknown'}</Text></View>
+            <View style={styles.detail}><Text style={styles.label}>Warmth</Text><Text style={styles.value}>{product.styling.warmth ?? 'Unknown'}{product.styling.warmth ? '/5' : ''}</Text></View>
+            <View style={styles.detail}><Text style={styles.label}>Formality</Text><Text style={styles.value}>{product.styling.formality ?? 'Unknown'}{product.styling.formality ? '/5' : ''}</Text></View>
+            <View style={styles.detail}><Text style={styles.label}>Layer</Text><Text style={styles.value}>{product.styling.layerRole ?? 'Unknown'}</Text></View>
+            <View style={styles.detail}><Text style={styles.label}>Style</Text><Text style={styles.value}>{product.styling.styleTags.join(', ') || 'Unknown'}</Text></View>
+          </>}
         </View>
         {missingDetails && <View style={styles.incompleteNotice}><Text style={styles.mutedNote}>Some details are missing. Add what you know before saving.</Text></View>}
         <Pressable accessibilityRole="button" style={styles.secondaryButton} onPress={() => beginEditing(product)}><Text style={styles.secondaryButtonText}>Edit product details</Text></Pressable>

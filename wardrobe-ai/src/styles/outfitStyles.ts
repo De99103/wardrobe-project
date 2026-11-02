@@ -73,6 +73,11 @@ export const styles = StyleSheet.create({
   field: {
     gap: 8,
   },
+  fieldHint: {
+    color: BrandColors.mutedText,
+    fontSize: 13,
+    lineHeight: 19,
+  },
   label: {
     color: BrandColors.charcoal,
     fontSize: 14,
@@ -89,6 +94,16 @@ export const styles = StyleSheet.create({
     paddingVertical: 12,
     color: BrandColors.charcoal,
     fontSize: 16,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  timeInput: {
+    flexGrow: 1,
+    flexBasis: 180,
+    minWidth: 140,
   },
   occasionRow: {
     flexDirection: 'row',
@@ -211,6 +226,11 @@ export const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 21,
   },
+  weatherTime: {
+    color: BrandColors.subtleText,
+    fontSize: 13,
+    lineHeight: 18,
+  },
   weatherMain: {
     color: BrandColors.charcoal,
     fontFamily: appFontFamily,
@@ -236,6 +256,68 @@ export const styles = StyleSheet.create({
     color: BrandColors.charcoal,
     fontSize: 13,
     lineHeight: 18,
+    fontWeight: '700',
+  },
+  noticeBox: {
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: BrandColors.warmBeige,
+    paddingVertical: 12,
+  },
+  noticeText: {
+    color: BrandColors.charcoal,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  optionSection: {
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: BrandColors.charcoal,
+    paddingVertical: 22,
+    gap: 16,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  optionButton: {
+    flexGrow: 1,
+    flexBasis: 180,
+    minWidth: 150,
+    minHeight: 118,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: BrandColors.stone,
+    paddingVertical: 12,
+    gap: 5,
+  },
+  optionButtonSelected: {
+    borderColor: BrandColors.charcoal,
+    borderBottomWidth: 3,
+  },
+  optionRank: {
+    color: BrandColors.subtleText,
+    fontSize: 11,
+    lineHeight: 15,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+  },
+  optionLabel: {
+    color: BrandColors.mutedText,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  optionLabelSelected: {
+    color: BrandColors.charcoal,
+  },
+  optionTitle: {
+    color: BrandColors.charcoal,
+    fontFamily: appFontFamily,
+    fontSize: 16,
+    lineHeight: 21,
     fontWeight: '700',
   },
   card: {
