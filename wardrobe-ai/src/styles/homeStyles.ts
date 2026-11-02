@@ -201,8 +201,6 @@ export const styles = StyleSheet.create({
   footerRule: { height: 1, backgroundColor: BrandColors.charcoal, marginBottom: 12 },
   footerBrand: { color: BrandColors.charcoal, fontFamily: appFontFamily, fontSize: 12, letterSpacing: 3, fontWeight: '600' },
   footerText: { color: BrandColors.mutedText, fontFamily: appFontFamily, fontSize: 12 },
-  footerLinks: { flexDirection: 'row', gap: 18, marginTop: 4 },
-  footerLink: { color: BrandColors.charcoal, fontFamily: appFontFamily, fontSize: 12, textDecorationLine: 'underline' },
 
   quickCardMeta: {
     color: BrandColors.mutedText,

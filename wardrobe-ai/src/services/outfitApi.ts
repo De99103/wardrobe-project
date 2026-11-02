@@ -28,6 +28,8 @@ export type OutfitChoice = {
   title: string;
   explanation: string;
   weatherTip: string;
+  missingPieces?: string[];
+  hijabColor?: string | null;
 };
 
 export type RankedOutfit = OutfitChoice & {
@@ -36,10 +38,12 @@ export type RankedOutfit = OutfitChoice & {
 };
 
 export type OutfitEnvironment = 'indoors' | 'outdoors' | 'mixed';
+export type HijabPreference = 'yes' | 'no';
 
 export type OutfitContext = {
   plannedTime: string | null;
   environment: OutfitEnvironment;
+  hijab?: HijabPreference;
 };
 
 function isOutfitChoice(value: unknown): value is OutfitChoice {
@@ -51,7 +55,10 @@ function isOutfitChoice(value: unknown): value is OutfitChoice {
     && new Set(outfit.sourceUrls).size === outfit.sourceUrls.length
     && typeof outfit.title === 'string' && outfit.title.length > 0 && outfit.title.length <= 120
     && typeof outfit.explanation === 'string' && outfit.explanation.length > 0 && outfit.explanation.length <= 800
-    && typeof outfit.weatherTip === 'string' && outfit.weatherTip.length > 0 && outfit.weatherTip.length <= 500;
+    && typeof outfit.weatherTip === 'string' && outfit.weatherTip.length > 0 && outfit.weatherTip.length <= 500
+    && (outfit.missingPieces === undefined || (Array.isArray(outfit.missingPieces) && outfit.missingPieces.length <= 6
+      && outfit.missingPieces.every(piece => typeof piece === 'string' && piece.length > 0 && piece.length <= 60)))
+    && (outfit.hijabColor === undefined || outfit.hijabColor === null || (typeof outfit.hijabColor === 'string' && outfit.hijabColor.length <= 60));
 }
 
 function isRankedOutfit(value: unknown): value is RankedOutfit {
@@ -65,7 +72,8 @@ function isContext(value: unknown): value is OutfitContext {
   if (!value || typeof value !== 'object') return false;
   const context = value as OutfitContext;
   return (context.plannedTime === null || (typeof context.plannedTime === 'string' && context.plannedTime.length <= 30))
-    && (context.environment === 'indoors' || context.environment === 'outdoors' || context.environment === 'mixed');
+    && (context.environment === 'indoors' || context.environment === 'outdoors' || context.environment === 'mixed')
+    && (context.hijab === undefined || context.hijab === 'yes' || context.hijab === 'no');
 }
 
 export function isRecommendation(value: unknown): value is OutfitRecommendation {
@@ -93,7 +101,7 @@ export async function getOutfitRecommendation(
   location: string,
   occasion: string,
   items: SavedClothing[],
-  context: OutfitContext = { plannedTime: null, environment: 'mixed' },
+  context: OutfitContext = { plannedTime: null, environment: 'mixed', hijab: 'no' },
 ): Promise<OutfitRecommendation> {
   if (!API_URL) throw new Error('Backend API URL is not configured.');
   const owned = items.filter(item => item.status === 'owned').slice(0, 100).map(item => {
@@ -128,6 +136,7 @@ export async function getOutfitRecommendation(
         occasion: occasion.trim() || 'everyday',
         plannedTime: context.plannedTime,
         environment: context.environment,
+        hijab: context.hijab ?? 'no',
         items: owned,
       }),
       signal: controller.signal,

@@ -39,6 +39,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 5,
     paddingHorizontal: 2,
+    // Match the centered content column on desktop while staying inset on mobile.
+    marginLeft: 'max(12px, calc((100vw - 780px) / 2))' as any,
+    marginRight: 'max(12px, calc((100vw - 780px) / 2))' as any,
     borderRadius: 0,
     backgroundColor: 'transparent',
     borderBottomWidth: 1,

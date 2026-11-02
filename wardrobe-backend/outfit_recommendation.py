@@ -41,6 +41,7 @@ class OutfitRequest(BaseModel):
     plannedTime: Optional[str] = Field(
         default=None, pattern=r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$')
     environment: Literal['indoors', 'outdoors', 'mixed'] = 'mixed'
+    hijab: Literal['yes', 'no'] = 'no'
     items: List[WardrobeItem] = Field(min_length=1, max_length=100)
 
 
@@ -64,6 +65,8 @@ class OutfitChoice(BaseModel):
     title: str = Field(min_length=1, max_length=120)
     explanation: str = Field(min_length=1, max_length=800)
     weatherTip: str = Field(min_length=1, max_length=500)
+    missingPieces: List[ShortTag] = Field(default_factory=list, max_length=6)
+    hijabColor: Optional[ShortTag] = None
 
 
 class RankedOutfit(OutfitChoice):
@@ -80,6 +83,7 @@ class CandidateSet(BaseModel):
 class OutfitContext(BaseModel):
     plannedTime: Optional[str]
     environment: Literal['indoors', 'outdoors', 'mixed']
+    hijab: Literal['yes', 'no'] = 'no'
 
 
 class OutfitResult(BaseModel):
@@ -90,7 +94,7 @@ class OutfitResult(BaseModel):
     notice: Optional[str] = Field(default=None, max_length=500)
 
 
-def _fallback_choice(items, weather, occasion):
+def _fallback_choice(items, weather, occasion, hijab='no'):
     """Return a safe local look when the AI provider is temporarily unavailable."""
     grouped = {}
     for item in items:
@@ -108,12 +112,27 @@ def _fallback_choice(items, weather, occasion):
     if not selected:
         selected = items[:1]
     rain_note = ' Consider waterproof footwear or an umbrella.' if (weather.chanceOfRain or 0) >= 40 else ''
+    missing = _missing_pieces(selected, weather)
     return OutfitChoice(
         sourceUrls=[item.sourceUrl for item in selected],
         title=f'{occasion.title()} wardrobe look',
         explanation='A simple outfit assembled from the pieces you already own, balanced for the current temperature and plan.',
         weatherTip=f'It is {round(weather.temperatureC)}°C in {weather.location}; dress for the feels-like temperature.{rain_note}',
+        missingPieces=missing,
+        hijabColor='soft taupe' if hijab == 'yes' else None,
     )
+
+
+def _missing_pieces(selected_items, weather):
+    categories = {_category(item) for item in selected_items}
+    missing = []
+    if 'dresses' not in categories:
+        if 'tops' not in categories: missing.append('top')
+        if 'bottoms' not in categories: missing.append('bottoms')
+    if 'shoes' not in categories: missing.append('shoes')
+    if (weather.feelsLikeC <= 12 or (weather.chanceOfRain or 0) >= 40) and 'outerwear' not in categories:
+        missing.append('outerwear')
+    return missing[:6]
 
 
 def _weather_key():
@@ -253,6 +272,8 @@ def _validated_candidates(candidates, items, weather):
             title=candidate.title,
             explanation=candidate.explanation,
             weatherTip=candidate.weatherTip,
+            missingPieces=list(dict.fromkeys([*candidate.missingPieces, *_missing_pieces(selected_items, weather)]))[:6],
+            hijabColor=candidate.hijabColor,
             rank=len(valid) + 1,
             label=label,
         ))
@@ -318,6 +339,7 @@ def recommend_outfit(request, groq_client, model):
         'occasion': request.occasion,
         'plannedTime': request.plannedTime,
         'environment': request.environment,
+        'hijab': request.hijab,
         'rankingCriteria': [
             'weather comfort and safety', 'occasion formality', 'color and pattern harmony',
             'sensible silhouette and layering', 'distinctness from the other options'],
@@ -337,13 +359,16 @@ def recommend_outfit(request, groq_client, model):
                     'Create up to three genuinely distinct outfits, strongest first, for the occasion, planned time, environment, and weather. '
                     'Rank primarily by weather comfort and safety, then occasion formality, color and pattern harmony, silhouette, and useful layering. '
                     'Use only exact sourceUrl values from ownedWardrobe; never invent or alter an item. '
-                    'Each complete outfit should contain either a dress or a top and bottom. Add owned layers, shoes, and accessories when useful. '
+                    'Each complete outfit should contain either a dress or a top and bottom. Include owned shoes in every outfit when available; '
+                    'include outerwear for cold, rainy, or windy conditions and accessories when useful. '
                     'Treat styling tags as editable heuristic guidance, not guaranteed physical ratings. Use them when present, but never invent missing '
                     'attributes or claim waterproofing, windproofing, or fabric performance without explicit evidence. '
                     'Account for feels-like temperature, rain, wind, daylight, and whether the plans are indoors, outdoors, or mixed. '
+                    'If hijab is yes, provide one complementary hijabColor for each look; if hijab is no, leave hijabColor null. '
                     'Give each option a short useful label. Only offer a warmer variation in cool conditions; never call an option warmer in mild or hot weather. '
                     'If the wardrobe cannot support three distinct or complete outfits, return fewer options '
-                    'instead of duplicating a look or adding unowned pieces. Keep explanations friendly, specific, and concise.'
+                    'instead of duplicating a look or adding unowned pieces. Include missingPieces as short generic categories '
+                    'when the selected look needs something the user does not own or the model did not select. Keep explanations friendly, specific, and concise.'
                 )},
                 {'role': 'user', 'content': prompt}],
             response_format={'type': 'json_schema', 'json_schema': {
@@ -353,18 +378,18 @@ def recommend_outfit(request, groq_client, model):
     except Exception:
         # Keep recommendations useful during a transient provider failure or
         # malformed model response. The fallback remains wardrobe-grounded.
-        fallback = _fallback_choice(request.items, weather, request.occasion)
+        fallback = _fallback_choice(request.items, weather, request.occasion, request.hijab)
         outfits = [RankedOutfit(rank=1, label='Best match', **fallback.model_dump())]
 
     if not outfits:
-        fallback = _fallback_choice(request.items, weather, request.occasion)
+        fallback = _fallback_choice(request.items, weather, request.occasion, request.hijab)
         outfits = [RankedOutfit(rank=1, label='Best match', **fallback.model_dump())]
     best = OutfitChoice(**outfits[0].model_dump(include={
-        'sourceUrls', 'title', 'explanation', 'weatherTip'}))
+        'sourceUrls', 'title', 'explanation', 'weatherTip', 'missingPieces', 'hijabColor'}))
     return OutfitResult(
         weather=weather,
         outfit=best,
         outfits=outfits,
-        context=OutfitContext(plannedTime=request.plannedTime, environment=request.environment),
+        context=OutfitContext(plannedTime=request.plannedTime, environment=request.environment, hijab=request.hijab),
         notice=_notice(outfits, request.items),
     )

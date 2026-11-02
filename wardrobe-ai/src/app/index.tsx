@@ -25,7 +25,7 @@ export default function HomeScreen() {
     <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={styles.container}>
       <View style={styles.brandRow}>
         <View style={styles.brandIdentity}>
-          <Text style={styles.brandName}>WEARLY</Text>
+          <Link href="/" asChild><Pressable accessibilityRole="button" accessibilityLabel="Go to home"><Text style={styles.brandName}>WEARLY</Text></Pressable></Link>
         </View>
         <View style={styles.headerLinks}>
           <Link href="/information" asChild><Pressable accessibilityRole="button" style={styles.infoButton}><Text style={styles.infoButtonText}>Information</Text></Pressable></Link>
@@ -61,12 +61,8 @@ export default function HomeScreen() {
 
       <View style={styles.footer}>
         <View style={styles.footerRule} />
-        <Text style={styles.footerBrand}>WEARLY</Text>
+        <Link href="/" style={styles.footerBrand}>WEARLY</Link>
         <Text style={styles.footerText}>Made by Deema Abo Gheda · © 2026</Text>
-        <View style={styles.footerLinks}>
-          <Link href="/information" style={styles.footerLink}>Information</Link>
-          <Link href="/account" style={styles.footerLink}>Account</Link>
-        </View>
       </View>
     </ScrollView>
   );

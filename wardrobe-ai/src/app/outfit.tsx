@@ -3,7 +3,7 @@ import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-nat
 import { Stack } from 'expo-router';
 
 import { getOutfitRecommendation } from '../services/outfitApi';
-import type { OutfitEnvironment, OutfitRecommendation, RankedOutfit } from '../services/outfitApi';
+import type { HijabPreference, OutfitEnvironment, OutfitRecommendation, RankedOutfit } from '../services/outfitApi';
 import { loadClothing } from '../services/wardrobeStorage';
 import { deleteSavedOutfit, loadSavedOutfits, saveOutfit } from '../services/outfitStorage';
 import type { SavedOutfit } from '../services/outfitStorage';
@@ -27,6 +27,7 @@ export default function OutfitScreen() {
   const [plannedClock, setPlannedClock] = useState('');
   const [plannedDay, setPlannedDay] = useState<'today' | 'tomorrow' | ''>('');
   const [environment, setEnvironment] = useState<OutfitEnvironment>('mixed');
+  const [hijab, setHijab] = useState<HijabPreference>('no');
   const [result, setResult] = useState<OutfitRecommendation | null>(null);
   const [resultOccasion, setResultOccasion] = useState('Everyday');
   const [selectedRank, setSelectedRank] = useState(1);
@@ -77,7 +78,7 @@ export default function OutfitScreen() {
     }
     setLoading(true); setError(''); setResult(null); setSavedRanks([]); setSavedError('');
     try {
-      const recommendation = await getOutfitRecommendation(location, occasion, owned, { plannedTime, environment });
+      const recommendation = await getOutfitRecommendation(location, occasion, owned, { plannedTime, environment, hijab });
       setResult(recommendation);
       setResultOccasion(occasion.trim() || 'Everyday');
       setSelectedRank(recommendation.outfits?.[0]?.rank ?? 1);
@@ -227,6 +228,22 @@ export default function OutfitScreen() {
           </View>
         </View>
 
+        <View style={styles.field}>
+          <Text style={styles.label}>Do you wear a hijab?</Text>
+          <View style={styles.occasionRow}>
+            {(['no', 'yes'] as const).map(option => <Pressable
+              key={option}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: hijab === option }}
+              disabled={loading}
+              style={[styles.occasionPill, hijab === option && styles.occasionPillSelected]}
+              onPress={() => setHijab(option)}
+            >
+              <Text style={[styles.occasionText, hijab === option && styles.occasionTextSelected]}>{option === 'yes' ? 'Yes' : 'No'}</Text>
+            </Pressable>)}
+          </View>
+        </View>
+
         <View style={styles.wardrobeStatus}>
           <View style={styles.statusDot} />
           <Text style={styles.statusText}>{loadingWardrobe ? 'Checking your wardrobe…' : `${owned.length} owned ${owned.length === 1 ? 'piece' : 'pieces'} ready to style`}</Text>
@@ -293,6 +310,14 @@ export default function OutfitScreen() {
           <Text style={styles.resultEyebrow}>{selectedOutfit.label}</Text>
           <Text style={styles.cardTitle}>{selectedOutfit.title}</Text>
           <Text style={styles.explanation}>{selectedOutfit.explanation}</Text>
+          {!!selectedOutfit.hijabColor && <View style={styles.hijabBox}>
+            <Text style={styles.missingTitle}>Hijab color suggestion</Text>
+            <Text style={styles.missingText}>{selectedOutfit.hijabColor}</Text>
+          </View>}
+          {!!selectedOutfit.missingPieces?.length && <View style={styles.missingBox}>
+            <Text style={styles.missingTitle}>Complete the look</Text>
+            <Text style={styles.missingText}>Consider adding: {selectedOutfit.missingPieces.join(' · ')}</Text>
+          </View>}
 
           {!!selected.length && <View style={styles.itemList}>
             <Text style={styles.itemListTitle}>The pieces</Text>
@@ -333,10 +358,8 @@ export default function OutfitScreen() {
           <View style={styles.savedCount}><Text style={styles.savedCountText}>{savedOutfits.length}</Text></View>
         </View>
         {loadingSaved ? <ActivityIndicator color={BrandColors.charcoal} /> : savedOutfits.length === 0 ? <Text style={styles.emptySaved}>Your saved outfits will appear here.</Text> : savedOutfits.map(saved => {
-          const pieceNames = saved.outfit.sourceUrls.map(sourceUrl => {
-            const item = owned.find(value => value.sourceUrl === sourceUrl);
-            return item?.name ?? item?.subcategory ?? 'Wardrobe item';
-          });
+          const savedItems = saved.outfit.sourceUrls.map(sourceUrl => owned.find(value => value.sourceUrl === sourceUrl)).filter((item): item is SavedClothing => !!item);
+          const pieceNames = savedItems.map(item => item.name ?? item.subcategory ?? 'Wardrobe item');
           return <View key={saved.id} style={styles.savedCard}>
             <View style={styles.savedCardTop}>
               <View style={{ flex: 1 }}>
@@ -345,6 +368,9 @@ export default function OutfitScreen() {
               </View>
               <Text style={styles.savedDate}>{new Date(saved.savedAt).toLocaleDateString()}</Text>
             </View>
+            {!!savedItems.some(item => !!item.imageUrl) && <View style={styles.savedImages}>
+              {savedItems.map(item => item.imageUrl ? <Image key={item.sourceUrl} source={{ uri: item.imageUrl }} style={styles.savedImage} resizeMode="cover" accessibilityLabel={item.name ?? 'Saved outfit piece'} /> : null)}
+            </View>}
             <Text style={styles.savedPieces}>{pieceNames.join(' · ')}</Text>
             <Text style={styles.savedTip}>{saved.outfit.weatherTip}</Text>
             {confirmDelete === saved.id ? <View style={styles.confirmPanel}>
