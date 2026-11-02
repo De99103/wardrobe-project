@@ -6,10 +6,15 @@ import { saveUserProfile } from './userProfile';
 import { getFirestore } from 'firebase/firestore';
 
 const configuredAuthDomain = process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN;
-const productionAuthDomain = Platform.OS === 'web'
-  && typeof window !== 'undefined'
-  && window.location.hostname === 'wardrobe-ai-six.vercel.app'
+const webHostname = Platform.OS === 'web' && typeof window !== 'undefined'
   ? window.location.hostname
+  : null;
+const productionAuthHosts = new Set([
+  'wardrobe-ai-six.vercel.app',
+  'wearly-closet-app.vercel.app',
+]);
+const productionAuthDomain = webHostname && productionAuthHosts.has(webHostname)
+  ? webHostname
   : configuredAuthDomain;
 
 const config = {
@@ -35,7 +40,7 @@ function authError(error: unknown): Error | null {
     return new Error('Google sign-in is not enabled yet. Enable the Google provider in Firebase Authentication, then try again.');
   }
   if (code === 'auth/unauthorized-domain') {
-    return new Error('This website is not authorized for Google sign-in yet. Add wardrobe-ai-six.vercel.app to Firebase Authentication → Settings → Authorized domains.');
+    return new Error(`This website is not authorized for Google sign-in yet. Add ${webHostname ?? 'your deployed hostname'} to Firebase Authentication → Settings → Authorized domains.`);
   }
   if (code === 'auth/popup-blocked') {
     return new Error('Your browser blocked the Google sign-in window. Allow popups for this app, then try again.');

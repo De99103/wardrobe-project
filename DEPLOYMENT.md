@@ -30,9 +30,9 @@ These values are embedded during the Expo web build, so redeploy after changing 
 
 Set the backend `CORS_ORIGINS` to the exact frontend origin, for example:
 
-`https://wardrobe-ai.vercel.app`
+`https://wearly-closet-app.vercel.app`
 
-Redeploy the backend. In Firebase Console, add the same frontend hostname (without `https://`) under Authentication > Settings > Authorized domains.
+During a domain migration, keep the old and new origins separated by a comma until the new domain is verified. Redeploy the backend. In Firebase Console, add the same frontend hostname (without `https://`) under Authentication > Settings > Authorized domains. Because mobile browsers use redirect sign-in, also add `https://wearly-closet-app.vercel.app/__/auth/handler` to the Google OAuth web client's authorized redirect URIs.
 
 ## 4. Production check
 
