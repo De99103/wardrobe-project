@@ -174,6 +174,8 @@ export const styles = StyleSheet.create({
   },
 
   quickTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  cardTitleRowArabic: { flexDirection: 'row-reverse', justifyContent: 'flex-end' },
 
   quickCardLabel: {
     color: BrandColors.charcoal,

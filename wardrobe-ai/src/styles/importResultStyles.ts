@@ -4,7 +4,7 @@ import { BrandColors } from '../constants/brand';
 export const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: BrandColors.ivory },
   container: {
-    flexGrow: 1, width: '100%', maxWidth: 780, alignSelf: 'center',
+    flexGrow: 1, width: '100%', maxWidth: 880, alignSelf: 'center',
     padding: 24, paddingTop: 32, paddingBottom: 56, gap: 24,
   },
   centered: {

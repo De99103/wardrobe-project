@@ -1,19 +1,24 @@
 import { Stack } from 'expo-router';
-import { AppHeaderBack, AppHeaderHome } from '../components/AppHeaderNavigation';
+import { useEffect } from 'react';
+import { AppHeader } from '../components/AppHeaderNavigation';
 import { appFontFamily } from '../components/AppTypography';
 import { BrandColors } from '../constants/brand';
+import { useLanguage } from '../services/i18n';
 
 export default function RootLayout() {
+  const { language } = useLanguage();
+  useEffect(() => {
+    if (typeof document !== 'undefined') document.documentElement.dir = 'ltr';
+  }, [language]);
   return (
     <Stack screenOptions={{
-      headerStyle: { backgroundColor: BrandColors.ivory, height: 58 } as any,
+      headerStyle: { backgroundColor: BrandColors.ivory } as any,
       headerShadowVisible: false,
       headerTintColor: BrandColors.charcoal,
       headerTitleStyle: { color: BrandColors.charcoal, fontFamily: appFontFamily, fontWeight: '700' },
       headerTitleAlign: 'center',
       headerBackVisible: false,
-      headerLeft: () => <AppHeaderBack />,
-      headerRight: () => <AppHeaderHome />,
+      header: ({ options }) => <AppHeader title={typeof options.title === 'string' ? options.title : 'Wearly'} />,
       contentStyle: { backgroundColor: BrandColors.ivory },
     }}>
       <Stack.Screen name="add-item" options={{ title: 'Add item' }} />

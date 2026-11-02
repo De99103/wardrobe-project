@@ -3,7 +3,7 @@ import { appFontFamily } from '../components/AppTypography';
 import { BrandColors } from '../constants/brand';
 
 export const styles = StyleSheet.create({
-  container: { flex: 1, width: '100%', maxWidth: 780, alignSelf: 'center', padding: 18, paddingTop: 24, paddingBottom: 24, backgroundColor: BrandColors.ivory, gap: 14 },
+  container: { flex: 1, width: '100%', maxWidth: 880, alignSelf: 'center', padding: 18, paddingTop: 28, paddingBottom: 24, backgroundColor: BrandColors.ivory, gap: 14 },
   eyebrow: { color: BrandColors.charcoal, fontSize: 12, lineHeight: 16, fontWeight: '800', letterSpacing: 1.5, textTransform: 'uppercase' },
   title: { fontFamily: appFontFamily, fontSize: 34, lineHeight: 40, letterSpacing: -0.5, color: BrandColors.charcoal },
   subtitle: { color: BrandColors.mutedText, fontSize: 15, lineHeight: 21, marginTop: -8 },

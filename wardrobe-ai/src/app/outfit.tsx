@@ -11,6 +11,7 @@ import type { SavedClothing } from '../types/clothing';
 import { styles } from '../styles/outfitStyles';
 import { Text, TextInput } from '../components/AppTypography';
 import { BrandColors } from '../constants/brand';
+import { useLanguage } from '../services/i18n';
 
 const occasionOptions = ['Everyday', 'Work', 'Dinner', 'Going out'] as const;
 const environmentOptions: { value: OutfitEnvironment; label: string }[] = [
@@ -20,6 +21,7 @@ const environmentOptions: { value: OutfitEnvironment; label: string }[] = [
 ];
 
 export default function OutfitScreen() {
+  const { language } = useLanguage();
   const [items, setItems] = useState<SavedClothing[]>([]);
   const [location, setLocation] = useState('Linköping');
   const [occasion, setOccasion] = useState('everyday');
@@ -87,6 +89,22 @@ export default function OutfitScreen() {
     } finally { setLoading(false); }
   }
 
+  function handleRecommendationPress() {
+    // The API returns up to three ranked looks. Show the next distinct look
+    // immediately instead of making a second request that may repeat the same
+    // model response. Once those choices are exhausted, ask the AI again.
+    if (result && rankedOutfits.length > 1) {
+      const currentIndex = rankedOutfits.findIndex(outfit => outfit.rank === selectedRank);
+      const nextOutfit = currentIndex >= 0 ? rankedOutfits[currentIndex + 1] : rankedOutfits[0];
+      if (nextOutfit) {
+        setSelectedRank(nextOutfit.rank);
+        setError('');
+        return;
+      }
+    }
+    void createOutfit();
+  }
+
   async function saveCurrentOutfit() {
     if (!result || !selectedOutfit || savingOutfit || selectedSaved) return;
     setSavingOutfit(true); setSavedError('');
@@ -138,7 +156,7 @@ export default function OutfitScreen() {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>City or postcode</Text>
+          <Text style={styles.label}>City</Text>
           <TextInput
             style={styles.input}
             value={location}
@@ -154,7 +172,7 @@ export default function OutfitScreen() {
         <View style={styles.field}>
           <Text style={styles.label}>When will you wear it?</Text>
           <Text style={styles.fieldHint}>Choose Today or Tomorrow, add a time, or use either one on its own.</Text>
-          <View style={styles.occasionRow}>
+          <View style={[styles.occasionRow, language === 'ar' && styles.occasionRowArabic]}>
             {(['today', 'tomorrow'] as const).map(day => <Pressable
               key={day}
               accessibilityRole="radio"
@@ -186,7 +204,7 @@ export default function OutfitScreen() {
 
         <View style={styles.field}>
           <Text style={styles.label}>What are you dressing for?</Text>
-          <View style={styles.occasionRow}>
+          <View style={[styles.occasionRow, language === 'ar' && styles.occasionRowArabic]}>
             {occasionOptions.map(option => {
               const selectedOccasion = occasion.trim().toLowerCase() === option.toLowerCase();
               return <Pressable
@@ -214,7 +232,7 @@ export default function OutfitScreen() {
 
         <View style={styles.field}>
           <Text style={styles.label}>Where will you spend most of the time?</Text>
-          <View style={styles.occasionRow}>
+          <View style={[styles.occasionRow, language === 'ar' && styles.occasionRowArabic]}>
             {environmentOptions.map(option => <Pressable
               key={option.value}
               accessibilityRole="radio"
@@ -230,7 +248,7 @@ export default function OutfitScreen() {
 
         <View style={styles.field}>
           <Text style={styles.label}>Do you wear a hijab?</Text>
-          <View style={styles.occasionRow}>
+          <View style={[styles.occasionRow, language === 'ar' && styles.occasionRowArabic]}>
             {(['no', 'yes'] as const).map(option => <Pressable
               key={option}
               accessibilityRole="radio"
@@ -254,10 +272,10 @@ export default function OutfitScreen() {
           accessibilityState={{ disabled: busy || !owned.length }}
           disabled={busy || !owned.length}
           style={[styles.button, (busy || !owned.length) && styles.buttonDisabled]}
-          onPress={createOutfit}
+          onPress={handleRecommendationPress}
         >
           {loading ? <ActivityIndicator color={BrandColors.ivory} /> : null}
-          <Text style={styles.buttonText}>{loading ? 'Styling your outfit…' : result ? 'Style another outfit  →' : 'Recommend an outfit  →'}</Text>
+          <Text style={styles.buttonText}>{loading ? 'Styling your outfit…' : result && rankedOutfits.length > 1 && rankedOutfits.findIndex(outfit => outfit.rank === selectedRank) < rankedOutfits.length - 1 ? 'Show another look  →' : result ? 'Style another outfit  →' : 'Recommend an outfit  →'}</Text>
         </Pressable>
       </View>
 

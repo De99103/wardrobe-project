@@ -9,10 +9,10 @@ export const styles = StyleSheet.create({
   },
   content: {
     width: '100%',
-    maxWidth: 780,
+    maxWidth: 880,
     alignSelf: 'center',
     padding: 18,
-    paddingTop: 24,
+    paddingTop: 28,
     paddingBottom: 56,
     gap: 18,
   },
@@ -109,6 +109,10 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  occasionRowArabic: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'flex-start',
   },
   occasionPill: {
     minHeight: 40,
