@@ -1,6 +1,5 @@
 import type { SavedClothing } from '../types/clothing';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL?.replace(/\/+$/, '');
+import { API_URL } from './apiConfig';
 
 export type WeatherSummary = {
   location: string;

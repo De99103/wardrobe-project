@@ -1,7 +1,6 @@
 import type { ImportedProduct } from '../types/clothing';
 import { isImportedProduct } from './productValidation';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL?.replace(/\/+$/, '');
+import { API_URL } from './apiConfig';
 
 async function requestProduct(path: string, body?: object): Promise<ImportedProduct> {
   if (!API_URL) throw new Error('Backend API URL is not configured.');
