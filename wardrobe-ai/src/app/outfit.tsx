@@ -152,7 +152,7 @@ export default function OutfitScreen() {
 
         <View style={styles.field}>
           <Text style={styles.label}>When will you wear it?</Text>
-          <Text style={styles.fieldHint}>Pick a day and add an approximate time, or leave it blank for current weather.</Text>
+          <Text style={styles.fieldHint}>Choose Today or Tomorrow, add a time, or use either one on its own.</Text>
           <View style={styles.occasionRow}>
             {(['today', 'tomorrow'] as const).map(day => <Pressable
               key={day}
@@ -373,16 +373,17 @@ function normalizePlannedTime(dateValue: string, clockValue: string): string | n
   const date = dateValue.trim();
   const clock = clockValue.trim();
   if (!date && !clock) return null;
-  if (!date || !clock) throw new Error('Pick Today or Tomorrow and add an approximate time, or leave both blank.');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(clock)) {
-    throw new Error('Use YYYY-MM-DD for the date and HH:mm for the time.');
+  const resolvedDate = date || dateForOffset(0);
+  const resolvedClock = clock || defaultTimeForDate(resolvedDate);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(resolvedDate) || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(resolvedClock)) {
+    throw new Error('Use a valid day and time.');
   }
-  const [year, month, day] = date.split('-').map(Number);
+  const [year, month, day] = resolvedDate.split('-').map(Number);
   const check = new Date(Date.UTC(year, month - 1, day));
   if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) {
     throw new Error('Enter a real calendar date.');
   }
-  return `${date}T${clock}`;
+  return `${resolvedDate}T${resolvedClock}`;
 }
 
 function dateForOffset(offset: number): string {
@@ -393,4 +394,10 @@ function dateForOffset(offset: number): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function defaultTimeForDate(date: string): string {
+  if (date !== dateForOffset(0)) return '12:00';
+  const nextHour = Math.min(new Date().getHours() + 1, 23);
+  return `${String(nextHour).padStart(2, '0')}:00`;
 }
