@@ -21,7 +21,7 @@ const environmentOptions: { value: OutfitEnvironment; label: string }[] = [
 
 export default function OutfitScreen() {
   const [items, setItems] = useState<SavedClothing[]>([]);
-  const [location, setLocation] = useState('Stockholm');
+  const [location, setLocation] = useState('Linköping');
   const [occasion, setOccasion] = useState('everyday');
   const [plannedDate, setPlannedDate] = useState('');
   const [plannedClock, setPlannedClock] = useState('');
@@ -142,7 +142,7 @@ export default function OutfitScreen() {
             style={styles.input}
             value={location}
             onChangeText={setLocation}
-            placeholder="Stockholm"
+            placeholder="Linköping"
             placeholderTextColor={BrandColors.softGrey}
             autoCapitalize="words"
             maxLength={200}

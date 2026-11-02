@@ -157,7 +157,7 @@ def fetch_current_weather(location, planned_time=None):
             timeout=(5, 15), allow_redirects=False)
         if response.status_code != 200:
             if response.status_code in (400, 404):
-                raise HTTPException(422, 'Location was not found. Try a city name such as Stockholm.')
+                raise HTTPException(422, 'Location was not found. Try a city name such as Linköping.')
             raise HTTPException(502, 'Weather is temporarily unavailable.')
         payload = response.json()
         place = payload['location']

@@ -125,6 +125,18 @@ def extract_product_data(html, page_url):
     title = clean(product.get('name')) or meta('og:title') or meta('twitter:title') or (clean(heading.get_text(' ', strip=True)) if heading else None)
     description = clean(product.get('description'), 5000) or meta('og:description') or meta('description')
     image = image_url(product.get('image') or meta('og:image') or meta('twitter:image'), page_url)
+    if not image:
+        image_link = soup.find('link', rel=lambda rel: 'image_src' in ([rel.lower()] if isinstance(rel, str) else [value.lower() for value in (rel or [])]))
+        image = image_url(image_link.get('href') if image_link else None, page_url)
+    if not image:
+        # Many modern storefronts lazy-load the first product image into data-* attributes.
+        # Prefer images inside the product/main region and ignore data/blob placeholders.
+        region = soup.find('main') or soup
+        for image_tag in region.select('img, [itemprop="image"]')[:30]:
+            candidate = next((image_tag.get(attribute) for attribute in ('data-src', 'data-lazy-src', 'data-original', 'src') if image_tag.get(attribute)), None)
+            image = image_url(candidate, page_url)
+            if image:
+                break
     brand = brand_name(product.get('brand'), entities)
     brand_source = 'product_schema' if brand else None
     if not brand:

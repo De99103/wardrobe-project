@@ -59,6 +59,11 @@ class ImportTests(unittest.TestCase):
         self.assertEqual(result["imageUrl"], "https://zara.com/dress.jpg")
         self.assertIn("Dress", result["text"])
 
+    def test_lazy_loaded_main_image_is_preserved(self):
+        html = '<main><h1>Dress</h1><img data-src="/images/dress.webp" alt="Dress"></main>'
+        result = main.extract_product_data(html, "https://shop.example/product")
+        self.assertEqual(result["imageUrl"], "https://shop.example/images/dress.webp")
+
     def test_verification_page_is_identified_before_ai(self):
         html = '<html><head><title>Verify your browser</title></head><body><iframe src="/interstitial/ic.html"></iframe></body></html>'
         with patch.object(main, "fetch_product_page", return_value=(html, "https://zara.com/product")), \
