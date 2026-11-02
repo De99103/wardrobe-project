@@ -8,7 +8,12 @@ import { useLanguage } from '../services/i18n';
 export default function RootLayout() {
   const { language } = useLanguage();
   useEffect(() => {
-    if (typeof document !== 'undefined') document.documentElement.dir = 'ltr';
+    if (typeof document !== 'undefined') {
+      document.documentElement.dir = 'ltr';
+      document.body.dir = 'ltr';
+      document.documentElement.style.direction = 'ltr';
+      document.body.style.direction = 'ltr';
+    }
   }, [language]);
   return (
     <Stack screenOptions={{

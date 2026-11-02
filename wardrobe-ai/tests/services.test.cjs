@@ -31,6 +31,40 @@ const product = {
   sourceUrl: 'https://www.zara.com/product',
 };
 
+test('language hydration runs once and cannot undo rapid explicit toggles', async () => {
+  let resolveRead;
+  let reads = 0;
+  const writes = [];
+  const storage = {
+    getItem: () => { reads++; return new Promise(resolve => { resolveRead = resolve; }); },
+    setItem: async (_key, value) => { writes.push(value); },
+  };
+  const snapshots = [];
+  const service = load('i18n', {
+    '@react-native-async-storage/async-storage': storage,
+    react: {
+      useEffect: effect => effect(),
+      useSyncExternalStore: (subscribe, getSnapshot, getServerSnapshot) => {
+        assert.equal(getServerSnapshot(), 'en');
+        subscribe(() => snapshots.push(getSnapshot()));
+        return getSnapshot();
+      },
+    },
+  });
+  service.useLanguage();
+  service.useLanguage();
+  assert.equal(reads, 1);
+  await service.setLanguage('ar');
+  await service.setLanguage('en');
+  resolveRead('ar');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(service.getLanguage(), 'en');
+  assert.equal(service.translate('Wardrobe', 'en'), 'Wardrobe');
+  assert.equal(service.translate('Wardrobe', 'ar'), 'الخزانة');
+  assert.deepEqual(snapshots, ['ar', 'ar', 'en', 'en']);
+  assert.deepEqual(writes, ['ar', 'en']);
+});
+
 test('store validation accepts supported subdomains and rejects deceptive or malformed links', () => {
   const { validateStoreUrl } = load('productValidation');
   assert.equal(validateStoreUrl(' https://www.zara.com/product '), product.sourceUrl);

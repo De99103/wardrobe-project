@@ -11,11 +11,13 @@ export const appFontFamily = Platform.select({
 
 export function Text({ style, children, ...props }: TextProps) {
   const { language } = useLanguage();
-  const translatedChildren = typeof children === 'string' ? translate(children) : children;
-  return <NativeText {...props} style={[{ fontFamily: appFontFamily, writingDirection: language === 'ar' ? 'rtl' : 'ltr' }, style]}>{translatedChildren}</NativeText>;
+  const translatedChildren = typeof children === 'string' ? translate(children, language) : children;
+  const isArabic = language === 'ar';
+  return <NativeText {...props} style={[{ fontFamily: appFontFamily, writingDirection: isArabic ? 'rtl' : 'ltr', textAlign: isArabic ? 'right' : 'left' }, style]}>{translatedChildren}</NativeText>;
 }
 
 export function TextInput({ style, ...props }: TextInputProps) {
   const { language } = useLanguage();
-  return <NativeTextInput {...props} placeholder={props.placeholder ? translate(props.placeholder) : props.placeholder} style={[{ fontFamily: appFontFamily, writingDirection: language === 'ar' ? 'rtl' : 'ltr' }, style]} />;
+  const isArabic = language === 'ar';
+  return <NativeTextInput {...props} placeholder={props.placeholder ? translate(props.placeholder, language) : props.placeholder} style={[{ fontFamily: appFontFamily, writingDirection: isArabic ? 'rtl' : 'ltr', textAlign: isArabic ? 'right' : 'left' }, style]} />;
 }

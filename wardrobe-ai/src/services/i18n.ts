@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useState } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 
 export type AppLanguage = 'en' | 'ar';
 const KEY = 'wearly:language:v1';
@@ -12,7 +12,26 @@ function browserLanguage(): AppLanguage {
   }
 }
 let language: AppLanguage = browserLanguage();
-const listeners = new Set<(value: AppLanguage) => void>();
+const listeners = new Set<() => void>();
+let revision = 0;
+let hydration: Promise<void> | undefined;
+let persistence = Promise.resolve();
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+}
+function hydrateLanguage() {
+  if (hydration) return hydration;
+  const startedAt = revision;
+  hydration = AsyncStorage.getItem(KEY).then(saved => {
+    if (revision !== startedAt) return;
+    if (saved === 'ar' || saved === 'en') {
+      language = saved;
+      listeners.forEach(listener => listener());
+    }
+  }).catch(() => { /* Keep the in-memory preference if storage is unavailable. */ });
+  return hydration;
+}
 
 const arabic: Record<string, string> = {
   'Information': 'معلومات', 'Sign in': 'تسجيل الدخول', 'Account': 'الحساب', 'Welcome to WEARLY': 'مرحباً بك في ويرلي',
@@ -32,7 +51,7 @@ const arabic: Record<string, string> = {
   'Current weather': 'الطقس الحالي', 'The pieces': 'القطع', 'Complete the look': 'أكمل الإطلالة', 'Hijab color suggestion': 'اقتراح لون الحجاب',
   'Save this outfit': 'احفظ هذه الإطلالة', 'Saved outfits': 'الإطلالات المحفوظة', 'Keep looks you want to wear again.': 'احتفظ بالإطلالات التي تريد ارتداءها مجدداً.',
   'Add manually': 'إضافة يدوية', 'Import a link': 'اضافة عبر رابط', 'My Wardrobe': 'خزانتي', 'My Wishlist': 'قائمة رغباتي',
-  'How Wearly works': 'كيف تعمل ويرلي', 'About the creator': 'عن المنشئة', 'Your account and privacy': 'حسابك وخصوصيتك', 'What comes next': 'ما القادم',
+  'How Wearly works': 'كيف تعمل Wearly', 'About the creator': 'عن المنشئة', 'Your account and privacy': 'حسابك وخصوصيتك', 'What comes next': 'ما القادم',
   'Your collection': 'مجموعتك', 'YOUR COLLECTION': 'مجموعتك', 'Everything you own, ready to style.': 'كل ما تملكه، جاهز للتنسيق.',
   'Pieces you are considering for your collection.': 'قطع تفكر في إضافتها إلى مجموعتك.', 'Wardrobe': 'الخزانة',
   'All': 'الكل', 'Tops': 'القطع العلوية', 'Bottoms': 'القطع السفلية', 'Dresses': 'فساتين', 'Outerwear': 'ملابس خارجية',
@@ -61,29 +80,22 @@ const arabic: Record<string, string> = {
   'On mobile, Google opens securely in this window and returns you here.': 'على الهاتف، يفتح Google بأمان في هذه النافذة ثم يعيدك إلى هنا.',
 };
 
-export function translate(value: string): string { return language === 'ar' ? arabic[value] ?? value : value; }
+export function translate(value: string, locale: AppLanguage = language): string { return locale === 'ar' ? arabic[value] ?? value : value; }
 export function getLanguage(): AppLanguage { return language; }
 export async function setLanguage(value: AppLanguage) {
   language = value;
+  revision += 1;
   // Update the UI immediately. Persistence happens in the background and
   // must never delay or overwrite the user's explicit selection.
-  listeners.forEach(listener => listener(language));
+  listeners.forEach(listener => listener());
   try { if (typeof window !== 'undefined') window.localStorage.setItem(KEY, value); } catch { /* storage may be unavailable */ }
-  try { await AsyncStorage.setItem(KEY, value); } catch { /* storage may be unavailable */ }
+  persistence = persistence.then(() => AsyncStorage.setItem(KEY, value)).catch(() => { /* storage may be unavailable */ });
+  await persistence;
 }
 export function useLanguage() {
-  const [value, setValue] = useState(language);
+  const value = useSyncExternalStore(subscribe, getLanguage, () => 'en' as AppLanguage);
   useEffect(() => {
-    let active = true;
-    const initialLanguage = language;
-    listeners.add(setValue);
-    AsyncStorage.getItem(KEY).then(saved => {
-      if (!active) return;
-      // Do not apply a stale storage read after the user has already toggled.
-      if (language === initialLanguage && (saved === 'ar' || saved === 'en')) language = saved;
-      setValue(language);
-    }).catch(() => { /* storage may be unavailable */ });
-    return () => { active = false; listeners.delete(setValue); };
+    void hydrateLanguage();
   }, []);
   return { language: value, setLanguage };
 }
