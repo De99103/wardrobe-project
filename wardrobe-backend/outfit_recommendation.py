@@ -1,7 +1,9 @@
 """Weather-aware outfit recommendations grounded in owned wardrobe items."""
 import json
+import logging
 import os
 import re
+from itertools import product
 from datetime import datetime
 from typing import Annotated, List, Literal, Optional
 
@@ -41,6 +43,13 @@ class OutfitFeedback(BaseModel):
     occasion: str = Field(max_length=200)
 
 
+class OutfitVariation(BaseModel):
+    mode: Literal['restyle', 'swap']
+    currentSourceUrls: List[str] = Field(min_length=1, max_length=8)
+    replaceSourceUrl: Optional[str] = None
+    avoidOutfits: List[List[str]] = Field(default_factory=list, max_length=20)
+
+
 class OutfitRequest(BaseModel):
     location: str = Field(min_length=2, max_length=200)
     occasion: str = Field(default='everyday', min_length=2, max_length=200)
@@ -49,6 +58,7 @@ class OutfitRequest(BaseModel):
     environment: Literal['indoors', 'outdoors', 'mixed'] = 'mixed'
     hijab: Literal['yes', 'no'] = 'no'
     items: List[WardrobeItem] = Field(min_length=1, max_length=100)
+    variation: Optional[OutfitVariation] = None
     feedback: List[OutfitFeedback] = Field(default_factory=list, max_length=20)
 
 
@@ -241,7 +251,7 @@ def _valid_composition(selected_items, wardrobe_supports_complete):
     categories = [_category(item) for item in selected_items]
     if categories.count('bottoms') > 1 or categories.count('dresses') > 1 or categories.count('shoes') > 1:
         return False
-    if categories.count('outerwear') > 2 or categories.count('accessories') > 3 or categories.count('tops') > 2:
+    if categories.count('outerwear') > 2 or categories.count('accessories') > 3 or categories.count('tops') > 2 or categories.count('hijabs') > 1:
         return False
     tops = [item for item in selected_items if _category(item) == 'tops']
     if len(tops) == 2:
@@ -255,7 +265,50 @@ def _valid_composition(selected_items, wardrobe_supports_complete):
     return 'dresses' in categories or ('tops' in categories and 'bottoms' in categories)
 
 
-def _validated_candidates(candidates, items, weather):
+def _strict_schema(schema):
+    """Groq strict output requires every property on every object to be required."""
+    if isinstance(schema, dict):
+        schema.pop('default', None)
+        for value in schema.values():
+            _strict_schema(value)
+        if schema.get('type') == 'object':
+            schema['required'] = list(schema.get('properties', {}))
+            schema['additionalProperties'] = False
+    elif isinstance(schema, list):
+        for value in schema:
+            _strict_schema(value)
+    return schema
+
+
+def _variation_signatures(variation):
+    if not variation:
+        return set()
+    return {frozenset(urls) for urls in [
+        variation.currentSourceUrls, *variation.avoidOutfits
+    ]}
+
+
+def _follows_variation(urls, variation, by_url):
+    if not variation:
+        return True
+    selected = set(urls)
+    if frozenset(selected) in _variation_signatures(variation):
+        return False
+    if variation.mode == 'restyle':
+        return True
+    original = set(variation.currentSourceUrls)
+    replaced = variation.replaceSourceUrl
+    if not replaced or replaced not in original or replaced in selected:
+        return False
+    # Enforce a real one-piece swap, not just a prompt suggestion.
+    if len(selected) != len(original) or not original.difference({replaced}).issubset(selected):
+        return False
+    added = selected - original
+    return (len(added) == 1 and
+            _category(by_url[next(iter(added))]) == _category(by_url[replaced]))
+
+
+def _validated_candidates(candidates, items, weather, variation=None, hijab='no'):
     by_url = {item.sourceUrl: item for item in items}
     supports_complete = _wardrobe_supports_complete_outfit(items)
     valid = []
@@ -265,10 +318,12 @@ def _validated_candidates(candidates, items, weather):
         if not selected_urls or any(url not in by_url for url in selected_urls):
             continue
         signature = frozenset(selected_urls)
-        if signature in seen:
+        if signature in seen or not _follows_variation(selected_urls, variation, by_url):
             continue
         selected_items = [by_url[url] for url in selected_urls]
         if not _valid_composition(selected_items, supports_complete):
+            continue
+        if hijab == 'no' and any(_category(item) == 'hijabs' for item in selected_items):
             continue
         seen.add(signature)
         label = candidate.label
@@ -285,6 +340,74 @@ def _validated_candidates(candidates, items, weather):
             label=label,
         ))
     return valid
+
+
+def _fallback_variations(items, weather, occasion, hijab='no', variation=None):
+    """Build distinct, wardrobe-only options if the model cannot provide them."""
+    grouped = {}
+    for item in items:
+        grouped.setdefault(_category(item), []).append(item)
+    by_url = {item.sourceUrl: item for item in items}
+    avoid = _variation_signatures(variation)
+
+    if variation and variation.mode == 'swap':
+        old = variation.currentSourceUrls
+        replaced = variation.replaceSourceUrl
+        category = _category(by_url[replaced])
+        alternatives = [item for item in grouped.get(category, [])
+                        if item.sourceUrl != replaced]
+        combinations = [
+            [by_url[url] if url != replaced else candidate for url in old]
+            for candidate in alternatives
+        ]
+    else:
+        dresses = [[item] for item in grouped.get('dresses', [])[:12]]
+        separates = [[top, bottom]
+                     for top, bottom in product(grouped.get('tops', [])[:12],
+                                                grouped.get('bottoms', [])[:12])]
+        bases = dresses + separates or [[item] for item in items[:12]]
+        cold = weather.feelsLikeC <= 14 or (weather.chanceOfRain or 0) >= 40
+        outer = grouped.get('outerwear', [])[:4]
+        outer_options = outer or [None] if cold else [None, *outer]
+        shoes = grouped.get('shoes', [])[:4] or [None]
+        accessories = [None, *grouped.get('accessories', [])[:3]]
+        headwear = (grouped.get('hijabs', [])[:4] or [None]) if hijab == 'yes' else [None]
+        combinations = (
+            [*base, *[item for item in extras if item is not None]]
+            for base, *extras in product(
+                bases, outer_options, shoes, accessories, headwear
+            )
+        )
+
+    outfits = []
+    seen = set()
+    for combination in combinations:
+        urls = [item.sourceUrl for item in combination]
+        signature = frozenset(urls)
+        if signature in seen or signature in avoid or len(urls) > 8:
+            continue
+        if not _follows_variation(urls, variation, by_url):
+            continue
+        if not _valid_composition(combination, _wardrobe_supports_complete_outfit(items)):
+            continue
+        seen.add(signature)
+        change = 'One-piece swap' if variation and variation.mode == 'swap' else 'Fresh combination'
+        hijab_item = next((item for item in combination if _category(item) == 'hijabs'), None)
+        outfits.append(RankedOutfit(
+            sourceUrls=urls, rank=len(outfits) + 1, label=change,
+            title=f'{occasion.title()} look {len(outfits) + 1}',
+            explanation=('Replaced just the selected piece, keeping your other choices.' if
+                         variation and variation.mode == 'swap' else
+                         'A different combination using pieces from your wardrobe.'),
+            weatherTip=(f'It is {round(weather.temperatureC)}°C in {weather.location}; '
+                        'dress for the feels-like temperature.'),
+            missingPieces=_missing_pieces(combination, weather),
+            hijabColor=(hijab_item.color if hijab_item and hijab_item.color else
+                        'soft taupe' if hijab == 'yes' else None),
+        ))
+        if len(outfits) == 3:
+            break
+    return outfits
 
 
 def _notice(outfits, items):
@@ -338,9 +461,24 @@ def _prompt_item(item):
 
 
 def recommend_outfit(request, groq_client, model):
+    variation = request.variation
+    if variation:
+        by_url = {item.sourceUrl: item for item in request.items}
+        if any(url not in by_url for url in variation.currentSourceUrls):
+            raise HTTPException(422, 'One of the selected outfit items is no longer in your wardrobe.')
+        if variation.mode == 'swap':
+            if variation.replaceSourceUrl not in variation.currentSourceUrls:
+                raise HTTPException(422, 'Choose a piece from your current outfit to replace.')
+            item = by_url[variation.replaceSourceUrl]
+            alternatives = [candidate for candidate in request.items
+                            if candidate.sourceUrl != item.sourceUrl
+                            and _category(candidate) == _category(item)]
+            if not alternatives:
+                raise HTTPException(422, 'Add another piece of this type to your wardrobe before swapping it.')
+
     weather = fetch_current_weather(request.location, request.plannedTime)
     wardrobe = [_prompt_item(item) for item in request.items]
-    schema = CandidateSet.model_json_schema()
+    schema = _strict_schema(CandidateSet.model_json_schema())
     prompt = json.dumps({
         'weather': weather.model_dump(),
         'occasion': request.occasion,
@@ -355,6 +493,7 @@ def recommend_outfit(request, groq_client, model):
             if weather.feelsLikeC < 18 else
             'Do not create or label a warmer option in these mild or hot conditions.'),
         'ownedWardrobe': wardrobe,
+        'variation': variation.model_dump() if variation else None,
         'previousFeedback': [entry.model_dump() for entry in request.feedback
                              if set(entry.sourceUrls).issubset({item.sourceUrl for item in request.items})],
     }, ensure_ascii=False)
@@ -375,7 +514,12 @@ def recommend_outfit(request, groq_client, model):
                     'Treat styling tags as editable heuristic guidance, not guaranteed physical ratings. Use them when present, but never invent missing '
                     'attributes or claim waterproofing, windproofing, or fabric performance without explicit evidence. '
                     'Account for feels-like temperature, rain, wind, daylight, and whether the plans are indoors, outdoors, or mixed. '
-                    'If hijab is yes, provide one complementary hijabColor for each look; if hijab is no, leave hijabColor null. '
+                    'If hijab is yes, select at most one owned hijab when available and give a matching hijabColor; '
+                    'if hijab is no, do not select hijabs and leave hijabColor null. '
+                    'Always include missingPieces as an array and hijabColor as a string or null. '
+                    'For a swap, preserve all currentSourceUrls except replaceSourceUrl and substitute exactly one different '
+                    'wardrobe item of the same category. For restyle, create a different composition from currentSourceUrls. '
+                    'Avoid repeating any combination in variation.avoidOutfits. '
                     'Give each option a short useful label. Only offer a warmer variation in cool conditions; never call an option warmer in mild or hot weather. '
                     'If the wardrobe cannot support three distinct or complete outfits, return fewer options '
                     'instead of duplicating a look or adding unowned pieces. Include missingPieces as short generic categories '
@@ -385,14 +529,17 @@ def recommend_outfit(request, groq_client, model):
             response_format={'type': 'json_schema', 'json_schema': {
                 'name': 'weather_outfits', 'strict': True, 'schema': schema}})
         generated = CandidateSet.model_validate_json(response.choices[0].message.content)
-        outfits = _validated_candidates(generated.outfits, request.items, weather)
+        outfits = _validated_candidates(generated.outfits, request.items, weather, variation, request.hijab)
     except Exception:
-        # Keep recommendations useful during a transient provider failure or
-        # malformed model response. The fallback remains wardrobe-grounded.
-        fallback = _fallback_choice(request.items, weather, request.occasion, request.hijab)
-        outfits = [RankedOutfit(rank=1, label='Best match', **fallback.model_dump())]
+        logging.getLogger(__name__).exception('AI outfit generation failed; using local alternatives')
+        outfits = []
 
+    used_fallback = not outfits
     if not outfits:
+        outfits = _fallback_variations(request.items, weather, request.occasion, request.hijab, variation)
+    if not outfits:
+        if variation:
+            raise HTTPException(422, 'No different suitable combination is available. Try adding more pieces to your wardrobe.')
         fallback = _fallback_choice(request.items, weather, request.occasion, request.hijab)
         outfits = [RankedOutfit(rank=1, label='Best match', **fallback.model_dump())]
     best = OutfitChoice(**outfits[0].model_dump(include={
@@ -402,5 +549,6 @@ def recommend_outfit(request, groq_client, model):
         outfit=best,
         outfits=outfits,
         context=OutfitContext(plannedTime=request.plannedTime, environment=request.environment, hijab=request.hijab),
-        notice=_notice(outfits, request.items),
+        notice=('Using basic wardrobe combinations because an AI variation was unavailable. '
+                if used_fallback else '') + (_notice(outfits, request.items) or '') or None,
     )

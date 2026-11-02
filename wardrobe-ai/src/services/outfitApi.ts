@@ -41,6 +41,13 @@ export type RankedOutfit = OutfitChoice & {
 export type OutfitEnvironment = 'indoors' | 'outdoors' | 'mixed';
 export type HijabPreference = 'yes' | 'no';
 
+export type OutfitVariation = {
+  mode: 'swap' | 'restyle';
+  currentSourceUrls: string[];
+  replaceSourceUrl?: string | null;
+  avoidOutfits: string[][];
+};
+
 export type OutfitContext = {
   plannedTime: string | null;
   environment: OutfitEnvironment;
@@ -103,6 +110,7 @@ export async function getOutfitRecommendation(
   occasion: string,
   items: SavedClothing[],
   context: OutfitContext = { plannedTime: null, environment: 'mixed', hijab: 'no' },
+  variation?: OutfitVariation,
 ): Promise<OutfitRecommendation> {
   if (!API_URL) throw new Error('Backend API URL is not configured.');
   const owned = items.filter(item => item.status === 'owned').slice(0, 100).map(item => {
@@ -142,6 +150,7 @@ export async function getOutfitRecommendation(
         hijab: context.hijab ?? 'no',
         items: owned,
         feedback,
+        variation: variation ?? null,
       }),
       signal: controller.signal,
     });

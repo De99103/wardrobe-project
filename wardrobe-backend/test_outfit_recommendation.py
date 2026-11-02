@@ -165,5 +165,48 @@ class OutfitRecommendationTests(unittest.TestCase):
         self.assertEqual(result.outfit.sourceUrls, ['manual:dress'])
 
 
+
+    def test_swap_keeps_other_pieces_and_uses_same_category(self):
+        from outfit_recommendation import OutfitVariation, _fallback_variations, WeatherSummary
+        weather = WeatherSummary(location='Stockholm', localTime='2026-11-01 12:00',
+                                 condition='Cloudy', temperatureC=18, feelsLikeC=18,
+                                 precipitationMm=0, chanceOfRain=0, windKph=4,
+                                 humidity=40, isDay=True)
+        request = OutfitRequest(location='Stockholm', items=ITEMS)
+        variation = OutfitVariation(
+            mode='swap',
+            currentSourceUrls=['manual:top-black', 'manual:bottom'],
+            replaceSourceUrl='manual:top-black',
+            avoidOutfits=[['manual:top-black', 'manual:bottom']],
+        )
+        outfits = _fallback_variations(request.items, weather, 'everyday', variation=variation)
+        self.assertTrue(outfits)
+        self.assertEqual(outfits[0].sourceUrls, ['manual:top-white', 'manual:bottom'])
+
+    def test_restyle_excludes_previous_look(self):
+        from outfit_recommendation import OutfitVariation, _fallback_variations, WeatherSummary
+        weather = WeatherSummary(location='Stockholm', localTime='2026-11-01 12:00',
+                                 condition='Cloudy', temperatureC=18, feelsLikeC=18,
+                                 precipitationMm=0, chanceOfRain=0, windKph=4,
+                                 humidity=40, isDay=True)
+        request = OutfitRequest(location='Stockholm', items=ITEMS)
+        variation = OutfitVariation(
+            mode='restyle',
+            currentSourceUrls=['manual:dress'],
+            avoidOutfits=[['manual:dress']],
+        )
+        outfits = _fallback_variations(request.items, weather, 'everyday', variation=variation)
+        self.assertTrue(outfits)
+        self.assertTrue(all(set(outfit.sourceUrls) != {'manual:dress'} for outfit in outfits))
+
+    def test_strict_schema_has_required_fields(self):
+        from outfit_recommendation import CandidateSet, _strict_schema
+        schema = _strict_schema(CandidateSet.model_json_schema())
+        self.assertEqual(schema['required'], list(schema['properties']))
+        self.assertFalse(schema['additionalProperties'])
+        for definition in schema['$defs'].values():
+            self.assertEqual(definition['required'], list(definition['properties']))
+            self.assertFalse(definition['additionalProperties'])
+
 if __name__ == '__main__':
     unittest.main()
