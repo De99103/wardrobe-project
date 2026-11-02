@@ -3,7 +3,7 @@ import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-nat
 import { Stack } from 'expo-router';
 
 import { getOutfitRecommendation } from '../services/outfitApi';
-import type { HijabPreference, OutfitEnvironment, OutfitRecommendation, RankedOutfit } from '../services/outfitApi';
+import type { HijabPreference, OutfitEnvironment, OutfitRecommendation, RankedOutfit, OutfitVariation } from '../services/outfitApi';
 import { loadClothing } from '../services/wardrobeStorage';
 import { deleteSavedOutfit, loadSavedOutfits, saveOutfit } from '../services/outfitStorage';
 import type { SavedOutfit } from '../services/outfitStorage';
@@ -36,6 +36,9 @@ export default function OutfitScreen() {
   const [result, setResult] = useState<OutfitRecommendation | null>(null);
   const [resultOccasion, setResultOccasion] = useState('Everyday');
   const [selectedRank, setSelectedRank] = useState(1);
+  const [changeMode, setChangeMode] = useState<'swap' | 'restyle' | null>(null);
+  const [replaceUrl, setReplaceUrl] = useState<string | null>(null);
+  const [previousLooks, setPreviousLooks] = useState<string[][]>([]);
   const [loadingWardrobe, setLoadingWardrobe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -71,7 +74,7 @@ export default function OutfitScreen() {
   }, [owned, selectedOutfit]);
   const selectedSaved = selectedOutfit ? savedRanks.includes(selectedOutfit.rank) : false;
 
-  async function createOutfit() {
+  async function createOutfit(variation?: OutfitVariation) {
     setFeedbackMessage('');
     if (savingOutfit) return;
     if (!location.trim()) { setError('Enter a city or postcode.'); return; }
@@ -82,10 +85,14 @@ export default function OutfitScreen() {
       setError(reason instanceof Error ? reason.message : 'Check the planned date and time.');
       return;
     }
-    setLoading(true); setError(''); setResult(null); setSavedRanks([]); setSavedError('');
+    setLoading(true); setError(''); setSavedError('');
     try {
-      const recommendation = await getOutfitRecommendation(location, occasion, owned, { plannedTime, environment, hijab });
+      const recommendation = await getOutfitRecommendation(location, occasion, owned, { plannedTime, environment, hijab }, variation);
       setResult(recommendation);
+      setChangeMode(null);
+      setReplaceUrl(null);
+      setPreviousLooks(previous => [...previous, ...(variation ? [] : []), ...rankedOutfits.map(look => look.sourceUrls), ...recommendation.outfits?.map(look => look.sourceUrls) ?? [recommendation.outfit.sourceUrls]].slice(-20));
+      setSavedRanks([]);
       setResultOccasion(occasion.trim() || 'Everyday');
       setSelectedRank(recommendation.outfits?.[0]?.rank ?? 1);
     } catch (reason) {
@@ -107,7 +114,11 @@ export default function OutfitScreen() {
         return;
       }
     }
-    void createOutfit();
+    if (selectedOutfit) {
+      void createOutfit({ mode: 'restyle', currentSourceUrls: selectedOutfit.sourceUrls, avoidOutfits: [...previousLooks, ...rankedOutfits.map(look => look.sourceUrls)].slice(-20) });
+    } else {
+      void createOutfit();
+    }
   }
 
   async function saveCurrentOutfit() {
@@ -342,6 +353,39 @@ export default function OutfitScreen() {
         </View>}
 
         {selectedOutfit && <View style={styles.card}>
+          <View style={styles.setupCard}>
+            <Text style={styles.sectionTitle}>Change this look</Text>
+            <Text style={styles.sectionSubtitle}>What would you like to change?</Text>
+            <View style={styles.occasionRow}>
+              <Pressable accessibilityRole="button" style={[styles.occasionPill, changeMode === 'swap' && styles.occasionPillSelected]}
+                onPress={() => { setChangeMode('swap'); setReplaceUrl(null); }}>
+                <Text style={styles.occasionText}>Change one item</Text>
+              </Pressable>
+              <Pressable accessibilityRole="button" style={[styles.occasionPill, changeMode === 'restyle' && styles.occasionPillSelected]}
+                onPress={() => { setChangeMode('restyle'); setReplaceUrl(null); }}>
+                <Text style={styles.occasionText}>Change entire outfit</Text>
+              </Pressable>
+            </View>
+            {changeMode === 'swap' && <>
+              <Text style={styles.sectionSubtitle}>Which piece should Wearly replace?</Text>
+              {selected.map(item => <Pressable key={item.sourceUrl} accessibilityRole="radio"
+                accessibilityState={{ checked: replaceUrl === item.sourceUrl }}
+                style={[styles.occasionPill, replaceUrl === item.sourceUrl && styles.occasionPillSelected]}
+                onPress={() => setReplaceUrl(item.sourceUrl)}>
+                <Text style={styles.occasionText}>{item.name ?? item.subcategory ?? item.category ?? 'Item'}</Text>
+              </Pressable>)}
+            </>}
+            {!!changeMode && <Pressable style={[styles.button, (loading || (changeMode === 'swap' && !replaceUrl)) && styles.buttonDisabled]}
+              disabled={loading || (changeMode === 'swap' && !replaceUrl)}
+              onPress={() => void createOutfit({
+                mode: changeMode,
+                currentSourceUrls: selectedOutfit.sourceUrls,
+                ...(changeMode === 'swap' ? { replaceSourceUrl: replaceUrl } : {}),
+                avoidOutfits: [...previousLooks, ...rankedOutfits.map(look => look.sourceUrls)].slice(-20),
+              })}>
+              <Text style={styles.buttonText}>{loading ? 'Restyling…' : 'Show my new look →'}</Text>
+            </Pressable>}
+          </View>
           <View style={[styles.occasionRow, language === 'ar' && styles.occasionRowArabic]}>
             <Pressable accessibilityRole="button" disabled={sendingFeedback} style={styles.occasionPill} onPress={() => rateOutfit('like')}>
               <Text>{language === 'ar' ? 'سأرتدي هذه الإطلالة' : 'I’d wear this'}</Text>
