@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Platform, Pressable, ScrollView, SectionList, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Platform, Pressable, ScrollView, View } from 'react-native';
 import { Link, Stack, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { loadClothing, deleteClothing, moveToWardrobe } from '../services/wardrobeStorage';
 import { categories, categoryLabel, collectionSections, storeLink } from '../services/collectionView';
@@ -76,6 +76,7 @@ export default function WardrobeScreen() {
     } finally { deleteBusy.current = false; setMoving(null); }
   }
   const sections = collectionSections(items, status, category, sort);
+  const gridItems = sections.flatMap(section => section.data);
   const count = sections.reduce((total, section) => total + section.data.length, 0);
   const collectionHeader = <View style={styles.listHeader}>
     <Text style={styles.eyebrow}>{status === 'owned' ? 'Your collection' : 'Saved for later'}</Text>
@@ -104,14 +105,13 @@ export default function WardrobeScreen() {
       <Stack.Screen options={{ title: 'Collection' }} />
       {loading ? <ScrollView style={styles.collectionList} contentContainerStyle={styles.list}>{collectionHeader}<ActivityIndicator color={BrandColors.charcoal} /></ScrollView>
         : error ? <ScrollView style={styles.collectionList} contentContainerStyle={styles.list}>{collectionHeader}<View style={styles.errorPanel}><Text style={styles.error}>{error}</Text><Pressable style={styles.button} accessibilityRole="button" onPress={refresh}><Text style={styles.buttonText}>Try Again</Text></Pressable></View></ScrollView> : (
-        <SectionList style={styles.collectionList} sections={sections} keyExtractor={item => `${item.status}:${item.sourceUrl}`} stickySectionHeadersEnabled={false} contentContainerStyle={styles.list}
+        <FlatList style={styles.collectionList} data={gridItems} numColumns={2} keyExtractor={item => `${item.status}:${item.sourceUrl}`} columnWrapperStyle={styles.gridRow} contentContainerStyle={styles.list}
           ListHeaderComponent={collectionHeader}
           ListEmptyComponent={<View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>{category === 'all' ? `Your ${status === 'owned' ? 'wardrobe' : 'wishlist'} is ready for its first piece.` : `No ${categoryLabel(category).toLowerCase()} here yet.`}</Text>
             <Text style={styles.message}>{category === 'all' ? 'Add something manually or import it straight from a store.' : 'Try another category or add a new item.'}</Text>
             <Pressable style={styles.emptyButton} accessibilityRole="button" onPress={() => router.push({ pathname: '/add-item', params: { status } })}><Text style={styles.buttonText}>Add your first item</Text></Pressable>
           </View>}
-          renderSectionHeader={({ section }) => <Text style={styles.sectionTitle}>{section.title} · {section.data.length}</Text>}
           renderItem={({ item }) => {
             const url = storeLink(item.sourceUrl);
             const key = `${item.status}:${item.sourceUrl}`;

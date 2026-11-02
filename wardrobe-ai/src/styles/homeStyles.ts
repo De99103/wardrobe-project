@@ -18,6 +18,7 @@ export const styles = StyleSheet.create({
 
   brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingBottom: 18, borderBottomWidth: 1, borderBottomColor: BrandColors.charcoal },
   brandIdentity: { flexDirection: 'row', alignItems: 'center', flexShrink: 1, gap: 11 },
+  headerLinks: { flexDirection: 'row', alignItems: 'center', gap: 18 },
   brandName: { color: BrandColors.charcoal, fontFamily: appFontFamily, fontSize: 19, lineHeight: 24, fontWeight: '500', letterSpacing: 6.5 },
   infoButton: { minHeight: 40, justifyContent: 'center', borderRadius: 0, borderBottomWidth: 1, borderColor: BrandColors.charcoal, paddingHorizontal: 0 },
   infoButtonText: { color: BrandColors.charcoal, fontSize: 12, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
@@ -40,6 +41,22 @@ export const styles = StyleSheet.create({
     lineHeight: 54,
     fontWeight: '400',
     letterSpacing: -1.4,
+  },
+
+  heroHint: {
+    color: BrandColors.mutedText,
+    fontFamily: appFontFamily,
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 16,
+  },
+
+  heroLink: {
+    color: BrandColors.mutedText,
+    fontFamily: appFontFamily,
+    fontSize: 14,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 
   title: {
@@ -166,6 +183,8 @@ export const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
 
+  quickArrow: { color: BrandColors.charcoal, fontSize: 22 },
+
   quickCardTitle: {
     color: BrandColors.charcoal,
     fontFamily: appFontFamily,
@@ -173,6 +192,17 @@ export const styles = StyleSheet.create({
     lineHeight: 24,
     fontWeight: '800',
   },
+
+  homeLinks: { gap: 14, marginTop: 20, paddingVertical: 4 },
+  homeLink: { color: BrandColors.charcoal, fontFamily: appFontFamily, fontSize: 16, fontWeight: '700', paddingVertical: 8 },
+  homeLinkHint: { color: BrandColors.mutedText, fontFamily: appFontFamily, fontSize: 13, marginTop: -4 },
+
+  footer: { gap: 8, marginTop: 48, paddingTop: 18, paddingBottom: 8 },
+  footerRule: { height: 1, backgroundColor: BrandColors.charcoal, marginBottom: 12 },
+  footerBrand: { color: BrandColors.charcoal, fontFamily: appFontFamily, fontSize: 12, letterSpacing: 3, fontWeight: '600' },
+  footerText: { color: BrandColors.mutedText, fontFamily: appFontFamily, fontSize: 12 },
+  footerLinks: { flexDirection: 'row', gap: 18, marginTop: 4 },
+  footerLink: { color: BrandColors.charcoal, fontFamily: appFontFamily, fontSize: 12, textDecorationLine: 'underline' },
 
   quickCardMeta: {
     color: BrandColors.mutedText,

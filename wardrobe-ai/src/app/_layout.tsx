@@ -6,7 +6,7 @@ import { BrandColors } from '../constants/brand';
 export default function RootLayout() {
   return (
     <Stack screenOptions={{
-      headerStyle: { backgroundColor: BrandColors.ivory },
+      headerStyle: { backgroundColor: BrandColors.ivory, height: 58 } as any,
       headerShadowVisible: false,
       headerTintColor: BrandColors.charcoal,
       headerTitleStyle: { color: BrandColors.charcoal, fontFamily: appFontFamily, fontWeight: '700' },

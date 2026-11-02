@@ -33,7 +33,7 @@ export function AppHeaderHome() {
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 40,
+    minHeight: 32,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

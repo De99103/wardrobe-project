@@ -1,4 +1,5 @@
 import { ScrollView, View } from 'react-native';
+import { Link } from 'expo-router';
 import { Text } from '../components/AppTypography';
 import { styles } from '../styles/informationStyles';
 
@@ -49,6 +50,16 @@ export default function InformationScreen() {
     <View style={styles.noteCard}>
       <Text style={styles.cardTitle}>What comes next</Text>
       <Text style={styles.body}>Wishlist price-drop alerts and native App Store and Google Play builds are planned next. Price alerts are not active yet.</Text>
+    </View>
+
+    <View style={styles.creatorCard}>
+      <Text style={styles.creatorEyebrow}>The person behind Wearly</Text>
+      <Text style={styles.creatorTitle}>Deema Abo Gheda</Text>
+      <Text style={styles.body}>Wearly is independently created and owned by Deema. It was made to make getting dressed feel simpler, more personal, and easier to enjoy every day.</Text>
+      <View style={styles.contactLinks}>
+        <Link href="https://se.linkedin.com/in/deemaabogheda99" target="_blank" rel="noopener noreferrer" style={styles.contactLink}>LinkedIn</Link>
+        <Link href="mailto:deema.abogheda@gmail.com" style={styles.contactLink}>Email</Link>
+      </View>
     </View>
   </ScrollView>;
 }

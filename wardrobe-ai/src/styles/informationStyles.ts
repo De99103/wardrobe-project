@@ -25,4 +25,10 @@ export const styles = StyleSheet.create({
   cardTitle: { color: BrandColors.charcoal, fontFamily: appFontFamily, fontSize: 19, lineHeight: 25, fontWeight: '800' },
   body: { color: BrandColors.mutedText, fontSize: 15, lineHeight: 22 },
   noteCard: { borderTopWidth: 1, borderBottomWidth: 1, borderColor: BrandColors.charcoal, borderRadius: 0, backgroundColor: BrandColors.ivory, paddingVertical: 20, gap: 7 },
+  creatorCard: { borderTopWidth: 2, borderBottomWidth: 2, borderColor: BrandColors.charcoal, backgroundColor: BrandColors.stone, padding: 20, gap: 8, marginTop: 8 },
+  creatorEyebrow: { color: BrandColors.charcoal, fontSize: 11, fontWeight: '800', letterSpacing: 1.4, textTransform: 'uppercase' },
+  creatorTitle: { color: BrandColors.charcoal, fontFamily: appFontFamily, fontSize: 24, lineHeight: 29, fontWeight: '700' },
+  contactPlaceholder: { color: BrandColors.charcoal, fontSize: 14, fontWeight: '700', marginTop: 6 },
+  contactLinks: { flexDirection: 'row', alignItems: 'center', gap: 20, marginTop: 6 },
+  contactLink: { color: BrandColors.charcoal, fontSize: 14, fontWeight: '700', textDecorationLine: 'underline' },
 });
