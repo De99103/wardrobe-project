@@ -12,6 +12,7 @@ import { styles } from '../styles/outfitStyles';
 import { Text, TextInput } from '../components/AppTypography';
 import { BrandColors } from '../constants/brand';
 import { useLanguage } from '../services/i18n';
+import { saveOutfitFeedback } from '../services/outfitFeedback';
 
 const occasionOptions = ['Everyday', 'Work', 'Dinner', 'Going out'] as const;
 const environmentOptions: { value: OutfitEnvironment; label: string }[] = [
@@ -22,6 +23,8 @@ const environmentOptions: { value: OutfitEnvironment; label: string }[] = [
 
 export default function OutfitScreen() {
   const { language } = useLanguage();
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [sendingFeedback, setSendingFeedback] = useState(false);
   const [items, setItems] = useState<SavedClothing[]>([]);
   const [location, setLocation] = useState('Linköping');
   const [occasion, setOccasion] = useState('everyday');
@@ -69,6 +72,7 @@ export default function OutfitScreen() {
   const selectedSaved = selectedOutfit ? savedRanks.includes(selectedOutfit.rank) : false;
 
   async function createOutfit() {
+    setFeedbackMessage('');
     if (savingOutfit) return;
     if (!location.trim()) { setError('Enter a city or postcode.'); return; }
     let plannedTime: string | null;
@@ -97,6 +101,7 @@ export default function OutfitScreen() {
       const currentIndex = rankedOutfits.findIndex(outfit => outfit.rank === selectedRank);
       const nextOutfit = currentIndex >= 0 ? rankedOutfits[currentIndex + 1] : rankedOutfits[0];
       if (nextOutfit) {
+        setFeedbackMessage('');
         setSelectedRank(nextOutfit.rank);
         setError('');
         return;
@@ -134,6 +139,18 @@ export default function OutfitScreen() {
   }
 
   const busy = loading || loadingWardrobe || savingOutfit;
+
+  async function rateOutfit(rating: 'like' | 'dislike') {
+    if (!selectedOutfit || sendingFeedback) return;
+    setSendingFeedback(true);
+    setFeedbackMessage('');
+    try {
+      await saveOutfitFeedback({ sourceUrls: selectedOutfit.sourceUrls, occasion: resultOccasion, rating });
+      setFeedbackMessage(language === 'ar' ? 'تم حفظ رأيك لتحسين الاقتراحات القادمة على هذا الجهاز.' : 'Feedback saved for future recommendations on this device.');
+    } catch {
+      setFeedbackMessage(language === 'ar' ? 'تعذّر حفظ رأيك. حاول مجدداً.' : 'Could not save feedback. Please try again.');
+    } finally { setSendingFeedback(false); }
+  }
 
   return <View style={styles.container}>
     <Stack.Screen options={{
@@ -314,7 +331,7 @@ export default function OutfitScreen() {
                 accessibilityRole="radio"
                 accessibilityState={{ checked: active }}
                 style={[styles.optionButton, active && styles.optionButtonSelected]}
-                onPress={() => setSelectedRank(outfit.rank)}
+                onPress={() => { setFeedbackMessage(''); setSelectedRank(outfit.rank); }}
               >
                 <Text style={styles.optionRank}>0{outfit.rank}</Text>
                 <Text style={[styles.optionLabel, active && styles.optionLabelSelected]}>{outfit.label}</Text>
@@ -325,6 +342,15 @@ export default function OutfitScreen() {
         </View>}
 
         {selectedOutfit && <View style={styles.card}>
+          <View style={[styles.occasionRow, language === 'ar' && styles.occasionRowArabic]}>
+            <Pressable accessibilityRole="button" disabled={sendingFeedback} style={styles.occasionPill} onPress={() => rateOutfit('like')}>
+              <Text>{language === 'ar' ? 'سأرتدي هذه الإطلالة' : 'I’d wear this'}</Text>
+            </Pressable>
+            <Pressable accessibilityRole="button" disabled={sendingFeedback} style={styles.occasionPill} onPress={() => rateOutfit('dislike')}>
+              <Text>{language === 'ar' ? 'ليست من ذوقي' : 'Not my style'}</Text>
+            </Pressable>
+          </View>
+          {!!feedbackMessage && <Text accessibilityLiveRegion="polite">{feedbackMessage}</Text>}
           <Text style={styles.resultEyebrow}>{selectedOutfit.label}</Text>
           <Text style={styles.cardTitle}>{selectedOutfit.title}</Text>
           <Text style={styles.explanation}>{selectedOutfit.explanation}</Text>

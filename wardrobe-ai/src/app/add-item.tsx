@@ -5,6 +5,8 @@ import * as Crypto from 'expo-crypto';
 import { categories, categoryLabel, type Category } from '../services/collectionView';
 import { emptyDetails, manualProduct, type ManualDetails } from '../services/manualClothing';
 import { chooseClothingPhoto } from '../services/clothingPhoto';
+import { analyzeClothingPhoto } from '../services/photoAnalysis';
+import { useLanguage } from '../services/i18n';
 import { saveClothing } from '../services/wardrobeStorage';
 import { styles } from '../styles/addItemStyles';
 import { Text, TextInput } from '../components/AppTypography';
@@ -23,6 +25,9 @@ const questions: { key: keyof ManualDetails; label: string; placeholder: string 
 ];
 
 export default function AddItemScreen() {
+  const { language } = useLanguage();
+  const [analyzing, setAnalyzing] = useState(false);
+  const [reviewPhoto, setReviewPhoto] = useState(false);
   const { status } = useLocalSearchParams<{ status?: string }>();
   const collection = status === 'wishlist' ? 'wishlist' : 'owned';
   const [category, setCategory] = useState<Category | null>(null);
@@ -42,7 +47,16 @@ export default function AddItemScreen() {
     try {
       const selected = await chooseClothingPhoto();
       if (selected) setPhoto(selected);
-    } catch { setError('Could not open this photo. Please choose a supported image from your device.'); }
+    } catch (err) {
+      console.error('Photo upload failed:', err);
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Could not process this image.'
+      );
+    }
+
     finally { busy.current = false; setPicking(false); }
   }
 
@@ -64,7 +78,23 @@ export default function AddItemScreen() {
     } finally { busy.current = false; setSaving(false); }
   }
 
-  const disabled = saving || picking;
+  async function analyzePhoto() {
+    if (!photo || busy.current) return;
+    busy.current = true; setAnalyzing(true); setError('');
+    try {
+      const suggestions = await analyzeClothingPhoto(photo);
+      setCategory(suggestions.category);
+      setDetails(previous => ({
+        ...previous, name: suggestions.name ?? previous.name,
+        subcategory: suggestions.subcategory ?? previous.subcategory, color: suggestions.color ?? previous.color
+      }));
+      setStylingDetails(null); setShowDetails(true); setReviewPhoto(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not analyze photo. Enter details manually.');
+    } finally { busy.current = false; setAnalyzing(false); }
+  }
+
+  const disabled = saving || picking || analyzing;
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
     <Text style={styles.eyebrow}>Add to your collection</Text>
     <Text style={styles.title}>Tell us about this piece.</Text>
@@ -98,6 +128,11 @@ export default function AddItemScreen() {
           <Pressable accessibilityRole="button" disabled={disabled} onPress={() => setPhoto(null)}><Text style={styles.dangerLink}>Remove</Text></Pressable>
         </View>
         <Text style={styles.helper}>This photo will be saved even if you skip the details.</Text>
+        <Text style={styles.helper}>{language === 'ar' ? 'أرسل الصورة إلى Gemini لاقتراح التفاصيل، ثم راجعها قبل الحفظ.' : 'Send this photo to Gemini for suggested details, then review before saving.'}</Text>
+        <Pressable style={styles.secondaryButton} disabled={disabled} accessibilityRole="button" onPress={analyzePhoto}>
+          <Text style={styles.secondaryButtonText}>{analyzing ? (language === 'ar' ? 'جارٍ تحليل الصورة…' : 'Analyzing photo…') : (language === 'ar' ? 'حلّل الصورة بالذكاء الاصطناعي' : 'Analyze photo with AI')}</Text>
+        </Pressable>
+        {reviewPhoto && <Text style={styles.helper}>{language === 'ar' ? 'راجع الفئة والتفاصيل أدناه وعدّلها. لم يتم حفظ القطعة بعد.' : 'Review the category and details below and edit anything incorrect. This item has not been saved yet.'}</Text>}
       </> : <Pressable style={[styles.uploadArea, disabled && styles.disabled]} accessibilityRole="button" disabled={disabled} onPress={pickPhoto}>
         <Text style={styles.uploadIcon}>＋</Text>
         <Text style={styles.uploadTitle}>{picking ? 'Preparing photo…' : 'Choose from your device'}</Text>
@@ -116,7 +151,7 @@ export default function AddItemScreen() {
       </> : <>
         {questions.map(({ key, label, placeholder }) => <View key={key} style={styles.question}>
           <Text style={styles.label}>{label}</Text>
-          <TextInput style={styles.input} accessibilityLabel={label} value={details[key]} placeholder={placeholder} editable={!saving}
+          <TextInput style={styles.input} accessibilityLabel={label} value={details[key]} placeholder={placeholder} editable={!disabled}
             maxLength={key === 'currency' ? 3 : 2000} keyboardType={key === 'price' ? 'decimal-pad' : key === 'imageUrl' ? 'url' : 'default'}
             autoCapitalize={key === 'imageUrl' ? 'none' : key === 'currency' ? 'characters' : 'sentences'}
             onChangeText={value => setDetails(previous => ({ ...previous, [key]: value }))} />

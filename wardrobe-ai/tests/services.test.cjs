@@ -18,6 +18,7 @@ function load(name, overrides = {}, globals = {}) {
       if (key === './cloudWardrobe') return { storageAccount: async () => null };
       if (key === './productValidation') return load('productValidation');
       if (key === './stylingTags') return load('stylingTags');
+      if (key === './outfitFeedback') return { loadOutfitFeedback: async () => [] };
       if (key === './apiConfig') return { API_URL: 'https://api.example.com' };
       throw new Error(`Unexpected import: ${key}`);
     }, process: { env: { EXPO_PUBLIC_API_URL: 'https://api.example.com/' } },
@@ -30,6 +31,27 @@ const product = {
   color: null, material: null, price: 0, currency: 'SEK', imageUrl: null,
   sourceUrl: 'https://www.zara.com/product',
 };
+
+test('feedback replaces ratings for the same combination and isolates accounts', async () => {
+  let uid = 'alice';
+  const data = new Map();
+  const service = load('outfitFeedback', {
+    './firebaseClient': { storageAccount: async () => uid ? { uid } : null },
+    '@react-native-async-storage/async-storage': {
+      getItem: async key => data.get(key) ?? null,
+      setItem: async (key, value) => data.set(key, value),
+    },
+  });
+  await service.saveOutfitFeedback({ sourceUrls: ['a', 'b'], occasion: 'Work', rating: 'like' });
+  await service.saveOutfitFeedback({ sourceUrls: ['b', 'a'], occasion: 'Work', rating: 'dislike' });
+  let rows = await service.loadOutfitFeedback();
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].rating, 'dislike');
+  uid = 'bob';
+  assert.equal((await service.loadOutfitFeedback()).length, 0);
+  uid = null;
+  assert.equal((await service.loadOutfitFeedback()).length, 0);
+});
 
 test('language hydration runs once and cannot undo rapid explicit toggles', async () => {
   let resolveRead;

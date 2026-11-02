@@ -1,6 +1,7 @@
 import type { SavedClothing } from '../types/clothing';
 import { API_URL } from './apiConfig';
 import { inferClothingStyling } from './stylingTags';
+import { loadOutfitFeedback } from './outfitFeedback';
 
 export type WeatherSummary = {
   location: string;
@@ -125,6 +126,8 @@ export async function getOutfitRecommendation(
     };
   });
   if (!owned.length) throw new Error('Add at least one item to your wardrobe first.');
+  const ownedIds = new Set(owned.map(item => item.sourceUrl));
+  const feedback = (await loadOutfitFeedback()).filter(row => row.sourceUrls.every(url => ownedIds.has(url)));
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 45000);
   try {
@@ -138,6 +141,7 @@ export async function getOutfitRecommendation(
         environment: context.environment,
         hijab: context.hijab ?? 'no',
         items: owned,
+        feedback,
       }),
       signal: controller.signal,
     });

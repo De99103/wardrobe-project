@@ -1,5 +1,16 @@
 import type { SavedClothing, ClothingStatus } from '../types/clothing';
-export const categories = ['tops', 'bottoms', 'dresses', 'outerwear', 'shoes', 'accessories', 'uncategorized'] as const;
+
+export const categories = [
+  'tops',
+  'bottoms',
+  'dresses',
+  'outerwear',
+  'shoes',
+  'accessories',
+  'hijabs',
+  'uncategorized',
+] as const;
+
 export type Category = typeof categories[number];
 export type CollectionSort = 'type' | 'newest' | 'name';
 export const categoryLabel = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);

@@ -20,6 +20,7 @@ from hosted_reader import hosted_reader_enabled, read_product_page
 from gemini_reader import gemini_reader_enabled, read_product_with_gemini
 from clothing_normalization import NORMALIZATION_PROMPT
 from outfit_recommendation import OutfitRequest, OutfitResult, recommend_outfit
+from photo_analysis import PhotoRequest, PhotoDetails, analyze_photo
 
 load_dotenv()
 app = FastAPI()
@@ -45,6 +46,11 @@ app.add_middleware(CORSMiddleware,
 @app.get('/health')
 def health():
     return {'status': 'ok'}
+
+
+@app.post('/analyze-photo', response_model=PhotoDetails)
+def analyze_clothing_photo(request: PhotoRequest):
+    return analyze_photo(request)
 
 
 @app.get('/')
