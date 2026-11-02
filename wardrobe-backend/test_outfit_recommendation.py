@@ -59,7 +59,7 @@ class OutfitRecommendationTests(unittest.TestCase):
         sent = json.loads(client.chat.completions.create.call_args.kwargs['messages'][1]['content'])
         self.assertEqual(len(sent['ownedWardrobe']), 2)
 
-    def test_invented_item_is_rejected(self):
+    def test_invented_item_is_replaced_with_owned_item_fallback(self):
         completion = Mock()
         completion.choices = [Mock(message=Mock(content=json.dumps({
             'sourceUrls': ['manual:not-owned'], 'title': 'Invalid',
@@ -68,10 +68,9 @@ class OutfitRecommendationTests(unittest.TestCase):
         client = Mock()
         client.chat.completions.create.return_value = completion
         with patch.dict(os.environ, {'weather_api_key': 'secret'}, clear=True), \
-             patch('outfit_recommendation.requests.get', return_value=weather_response()), \
-             self.assertRaises(HTTPException) as error:
-            recommend_outfit(OutfitRequest(location='Stockholm', items=ITEMS), client, 'test-model')
-        self.assertEqual(error.exception.status_code, 502)
+             patch('outfit_recommendation.requests.get', return_value=weather_response()):
+            result = recommend_outfit(OutfitRequest(location='Stockholm', items=ITEMS), client, 'test-model')
+        self.assertEqual(result.outfit.sourceUrls, ['manual:top', 'manual:bottom'])
 
     def test_provider_failure_uses_owned_item_fallback(self):
         client = Mock()

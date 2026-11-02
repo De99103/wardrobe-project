@@ -154,6 +154,10 @@ def recommend_outfit(request, groq_client, model):
     allowed = {item.sourceUrl for item in request.items}
     selected = list(dict.fromkeys(choice.sourceUrls))
     if not selected or any(url not in allowed for url in selected):
-        raise HTTPException(502, 'The stylist returned an invalid outfit. Please try again.')
+        # A model can occasionally return a stale or altered URL for one
+        # location/occasion. Never expose that item, but keep the request
+        # useful by rebuilding the look from the validated wardrobe payload.
+        choice = _fallback_choice(request.items, weather, request.occasion)
+        selected = choice.sourceUrls
     choice.sourceUrls = selected
     return OutfitResult(weather=weather, outfit=choice)
