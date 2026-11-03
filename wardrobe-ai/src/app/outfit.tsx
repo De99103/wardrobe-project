@@ -30,7 +30,7 @@ export default function OutfitScreen() {
   const [occasion, setOccasion] = useState('everyday');
   const [plannedDate, setPlannedDate] = useState('');
   const [plannedClock, setPlannedClock] = useState('');
-  const [plannedDay, setPlannedDay] = useState<'today' | 'tomorrow' | ''>('');
+  const [plannedDay, setPlannedDay] = useState<'today' | 'tomorrow' | 'dayAfterTomorrow' | ''>('');
   const [environment, setEnvironment] = useState<OutfitEnvironment>('mixed');
   const [hijab, setHijab] = useState<HijabPreference>('no');
   const [result, setResult] = useState<OutfitRecommendation | null>(null);
@@ -199,9 +199,9 @@ export default function OutfitScreen() {
 
         <View style={styles.field}>
           <Text style={styles.label}>When will you wear it?</Text>
-          <Text style={styles.fieldHint}>Choose Today or Tomorrow, add a time, or use either one on its own.</Text>
+          <Text style={styles.fieldHint}>Choose a day in the next three days, add a time, or use either one on its own.</Text>
           <View style={[styles.occasionRow, language === 'ar' && styles.occasionRowArabic]}>
-            {(['today', 'tomorrow'] as const).map(day => <Pressable
+            {(['today', 'tomorrow', 'dayAfterTomorrow'] as const).map(day => <Pressable
               key={day}
               accessibilityRole="radio"
               accessibilityState={{ checked: plannedDay === day }}
@@ -209,10 +209,10 @@ export default function OutfitScreen() {
               style={[styles.occasionPill, plannedDay === day && styles.occasionPillSelected]}
               onPress={() => {
                 setPlannedDay(day);
-                setPlannedDate(dateForOffset(day === 'tomorrow' ? 1 : 0));
+                setPlannedDate(dateForOffset(day === 'today' ? 0 : day === 'tomorrow' ? 1 : 2));
               }}
             >
-              <Text style={[styles.occasionText, plannedDay === day && styles.occasionTextSelected]}>{day === 'today' ? 'Today' : 'Tomorrow'}</Text>
+              <Text style={[styles.occasionText, plannedDay === day && styles.occasionTextSelected]}>{day === 'today' ? 'Today' : day === 'tomorrow' ? 'Tomorrow' : 'Day after tomorrow'}</Text>
             </Pressable>)}
           </View>
           <View style={styles.timeRow}>

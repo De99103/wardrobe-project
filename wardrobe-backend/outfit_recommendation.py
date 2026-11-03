@@ -97,6 +97,26 @@ class CandidateSet(BaseModel):
     outfits: List[RankedOutfit] = Field(min_length=1, max_length=3)
 
 
+class ModelRankedOutfit(BaseModel):
+    """The compact shape sent to and received from the AI provider."""
+    model_config = ConfigDict(extra='forbid')
+
+    rank: int = Field(ge=1, le=3)
+    label: str = Field(min_length=1, max_length=60)
+    itemIds: List[int] = Field(min_length=1, max_length=8)
+    title: str = Field(min_length=1, max_length=120)
+    explanation: str = Field(min_length=1, max_length=800)
+    weatherTip: str = Field(min_length=1, max_length=500)
+    missingPieces: List[ShortTag] = Field(default_factory=list, max_length=6)
+    hijabColor: Optional[ShortTag] = None
+
+
+class ModelCandidateSet(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
+    outfits: List[ModelRankedOutfit] = Field(min_length=1, max_length=3)
+
+
 class OutfitContext(BaseModel):
     plannedTime: Optional[str]
     environment: Literal['indoors', 'outdoors', 'mixed']
@@ -150,6 +170,20 @@ def _missing_pieces(selected_items, weather):
     if (weather.feelsLikeC <= 12 or (weather.chanceOfRain or 0) >= 40) and 'outerwear' not in categories:
         missing.append('outerwear')
     return missing[:6]
+
+
+def _suggest_hijab_color(selected_items):
+    """Provide a useful suggestion even when no hijab is saved in the wardrobe."""
+    colors = ' '.join((item.color or '').casefold() for item in selected_items)
+    if any(value in colors for value in ('black', 'navy', 'grey', 'gray', 'charcoal')):
+        return 'ivory'
+    if any(value in colors for value in ('white', 'ivory', 'cream', 'beige', 'camel', 'brown')):
+        return 'soft taupe'
+    if any(value in colors for value in ('red', 'pink', 'burgundy', 'purple')):
+        return 'stone'
+    if any(value in colors for value in ('blue', 'green', 'teal')):
+        return 'warm beige'
+    return 'soft taupe'
 
 
 def _weather_key():
@@ -335,7 +369,8 @@ def _validated_candidates(candidates, items, weather, variation=None, hijab='no'
             explanation=candidate.explanation,
             weatherTip=candidate.weatherTip,
             missingPieces=list(dict.fromkeys([*candidate.missingPieces, *_missing_pieces(selected_items, weather)]))[:6],
-            hijabColor=candidate.hijabColor,
+            hijabColor=(candidate.hijabColor or _suggest_hijab_color(selected_items))
+            if hijab == 'yes' else None,
             rank=len(valid) + 1,
             label=label,
         ))
@@ -454,10 +489,40 @@ def _inferred_styling(item):
         layerRole=layer_role, styleTags=style_tags)
 
 
-def _prompt_item(item):
-    value = item.model_dump(exclude_none=True)
-    value['styling'] = _inferred_styling(item).model_dump()
-    return value
+def _prompt_item(item, item_id):
+    """Keep provider prompts small enough for the free Groq rate limit.
+
+    Store URLs can be hundreds of characters long and previously appeared in
+    the prompt several times.  The model only needs a stable reference, so it
+    receives a small integer and the server maps it back to the real URL.
+    """
+    return {
+        'id': item_id,
+        'name': item.name,
+        'category': item.category,
+        'color': item.color,
+        'material': item.material,
+        'styling': _inferred_styling(item).model_dump(exclude_none=True),
+    }
+
+
+def _model_candidates_to_candidates(generated, items):
+    by_id = {index: item.sourceUrl for index, item in enumerate(items, start=1)}
+    candidates = []
+    for outfit in generated.outfits:
+        if any(item_id not in by_id for item_id in outfit.itemIds):
+            continue
+        candidates.append(RankedOutfit(
+            rank=outfit.rank,
+            label=outfit.label,
+            sourceUrls=[by_id[item_id] for item_id in outfit.itemIds],
+            title=outfit.title,
+            explanation=outfit.explanation,
+            weatherTip=outfit.weatherTip,
+            missingPieces=outfit.missingPieces,
+            hijabColor=outfit.hijabColor,
+        ))
+    return candidates
 
 
 def recommend_outfit(request, groq_client, model):
@@ -477,8 +542,20 @@ def recommend_outfit(request, groq_client, model):
                 raise HTTPException(422, 'Add another piece of this type to your wardrobe before swapping it.')
 
     weather = fetch_current_weather(request.location, request.plannedTime)
-    wardrobe = [_prompt_item(item) for item in request.items]
-    schema = _strict_schema(CandidateSet.model_json_schema())
+    item_ids = {item.sourceUrl: index for index, item in enumerate(request.items, start=1)}
+    wardrobe = [_prompt_item(item, index) for index, item in enumerate(request.items, start=1)]
+
+    def compact_urls(urls):
+        return [item_ids[url] for url in urls if url in item_ids]
+
+    compact_variation = None
+    if variation:
+        compact_variation = {
+            'mode': variation.mode,
+            'currentItemIds': compact_urls(variation.currentSourceUrls),
+            'replaceItemId': item_ids.get(variation.replaceSourceUrl),
+            'avoidOutfits': [compact_urls(urls) for urls in variation.avoidOutfits],
+        }
     prompt = json.dumps({
         'weather': weather.model_dump(),
         'occasion': request.occasion,
@@ -493,9 +570,12 @@ def recommend_outfit(request, groq_client, model):
             if weather.feelsLikeC < 18 else
             'Do not create or label a warmer option in these mild or hot conditions.'),
         'ownedWardrobe': wardrobe,
-        'variation': variation.model_dump() if variation else None,
-        'previousFeedback': [entry.model_dump() for entry in request.feedback
-                             if set(entry.sourceUrls).issubset({item.sourceUrl for item in request.items})],
+        'variation': compact_variation,
+        'previousFeedback': [
+            {'itemIds': compact_urls(entry.sourceUrls), 'rating': entry.rating, 'occasion': entry.occasion}
+            for entry in request.feedback
+            if set(entry.sourceUrls).issubset(item_ids)
+        ],
     }, ensure_ascii=False)
     try:
         response = groq_client.chat.completions.create(
@@ -508,28 +588,37 @@ def recommend_outfit(request, groq_client, model):
                     'Rank primarily by weather comfort and safety, then occasion formality, color and pattern harmony, silhouette, and useful layering. '
                     'Use previousFeedback to personalize: favor qualities of liked combinations and avoid disliked combinations when suitable alternatives exist. '
                     'Feedback describes a combination for its occasion, not a blanket dislike of each piece. Weather safety takes priority over feedback. '
-                    'Use only exact sourceUrl values from ownedWardrobe; never invent or alter an item. '
+                    'Use only integer id values from ownedWardrobe in itemIds; never invent an id. '
                     'Each complete outfit should contain either a dress or a top and bottom. Include owned shoes in every outfit when available; '
                     'include outerwear for cold, rainy, or windy conditions and accessories when useful. '
                     'Treat styling tags as editable heuristic guidance, not guaranteed physical ratings. Use them when present, but never invent missing '
                     'attributes or claim waterproofing, windproofing, or fabric performance without explicit evidence. '
                     'Account for feels-like temperature, rain, wind, daylight, and whether the plans are indoors, outdoors, or mixed. '
-                    'If hijab is yes, select at most one owned hijab when available and give a matching hijabColor; '
+                    'If hijab is yes, select at most one owned hijab when available and always give a matching hijabColor, '
+                    'including when the user has not saved a hijab; '
                     'if hijab is no, do not select hijabs and leave hijabColor null. '
                     'Always include missingPieces as an array and hijabColor as a string or null. '
-                    'For a swap, preserve all currentSourceUrls except replaceSourceUrl and substitute exactly one different '
+                    'For a swap, preserve all currentItemIds except replaceItemId and substitute exactly one different '
                     'wardrobe item of the same category. For restyle, create a different composition from currentSourceUrls. '
                     'Avoid repeating any combination in variation.avoidOutfits. '
                     'Give each option a short useful label. Only offer a warmer variation in cool conditions; never call an option warmer in mild or hot weather. '
                     'If the wardrobe cannot support three distinct or complete outfits, return fewer options '
                     'instead of duplicating a look or adding unowned pieces. Include missingPieces as short generic categories '
                     'when the selected look needs something the user does not own or the model did not select. Keep explanations friendly, specific, and concise.'
+                    ' Return a single valid JSON object with this exact shape and no Markdown: '
+                    '{"outfits":[{"rank":1,"label":"short label","itemIds":[1,2],'
+                    '"title":"short title","explanation":"short explanation","weatherTip":"weather advice",'
+                    '"missingPieces":["generic category"],"hijabColor":null}]}. '
+                    'Every outfit object must include every field shown, even when missingPieces is empty or hijabColor is null.'
                 )},
                 {'role': 'user', 'content': prompt}],
-            response_format={'type': 'json_schema', 'json_schema': {
-                'name': 'weather_outfits', 'strict': True, 'schema': schema}})
-        generated = CandidateSet.model_validate_json(response.choices[0].message.content)
-        outfits = _validated_candidates(generated.outfits, request.items, weather, variation, request.hijab)
+            # gpt-oss occasionally rejects deeply nested strict schemas before it
+            # generates a response. We still validate the JSON with Pydantic below,
+            # while JSON mode lets the model reliably produce the requested shape.
+            response_format={'type': 'json_object'})
+        generated = ModelCandidateSet.model_validate_json(response.choices[0].message.content)
+        candidates = _model_candidates_to_candidates(generated, request.items)
+        outfits = _validated_candidates(candidates, request.items, weather, variation, request.hijab)
     except Exception:
         logging.getLogger(__name__).exception('AI outfit generation failed; using local alternatives')
         outfits = []

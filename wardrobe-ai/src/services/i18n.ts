@@ -45,6 +45,8 @@ const arabic: Record<string, string> = {
   'Set the scene': 'حدّد المناسبة', 'City': 'المدينة', 'Today': 'اليوم', 'Tomorrow': 'غداً',
   'Wishlist pieces stay out of your recommendation.': 'قطع قائمة الرغبات لا تدخل في اقتراحك.',
   'When will you wear it?': 'متى سترتديها؟', 'Choose Today or Tomorrow, add a time, or use either one on its own.': 'اختر اليوم أو غداً، أضف الوقت، أو استخدم أحدهما فقط.',
+  'Choose a day in the next three days, add a time, or use either one on its own.': 'اختر يوماً خلال الأيام الثلاثة القادمة، وأضف الوقت إن رغبت.',
+  'Day after tomorrow': 'بعد غد',
   'What are you dressing for?': 'لأي مناسبة ترتدي؟', 'Everyday': 'يومي', 'Work': 'العمل', 'Dinner': 'العشاء', 'Going out': 'خروج',
   'Where will you spend most of the time?': 'أين ستقضي معظم الوقت؟', 'Mostly indoors': 'غالباً في الداخل', 'Mostly outdoors': 'غالباً في الخارج', 'A mix of both': 'مزيج من الاثنين',
   'Do you wear a hijab?': 'هل ترتدين الحجاب؟', 'Yes': 'نعم', 'No': 'لا', 'Recommend an outfit  →': 'اقترح إطلالة  →', 'Show another look  →': 'اعرض إطلالة أخرى  ←', 'Style another outfit  →': 'نسّق إطلالة أخرى  ←',
