@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, Platform, Pressable, ScrollView, View } from 'react-native';
 import { Link, Stack, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { loadClothing, deleteClothing, moveToWardrobe } from '../services/wardrobeStorage';
+import { loadClothing, deleteClothing, moveToWardrobe, updateClothingCategory } from '../services/wardrobeStorage';
 import { categories, categoryLabel, collectionSections, storeLink } from '../services/collectionView';
 import type { Category, CollectionSort } from '../services/collectionView';
 import { AccountPanel } from '../components/AccountPanel';
@@ -14,6 +14,8 @@ export default function WardrobeScreen() {
   const { status: selectedStatus } = useLocalSearchParams<{ status?: string }>();
   const status: ClothingStatus = selectedStatus === 'wishlist' ? 'wishlist' : 'owned';
   const [items, setItems] = useState<SavedClothing[]>([]);
+  const [editingCategory, setEditingCategory] = useState<string | null>(null);
+  const [savingCategory, setSavingCategory] = useState(false);
   const [category, setCategory] = useState<Category | 'all'>('all');
   const [sort, setSort] = useState<CollectionSort>('type');
   const [loading, setLoading] = useState(true);
@@ -116,11 +118,20 @@ export default function WardrobeScreen() {
             const url = storeLink(item.sourceUrl);
             const key = `${item.status}:${item.sourceUrl}`;
             return <View style={styles.card}>
-              {item.imageUrl && <Image source={{ uri: item.imageUrl }} style={styles.image} resizeMode="cover" />}
+              {item.imageUrl ? <Image source={{ uri: item.imageUrl }} style={styles.image} resizeMode="contain" /> : <View style={[styles.image, { alignItems: 'center', justifyContent: 'center' }]}><Text>◇</Text></View>}
               <Text style={styles.cardEyebrow}>{categoryLabel(item.category ?? 'uncategorized')}</Text>
-              <Text style={styles.name}>{item.name ?? `${categoryLabel(item.category ?? 'uncategorized')} item`}</Text>
-              {!![item.brand, item.color, item.subcategory].filter(Boolean).length && <Text style={styles.meta}>{[item.brand, item.color, item.subcategory].filter(Boolean).join(' · ')}</Text>}
-              {item.price !== null && <Text style={styles.price}>{item.price} {item.currency ?? ''}</Text>}
+              <Pressable accessibilityRole="button" style={styles.chip} onPress={() => setEditingCategory(editingCategory === key ? null : key)}><Text>Change category</Text></Pressable>
+              {editingCategory === key && <View style={styles.row}>{categories.map(value => <Pressable key={value} accessibilityRole="button" disabled={savingCategory} style={styles.chip} onPress={async () => {
+                setSavingCategory(true); setDeleteError('');
+                try {
+                  await updateClothingCategory(item, value);
+                  setEditingCategory(null); refresh();
+                } catch { setDeleteError('Could not change category. Please try again.'); }
+                finally { setSavingCategory(false); }
+              }}><Text>{categoryLabel(value)}</Text></Pressable>)}</View>}
+              <Text style={styles.name} numberOfLines={2}>{item.name ?? `${categoryLabel(item.category ?? 'uncategorized')} item`}</Text>
+              <Text style={styles.meta} numberOfLines={2}>{[item.brand, item.color, item.subcategory].filter(Boolean).join(' · ') || ' '}</Text>
+              <Text style={styles.price}>{item.price !== null ? `${item.price} ${item.currency ?? ''}` : ' '}</Text>
               {url && <Link href={url as `https://${string}`} target="_blank" rel="noopener noreferrer" accessibilityLabel={`Open store page for ${item.name ?? 'this item'}`} style={styles.storeLink}>Open store page ↗</Link>}
               {item.status === 'wishlist' && <Pressable style={styles.moveButton} accessibilityRole="button" disabled={deleting || moving !== null} onPress={() => markBought(item)}><Text style={styles.moveButtonText}>{moving === item.sourceUrl ? 'Moving…' : 'I bought this  →'}</Text></Pressable>}
               {confirmDelete === key ? <View style={styles.confirmPanel}>

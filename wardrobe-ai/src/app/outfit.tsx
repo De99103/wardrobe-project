@@ -26,6 +26,8 @@ export default function OutfitScreen() {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [sendingFeedback, setSendingFeedback] = useState(false);
   const [items, setItems] = useState<SavedClothing[]>([]);
+  const [requiredSourceUrls, setRequiredSourceUrls] = useState<string[]>([]);
+  const [piecePickerOpen, setPiecePickerOpen] = useState(false);
   const [location, setLocation] = useState('Linköping');
   const [occasion, setOccasion] = useState('everyday');
   const [plannedDate, setPlannedDate] = useState('');
@@ -87,7 +89,7 @@ export default function OutfitScreen() {
     }
     setLoading(true); setError(''); setSavedError('');
     try {
-      const recommendation = await getOutfitRecommendation(location, occasion, owned, { plannedTime, environment, hijab }, variation);
+      const recommendation = await getOutfitRecommendation(location, occasion, owned, { plannedTime, environment, hijab, requiredSourceUrls }, variation);
       setResult(recommendation);
       setChangeMode(null);
       setReplaceUrl(null);
@@ -180,6 +182,23 @@ export default function OutfitScreen() {
       <View style={styles.setupCard}>
         <View style={styles.sectionHeading}>
           <Text style={styles.sectionTitle}>Set the scene</Text>
+          <Text style={styles.sectionTitle}>{language === 'ar' ? 'ابدأ بقطع من خزانتك' : 'Build around your pieces'}</Text>
+          <Text>{language === 'ar' ? 'اختياري: اختر قطعة واحدة من كل فئة لهذه الإطلالة.' : 'Optional: choose one piece per category for this outfit.'}</Text>
+          <Pressable accessibilityRole="button" accessibilityState={{ expanded: piecePickerOpen }} style={styles.occasionPill} onPress={() => setPiecePickerOpen(open => !open)}>
+            <Text>{language === 'ar' ? `اختر القطع (${requiredSourceUrls.length})` : requiredSourceUrls.length ? `${requiredSourceUrls.length} pieces selected` : 'Choose wardrobe pieces'} {piecePickerOpen ? '⌃' : '⌄'}</Text>
+          </Pressable>
+          {piecePickerOpen && <ScrollView style={{ maxHeight: 280 }} nestedScrollEnabled>
+            {owned.map(item => <Pressable key={item.sourceUrl} accessibilityRole="checkbox" accessibilityState={{ checked: requiredSourceUrls.includes(item.sourceUrl) }} style={styles.occasionPill}
+              onPress={() => {
+                setRequiredSourceUrls(previous => previous.includes(item.sourceUrl)
+                  ? previous.filter(url => url !== item.sourceUrl)
+                  : [...previous.filter(url => item.category === 'accessories' || (owned.find(piece => piece.sourceUrl === url)?.category || 'uncategorized') !== (item.category || 'uncategorized')), item.sourceUrl]);
+                setResult(null);
+              }}>
+              <Text>{requiredSourceUrls.includes(item.sourceUrl) ? '☑ ' : '☐ '}{item.name || item.category}</Text>
+            </Pressable>)}
+            <Pressable accessibilityRole="button" style={styles.occasionPill} onPress={() => setPiecePickerOpen(false)}><Text>{language === 'ar' ? 'تم' : 'Done'}</Text></Pressable>
+          </ScrollView>}
           <Text style={styles.sectionSubtitle}>Wishlist pieces stay out of your recommendation.</Text>
         </View>
 

@@ -52,6 +52,7 @@ export type OutfitContext = {
   plannedTime: string | null;
   environment: OutfitEnvironment;
   hijab?: HijabPreference;
+  requiredSourceUrls?: string[];
 };
 
 function isOutfitChoice(value: unknown): value is OutfitChoice {
@@ -149,6 +150,7 @@ export async function getOutfitRecommendation(
         environment: context.environment,
         hijab: context.hijab ?? 'no',
         items: owned,
+        requiredSourceUrls: context.requiredSourceUrls ?? [],
         feedback,
         variation: variation ?? null,
       }),

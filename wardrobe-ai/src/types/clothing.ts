@@ -25,6 +25,7 @@ export type ImportedProduct = {
   price: number | null;
   currency: string | null;
   imageUrl: string | null;
+  imageUrls?: string[];
   sourceUrl: string;
   // Optional so wardrobes saved before styling tags were introduced stay valid.
   styling?: ClothingStyling;

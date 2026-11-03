@@ -141,6 +141,7 @@ def analyze_product(data, source_url, method):
         raise HTTPException(422, 'Could not identify a product on this page. Open the product itself and try the browser extension.')
     result = ProductAttributes.model_validate(result).model_dump()
     return {**result, 'sourceUrl': source_url, 'imageUrl': data.get('imageUrl'),
+            'imageUrls': data.get('imageUrls', []),
             'importMethod': method, 'evidence': evidence, 'brandSource': data.get('brandSource')}
 
 

@@ -52,6 +52,23 @@ export function saveClothing(product: ImportedProduct, status: ClothingStatus): 
   return operation;
 }
 
+export function updateClothingCategory(item: SavedClothing, category: SavedClothing['category']): Promise<void> {
+  const session = storageAccount();
+  const operation = pending.then(async () => {
+    const user = await session;
+    const updated = { ...item, category };
+    if (user) {
+      await saveCloudClothing(user.uid, updated);
+      return;
+    }
+    const items = await loadDeviceClothing();
+    await AsyncStorage.setItem(KEY, JSON.stringify(items.map(saved =>
+      saved.sourceUrl === item.sourceUrl && saved.status === item.status ? { ...saved, category } : saved)));
+  });
+  pending = operation.catch(() => undefined);
+  return operation;
+}
+
 export function deleteClothing(item: Pick<SavedClothing, 'sourceUrl' | 'status'>): Promise<void> {
   const session = storageAccount();
   const operation = pending.then(async () => {

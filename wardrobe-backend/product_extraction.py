@@ -137,6 +137,18 @@ def extract_product_data(html, page_url):
             image = image_url(candidate, page_url)
             if image:
                 break
+    images = []
+    raw_images = product.get('image') or []
+    for raw in ([image] + (raw_images if isinstance(raw_images, list) else [raw_images])):
+        candidate = image_url(raw, page_url)
+        if candidate and candidate not in images:
+            images.append(candidate)
+    if len(images) < 2:
+        region = soup.find('main') or soup
+        for tag in region.select('img')[:40]:
+            candidate = image_url(tag.get('data-src') or tag.get('src'), page_url)
+            if candidate and candidate not in images:
+                images.append(candidate)
     brand = brand_name(product.get('brand'), entities)
     brand_source = 'product_schema' if brand else None
     if not brand:
@@ -181,5 +193,5 @@ def extract_product_data(html, page_url):
     # Keep valid JSON rather than truncating a serialized object halfway through.
     if len(json.dumps(product, ensure_ascii=False)) > 16000:
         evidence['structured_product'] = {**direct, 'description': description}
-    return {'text': json.dumps(evidence, ensure_ascii=False), 'imageUrl': image,
+    return {'text': json.dumps(evidence, ensure_ascii=False), 'imageUrl': image, 'imageUrls': images[:20],
             'direct': direct, 'brandSource': brand_source, 'structured': bool(product.get('name')), 'evidence': {key: str(value) for key, value in direct.items() if value is not None}}

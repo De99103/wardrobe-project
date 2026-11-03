@@ -51,6 +51,7 @@ export default function ImportResultScreen() {
   }>();
 
   const [product, setProduct] = useState<ImportedProduct | null>(null);
+  const [choosingPhoto, setChoosingPhoto] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -280,6 +281,14 @@ export default function ImportResultScreen() {
         )}
       </View>
 
+      {!!product.imageUrls?.length && <View>
+        <Pressable accessibilityRole="button" onPress={() => setChoosingPhoto(value => !value)}><Text>Choose another photo</Text></Pressable>
+        {choosingPhoto && <ScrollView horizontal>
+          {product.imageUrls.map(uri => <Pressable key={uri} accessibilityRole="button" accessibilityLabel="Select product photo" onPress={() => { setProduct({ ...product, imageUrl: uri }); setChoosingPhoto(false); }}>
+            <Image source={{ uri }} style={{ width: 100, height: 120, margin: 6 }} resizeMode="contain" />
+          </Pressable>)}
+        </ScrollView>}
+      </View>}
       {/* Product information */}
       {editing && editDetails ? <View style={styles.editCard}>
         <Text style={styles.cardTitle}>Edit product details</Text>

@@ -51,6 +51,7 @@ class OutfitVariation(BaseModel):
 
 
 class OutfitRequest(BaseModel):
+    requiredSourceUrls: List[str] = Field(default_factory=list, max_length=8)
     location: str = Field(min_length=2, max_length=200)
     occasion: str = Field(default='everyday', min_length=2, max_length=200)
     plannedTime: Optional[str] = Field(
@@ -526,6 +527,15 @@ def _model_candidates_to_candidates(generated, items):
 
 
 def recommend_outfit(request, groq_client, model):
+    required = set(request.requiredSourceUrls)
+    if not required.issubset({item.sourceUrl for item in request.items}):
+        raise HTTPException(422, 'A selected piece is no longer in your wardrobe.')
+    required_items = [item for item in request.items if item.sourceUrl in required]
+    required_categories = [_category(item) for item in required_items if _category(item) != 'accessories']
+    if len(required_categories) != len(set(required_categories)):
+        raise HTTPException(422, 'Choose only one piece per category.')
+    if required_items and not _valid_composition(required_items, False):
+        raise HTTPException(422, 'These pieces cannot form one outfit. Choose compatible pieces.')
     variation = request.variation
     if variation:
         by_url = {item.sourceUrl: item for item in request.items}
@@ -570,6 +580,7 @@ def recommend_outfit(request, groq_client, model):
             if weather.feelsLikeC < 18 else
             'Do not create or label a warmer option in these mild or hot conditions.'),
         'ownedWardrobe': wardrobe,
+        'requiredItemIds': compact_urls(request.requiredSourceUrls),
         'variation': compact_variation,
         'previousFeedback': [
             {'itemIds': compact_urls(entry.sourceUrls), 'rating': entry.rating, 'occasion': entry.occasion}
@@ -589,6 +600,7 @@ def recommend_outfit(request, groq_client, model):
                     'Use previousFeedback to personalize: favor qualities of liked combinations and avoid disliked combinations when suitable alternatives exist. '
                     'Feedback describes a combination for its occasion, not a blanket dislike of each piece. Weather safety takes priority over feedback. '
                     'Use only integer id values from ownedWardrobe in itemIds; never invent an id. '
+                    'Include all requiredItemIds in the outfit for this request. They are not a permanent preference. '
                     'Each complete outfit should contain either a dress or a top and bottom. Include owned shoes in every outfit when available; '
                     'include outerwear for cold, rainy, or windy conditions and accessories when useful. '
                     'Treat styling tags as editable heuristic guidance, not guaranteed physical ratings. Use them when present, but never invent missing '
@@ -626,6 +638,10 @@ def recommend_outfit(request, groq_client, model):
     used_fallback = not outfits
     if not outfits:
         outfits = _fallback_variations(request.items, weather, request.occasion, request.hijab, variation)
+    if required:
+        outfits = [outfit for outfit in outfits if required.issubset(outfit.sourceUrls)]
+        if not outfits:
+            raise HTTPException(422, 'Could not build a suitable outfit around these pieces. Try again or choose fewer pieces.')
     if not outfits:
         if variation:
             raise HTTPException(422, 'No different suitable combination is available. Try adding more pieces to your wardrobe.')
