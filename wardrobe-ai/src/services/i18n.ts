@@ -34,6 +34,18 @@ function hydrateLanguage() {
 }
 
 const arabic: Record<string, string> = {
+  'Sunny and mild—no outerwear needed.': 'الطقس مشمس ومعتدل، ولا حاجة إلى جاكيت أو معطف.',
+  'Sunny and mild—no outerwear needed': 'الطقس مشمس ومعتدل، ولا حاجة إلى جاكيت أو معطف.',
+  'Sunny and mild — no outerwear needed.': 'الطقس مشمس ومعتدل، ولا حاجة إلى جاكيت أو معطف.',
+  'Classic Black Dress': 'فستان أسود كلاسيكي',
+  'CLASSIC BLACK DRESS': 'فستان أسود كلاسيكي',
+  'Black Maxi Dress with Hijab': 'فستان أسود طويل مع حجاب',
+  'Casual Sweater & Jeans': 'كنزة وجينز لإطلالة يومية',
+  'CASUAL SWEATER & JEANS': 'كنزة وجينز لإطلالة يومية',
+  'White Sweater & Blue Jeans': 'كنزة بيضاء وجينز أزرق',
+  'Stylish Flared Pants': 'بنطال واسع الساقين لإطلالة أنيقة',
+  'STYLISH FLARED PANTS': 'بنطال واسع الساقين لإطلالة أنيقة',
+  'Beige Sweater & Dark Gray Pants': 'كنزة بيج وبنطال رمادي داكن',
   'Choose the best match so we can organize and style it correctly.': 'اختر الفئة الأنسب لتنظيم القطعة وتنسيقها بشكل صحيح.',
   'Not sure? Uncategorized is always a safe choice.': 'لست متأكداً؟ يمكنك اختيار غير مصنّف.',
   'This photo will be saved even if you skip the details.': 'ستُحفظ الصورة حتى إن تخطّيت التفاصيل.',
