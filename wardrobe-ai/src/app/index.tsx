@@ -8,6 +8,7 @@ import {
 import { Link, router, useLocalSearchParams } from 'expo-router';
 
 import { Text } from '../components/AppTypography';
+import { RouteSeo } from '../components/RouteSeo';
 import { styles } from '../styles/homeStyles';
 import { observeAccount } from '../services/firebaseClient';
 import type { ClothingStatus } from '../types/clothing';
@@ -25,6 +26,10 @@ export default function HomeScreen() {
 
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={styles.container}>
+      <RouteSeo
+        title="Wearly | Digital Wardrobe & AI Outfit Planner"
+        description="Organize the clothes you own, manage a wishlist, and get personalized AI outfit recommendations with Wearly."
+      />
       <View style={styles.brandRow}>
         <View style={styles.brandIdentity}>
           <Link href="/" asChild><Pressable accessibilityRole="button" accessibilityLabel="Go to home"><Text style={styles.brandName}>WEARLY</Text></Pressable></Link>
@@ -36,7 +41,8 @@ export default function HomeScreen() {
         </View>
       </View>
       <View style={styles.hero}>
-        <Text style={styles.heroTitle}>{userName ? `${language === 'ar' ? 'أهلاً،' : 'Welcome,'}\n${userName}` : language === 'ar' ? 'أهلاً WEARLY' : 'Welcome to W E A R L Y'}</Text>
+        <Text accessibilityRole="header" style={styles.heroTitle}>{userName ? `${language === 'ar' ? 'أهلاً،' : 'Welcome,'}\n${userName}` : language === 'ar' ? 'خزانتكِ بأسلوب جديد.' : 'Your wardrobe, reimagined.'}</Text>
+        {!userName && <Text style={styles.heroDescription}>Wearly is your digital wardrobe for organizing clothes, saving future finds, and creating AI outfit ideas around your style, plans, and weather.</Text>}
         {!userName && <Text style={styles.heroHint}>
           {language === 'ar' ? 'أول مرة هنا؟ ' : 'First time here? '}
           <Link href="/information" style={styles.heroLink}>{language === 'ar' ? 'اطّلع على المعلومات' : 'Visit Information'}</Link>
@@ -55,6 +61,21 @@ export default function HomeScreen() {
           <Text style={styles.quickCardMeta}>Keep an eye on future finds</Text>
         </Pressable>
       </View>
+
+      {!userName && <View style={styles.featureSummary}>
+        <View style={styles.featureItem}>
+          <Text style={styles.featureTitle}>Build your wardrobe</Text>
+          <Text style={styles.featureBody}>Add pieces yourself, with a photo, or from a public store link.</Text>
+        </View>
+        <View style={styles.featureItem}>
+          <Text style={styles.featureTitle}>Style with context</Text>
+          <Text style={styles.featureBody}>Create weather-aware looks for everyday plans, work, dinners, and more.</Text>
+        </View>
+        <View style={styles.featureItem}>
+          <Text style={styles.featureTitle}>Save what works</Text>
+          <Text style={styles.featureBody}>Keep favorite outfit combinations and build a more personal wardrobe over time.</Text>
+        </View>
+      </View>}
 
       <View style={styles.homeLinks}>
         <Pressable accessibilityRole="button" onPress={() => router.push('/saved-outfits')}>

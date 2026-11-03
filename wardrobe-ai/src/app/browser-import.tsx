@@ -3,6 +3,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { styles } from '../styles/importResultStyles';
 import { Text, TextInput } from '../components/AppTypography';
+import { RouteSeo } from '../components/RouteSeo';
 
 export default function BrowserImportScreen() {
   const { status: requestedStatus } = useLocalSearchParams<{ status?: string }>();
@@ -28,6 +29,7 @@ export default function BrowserImportScreen() {
 
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container}>
+      <RouteSeo title="Import an item | Wearly" path="/browser-import" noIndex />
       <View style={styles.header}>
         <Text style={styles.eyebrow}>STORE IMPORT</Text>
         <Text style={styles.title}>Add from a product link.</Text>

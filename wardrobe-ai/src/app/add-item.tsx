@@ -10,6 +10,7 @@ import { useLanguage } from '../services/i18n';
 import { saveClothing } from '../services/wardrobeStorage';
 import { styles } from '../styles/addItemStyles';
 import { Text, TextInput } from '../components/AppTypography';
+import { RouteSeo } from '../components/RouteSeo';
 import { StylingEditor } from '../components/StylingEditor';
 import { BrandColors } from '../constants/brand';
 import { stylingDraft, stylingFromDraft, type StylingDraft } from '../services/stylingTags';
@@ -97,6 +98,7 @@ export default function AddItemScreen() {
 
   const disabled = saving || picking || analyzing;
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+    <RouteSeo title="Add an item | Wearly" path="/add-item" noIndex />
     <Text style={styles.eyebrow}>Add to your collection</Text>
     <Text style={styles.title}>Tell us about this piece.</Text>
     <Text style={styles.subtitle}>Start with a category. A photo and the details are completely optional.</Text>

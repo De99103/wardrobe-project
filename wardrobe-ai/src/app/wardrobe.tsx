@@ -6,6 +6,7 @@ import { categories, categoryLabel, collectionSections, storeLink } from '../ser
 import type { Category, CollectionSort } from '../services/collectionView';
 import { AccountPanel } from '../components/AccountPanel';
 import { Text } from '../components/AppTypography';
+import { RouteSeo } from '../components/RouteSeo';
 import { BrandColors } from '../constants/brand';
 import type { ClothingStatus, SavedClothing } from '../types/clothing';
 import { styles } from '../styles/collectionStyles';
@@ -106,6 +107,7 @@ export default function WardrobeScreen() {
   </View>;
   return (
     <View style={styles.container}>
+      <RouteSeo title="My wardrobe | Wearly" path="/wardrobe" noIndex />
       <Stack.Screen options={{ title: 'Collection' }} />
       {loading ? <ScrollView style={styles.collectionList} contentContainerStyle={styles.list}>{collectionHeader}<ActivityIndicator color={BrandColors.charcoal} /></ScrollView>
         : error ? <ScrollView style={styles.collectionList} contentContainerStyle={styles.list}>{collectionHeader}<View style={styles.errorPanel}><Text style={styles.error}>{error}</Text><Pressable style={styles.button} accessibilityRole="button" onPress={refresh}><Text style={styles.buttonText}>Try Again</Text></Pressable></View></ScrollView> : (
