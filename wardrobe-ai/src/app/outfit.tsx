@@ -91,7 +91,9 @@ export default function OutfitScreen() {
     }
     setLoading(true); setError(''); setSavedError('');
     try {
-      const recommendation = await getOutfitRecommendation(location, occasion, owned, { plannedTime, environment, hijab, requiredSourceUrls, language }, variation);
+      const recommendation = await getOutfitRecommendation(location, occasion, owned, { plannedTime, environment, hijab, requiredSourceUrls, language,
+        favoriteOutfits: savedOutfits.slice(0, 10).map(saved => ({ sourceUrls: saved.outfit.sourceUrls, occasion: saved.occasion })),
+      }, variation);
       setResult(recommendation);
       setChangeMode(null);
       setReplaceUrl(null);

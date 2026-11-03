@@ -54,6 +54,7 @@ export type OutfitContext = {
   hijab?: HijabPreference;
   requiredSourceUrls?: string[];
   language?: 'en' | 'ar';
+  favoriteOutfits?: { sourceUrls: string[]; occasion: string }[];
 };
 
 function isOutfitChoice(value: unknown): value is OutfitChoice {
@@ -153,6 +154,7 @@ export async function getOutfitRecommendation(
         items: owned,
         requiredSourceUrls: context.requiredSourceUrls ?? [],
         language: context.language ?? 'en',
+        favoriteOutfits: (context.favoriteOutfits ?? []).slice(0, 10),
         feedback,
         variation: variation ?? null,
       }),

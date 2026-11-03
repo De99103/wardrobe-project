@@ -51,7 +51,13 @@ class OutfitVariation(BaseModel):
     avoidOutfits: List[List[str]] = Field(default_factory=list, max_length=20)
 
 
+class FavoriteOutfit(BaseModel):
+    sourceUrls: List[Annotated[str, Field(min_length=1, max_length=2048)]] = Field(min_length=1, max_length=8)
+    occasion: str = Field(max_length=200)
+
+
 class OutfitRequest(BaseModel):
+    favoriteOutfits: List[FavoriteOutfit] = Field(default_factory=list, max_length=10)
     language: Literal['en', 'ar'] = 'en'
     requiredSourceUrls: List[str] = Field(default_factory=list, max_length=8)
     location: str = Field(min_length=2, max_length=200)
@@ -593,6 +599,11 @@ def recommend_outfit(request, groq_client, model):
             if weather.feelsLikeC < 18 else
             'Do not create or label a warmer option in these mild or hot conditions.'),
         'ownedWardrobe': wardrobe,
+        'savedStyleExamples': [
+            {'itemIds': compact_urls(saved.sourceUrls), 'occasion': saved.occasion}
+            for saved in request.favoriteOutfits
+            if set(saved.sourceUrls).issubset(item_ids)
+        ],
         'requiredItemIds': compact_urls(request.requiredSourceUrls),
         'variation': compact_variation,
         'previousFeedback': [
@@ -612,6 +623,11 @@ def recommend_outfit(request, groq_client, model):
                     'Create up to three genuinely distinct outfits, strongest first, for the occasion, planned time, environment, and weather. '
                     'Rank primarily by weather comfort and safety, then occasion formality, color and pattern harmony, silhouette, and useful layering. '
                     'Use previousFeedback to personalize: favor qualities of liked combinations and avoid disliked combinations when suitable alternatives exist. '
+                    'Treat savedStyleExamples as positive style examples. Infer recurring color palettes, formality, '
+                    'silhouettes, patterns and accessory choices from their referenced wardrobe items. Favor similar '
+                    'qualities in fresh combinations, especially for matching occasions. Do not simply copy saved '
+                    'outfits or infer personal identity, religion or body characteristics. Explicit adjustment requests '
+                    'and recent negative feedback override saved examples; weather safety always takes priority. '
                     'Use feedback reasons specifically: too_warm means lighter layers, too_cold means warmer layers, '
                     'too_formal or too_casual means adjust formality for that occasion, colors means improve color harmony, '
                     'comfort means favor comfortable alternatives without inventing fabric properties. '
