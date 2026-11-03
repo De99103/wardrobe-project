@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storageAccount } from './firebaseClient';
 
-export const feedbackReasons = ['too_warm', 'too_cold', 'too_formal', 'too_casual', 'colors', 'comfort', 'not_my_style'] as const;
+export const feedbackReasons = ['too_warm', 'too_cold', 'too_formal', 'too_casual', 'colors', 'comfort', 'not_my_style', 'more_elegant', 'more_interesting', 'minimal'] as const;
 export type FeedbackReason = typeof feedbackReasons[number];
 export type OutfitFeedback = { sourceUrls: string[]; rating: 'like' | 'dislike'; occasion: string; reason?: FeedbackReason };
 let pending = Promise.resolve();

@@ -38,7 +38,7 @@ class WardrobeItem(BaseModel):
 
 
 class OutfitFeedback(BaseModel):
-    reason: Optional[Literal['too_warm', 'too_cold', 'too_formal', 'too_casual', 'colors', 'comfort', 'not_my_style']] = None
+    reason: Optional[Literal['too_warm', 'too_cold', 'too_formal', 'too_casual', 'colors', 'comfort', 'not_my_style', 'more_elegant', 'more_interesting', 'minimal']] = None
     sourceUrls: List[Annotated[str, Field(min_length=1, max_length=2048)]] = Field(min_length=1, max_length=8)
     rating: Literal['like', 'dislike']
     occasion: str = Field(max_length=200)
@@ -615,6 +615,9 @@ def recommend_outfit(request, groq_client, model):
                     'Use feedback reasons specifically: too_warm means lighter layers, too_cold means warmer layers, '
                     'too_formal or too_casual means adjust formality for that occasion, colors means improve color harmony, '
                     'comfort means favor comfortable alternatives without inventing fabric properties. '
+                    'more_elegant means a polished coordinated silhouette; more_interesting means change one or two elements '
+                    'using a statement accessory, pattern or stronger color available in the wardrobe; minimal means simple '
+                    'lines, fewer accessories and restrained colors. Respect occasion and weather in every adjustment. '
                     'Feedback describes a combination for its occasion, not a blanket dislike of each piece. Weather safety takes priority over feedback. '
                     'Use only integer id values from ownedWardrobe in itemIds; never invent an id. '
                     'Include all requiredItemIds in the outfit for this request. They are not a permanent preference. '

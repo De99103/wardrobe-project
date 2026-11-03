@@ -423,11 +423,31 @@ export default function OutfitScreen() {
                 too_warm: ['Too warm', 'دافئة أكثر من اللازم'], too_cold: ['Too cold', 'غير دافئة بما يكفي'],
                 too_formal: ['Too formal', 'رسمية أكثر من اللازم'], too_casual: ['Too casual', 'غير رسمية بما يكفي'],
                 colors: ['Colors don’t match', 'الألوان غير متناسقة'], comfort: ['Not comfortable', 'غير مريحة'], not_my_style: ['Not my style', 'ليست من ذوقي'],
+                more_elegant: ['More elegant', 'أكثر أناقة'], more_interesting: ['More interesting', 'لمسة مميزة'], minimal: ['More minimal', 'أكثر بساطة'],
               };
               return <Pressable key={reason} disabled={sendingFeedback} accessibilityRole="button" style={styles.occasionPill} onPress={() => rateOutfit('dislike', reason)}><Text>{labels[reason][language === 'ar' ? 1 : 0]}</Text></Pressable>;
             })}</View>
           </View>}
           {!!feedbackMessage && <Text accessibilityLiveRegion="polite">{feedbackMessage}</Text>}
+          <Text>{language === 'ar' ? 'عدّل هذه الإطلالة' : 'Adjust this look'}</Text>
+          <View style={[styles.occasionRow, language === 'ar' && styles.occasionRowArabic]}>
+            {([
+              ['too_formal', 'Make it more casual', 'اجعلها أكثر عفوية'],
+              ['too_casual', 'Make it more formal', 'اجعلها أكثر رسمية'],
+              ['more_elegant', 'Make it more elegant', 'اجعلها أكثر أناقة'],
+              ['more_interesting', 'Make it more interesting', 'أضف لمسة مميزة'],
+              ['minimal', 'Keep it minimal', 'اجعلها بسيطة'],
+              ['colors', 'Try different colors', 'جرّب ألواناً مختلفة'],
+            ] as const).map(([reason, en, ar]) => <Pressable key={reason} accessibilityRole="button" disabled={busy || sendingFeedback} style={styles.occasionPill} onPress={async () => {
+              if (!selectedOutfit) return;
+              setSendingFeedback(true);
+              try {
+                await saveOutfitFeedback({ sourceUrls: selectedOutfit.sourceUrls, occasion: resultOccasion, rating: 'dislike', reason });
+                await createOutfit({ mode: 'restyle', currentSourceUrls: selectedOutfit.sourceUrls, avoidOutfits: previousLooks });
+              } catch { setFeedbackMessage(language === 'ar' ? 'تعذّر تعديل الإطلالة. حاول مجدداً.' : 'Could not adjust this look. Please try again.'); }
+              finally { setSendingFeedback(false); }
+            }}><Text>{language === 'ar' ? ar : en}</Text></Pressable>)}
+          </View>
           <Text style={styles.resultEyebrow}>{selectedOutfit.label}</Text>
           <Text style={styles.cardTitle}>{selectedOutfit.title}</Text>
           <Text style={styles.explanation}>{selectedOutfit.explanation}</Text>
