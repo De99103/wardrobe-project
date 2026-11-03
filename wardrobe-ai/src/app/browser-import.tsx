@@ -60,7 +60,7 @@ export default function BrowserImportScreen() {
         </View>
         {error ? <Text accessibilityRole="alert" style={styles.errorText}>{error}</Text> : null}
         <Pressable style={styles.button} accessibilityRole="button" onPress={continueToReview}>
-          <Text style={styles.buttonText}>Read product details  →</Text>
+          <Text style={styles.buttonText}>Read product details  →︎</Text>
         </Pressable>
       </View>
     </ScrollView>

@@ -40,7 +40,7 @@ function authError(error: unknown): Error | null {
     return new Error('Google sign-in is not enabled yet. Enable the Google provider in Firebase Authentication, then try again.');
   }
   if (code === 'auth/unauthorized-domain') {
-    return new Error(`This website is not authorized for Google sign-in yet. Add ${webHostname ?? 'your deployed hostname'} to Firebase Authentication → Settings → Authorized domains.`);
+    return new Error(`This website is not authorized for Google sign-in yet. Add ${webHostname ?? 'your deployed hostname'} to Firebase Authentication →︎ Settings →︎ Authorized domains.`);
   }
   if (code === 'auth/popup-blocked') {
     return new Error('Your browser blocked the Google sign-in window. Allow popups for this app, then try again.');

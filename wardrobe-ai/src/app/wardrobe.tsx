@@ -132,8 +132,8 @@ export default function WardrobeScreen() {
               <Text style={styles.name} numberOfLines={2}>{item.name ?? `${categoryLabel(item.category ?? 'uncategorized')} item`}</Text>
               <Text style={styles.meta} numberOfLines={2}>{[item.brand, item.color, item.subcategory].filter(Boolean).join(' · ') || ' '}</Text>
               <Text style={styles.price}>{item.price !== null ? `${item.price} ${item.currency ?? ''}` : ' '}</Text>
-              {url && <Link href={url as `https://${string}`} target="_blank" rel="noopener noreferrer" accessibilityLabel={`Open store page for ${item.name ?? 'this item'}`} style={styles.storeLink}>Open store page ↗</Link>}
-              {item.status === 'wishlist' && <Pressable style={styles.moveButton} accessibilityRole="button" disabled={deleting || moving !== null} onPress={() => markBought(item)}><Text style={styles.moveButtonText}>{moving === item.sourceUrl ? 'Moving…' : 'I bought this  →'}</Text></Pressable>}
+              {url && <Link href={url as `https://${string}`} target="_blank" rel="noopener noreferrer" accessibilityLabel={`Open store page for ${item.name ?? 'this item'}`} style={styles.storeLink}>Open store page ↗︎</Link>}
+              {item.status === 'wishlist' && <Pressable style={styles.moveButton} accessibilityRole="button" disabled={deleting || moving !== null} onPress={() => markBought(item)}><Text style={styles.moveButtonText}>{moving === item.sourceUrl ? 'Moving…' : 'I bought this  →︎'}</Text></Pressable>}
               {confirmDelete === key ? <View style={styles.confirmPanel}>
                 <Text style={styles.meta}>Delete {item.name ?? 'this item'} from {item.status === 'owned' ? 'Wardrobe' : 'Wishlist'}? This cannot be undone.</Text>
                 <View style={styles.row}>
@@ -146,7 +146,7 @@ export default function WardrobeScreen() {
       )}
       {deleteError ? <Text accessibilityRole="alert" style={styles.error}>{deleteError}</Text> : null}
       <View style={styles.actionPanel}>
-        {status === 'owned' && <Pressable style={styles.button} accessibilityRole="button" onPress={() => router.push('/outfit')}><Text style={styles.primaryButtonText}>Style an outfit  →</Text></Pressable>}
+        {status === 'owned' && <Pressable style={styles.button} accessibilityRole="button" onPress={() => router.push('/outfit')}><Text style={styles.primaryButtonText}>Style an outfit  →︎</Text></Pressable>}
         <View style={styles.actionRow}>
           <Pressable style={styles.secondaryButton} accessibilityRole="button" onPress={() => router.push({ pathname: '/add-item', params: { status } })}><Text style={styles.secondaryButtonText}>Add manually</Text></Pressable>
           <Pressable style={styles.secondaryButton} accessibilityRole="button" onPress={() => router.push({ pathname: '/browser-import', params: { status } })}><Text style={styles.secondaryButtonText}>Import a link</Text></Pressable>

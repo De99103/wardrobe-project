@@ -226,7 +226,7 @@ export default function ImportResultScreen() {
           <Text style={styles.cardTitle}>Automatic import paused</Text>
           {error && <Text style={styles.errorText}>{error}</Text>}
           <Pressable accessibilityRole="button" style={styles.button} onPress={() => setRetryCount(count => count + 1)} disabled={manualLoading}>
-            <Text style={styles.buttonText}>Retry automatic import  →</Text>
+            <Text style={styles.buttonText}>Retry automatic import  →︎</Text>
           </Pressable>
           {url && <Pressable accessibilityRole="button" style={styles.secondaryButton} onPress={handleManualEntry} disabled={manualLoading}>
             <Text style={styles.secondaryButtonText}>Enter product details manually</Text>
@@ -251,7 +251,7 @@ export default function ImportResultScreen() {
             {manualLoading ? <ActivityIndicator color={BrandColors.charcoal} /> : <Text style={styles.secondaryButtonText}>Analyze pasted details with AI</Text>}
           </Pressable>
         </View>
-        <Pressable accessibilityRole="button" onPress={() => router.back()}><Text style={styles.backText}>← Back to import</Text></Pressable>
+        <Pressable accessibilityRole="button" onPress={() => router.back()}><Text style={styles.backText}>←︎ Back to import</Text></Pressable>
       </ScrollView>
     );
   }
@@ -348,7 +348,7 @@ export default function ImportResultScreen() {
         </View>
         {missingDetails && <View style={styles.incompleteNotice}><Text style={styles.mutedNote}>Some details are missing. Add what you know before saving.</Text></View>}
         <Pressable accessibilityRole="button" style={styles.secondaryButton} onPress={() => beginEditing(product)}><Text style={styles.secondaryButtonText}>Edit product details</Text></Pressable>
-        <Link href={product.sourceUrl as `https://${string}`} target="_blank" rel="noopener noreferrer" style={styles.storeLink}>Open original product ↗</Link>
+        <Link href={product.sourceUrl as `https://${string}`} target="_blank" rel="noopener noreferrer" style={styles.storeLink}>Open original product ↗︎</Link>
       </View>}
 
       {/* Selected destination */}
@@ -362,7 +362,7 @@ export default function ImportResultScreen() {
         <Pressable accessibilityRole="button" style={styles.button} onPress={handleSave} disabled={saving}>
           {saving ? <ActivityIndicator color={BrandColors.ivory} /> : (
             <Text style={styles.buttonText}>
-              {collection === 'wishlist' ? 'Save to Wishlist  →' : 'Save to Wardrobe  →'}
+              {collection === 'wishlist' ? 'Save to Wishlist  →︎' : 'Save to Wardrobe  →︎'}
             </Text>
           )}
         </Pressable>

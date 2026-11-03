@@ -53,6 +53,7 @@ export type OutfitContext = {
   environment: OutfitEnvironment;
   hijab?: HijabPreference;
   requiredSourceUrls?: string[];
+  language?: 'en' | 'ar';
 };
 
 function isOutfitChoice(value: unknown): value is OutfitChoice {
@@ -151,6 +152,7 @@ export async function getOutfitRecommendation(
         hijab: context.hijab ?? 'no',
         items: owned,
         requiredSourceUrls: context.requiredSourceUrls ?? [],
+        language: context.language ?? 'en',
         feedback,
         variation: variation ?? null,
       }),

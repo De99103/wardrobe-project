@@ -89,7 +89,7 @@ export default function OutfitScreen() {
     }
     setLoading(true); setError(''); setSavedError('');
     try {
-      const recommendation = await getOutfitRecommendation(location, occasion, owned, { plannedTime, environment, hijab, requiredSourceUrls }, variation);
+      const recommendation = await getOutfitRecommendation(location, occasion, owned, { plannedTime, environment, hijab, requiredSourceUrls, language }, variation);
       setResult(recommendation);
       setChangeMode(null);
       setReplaceUrl(null);
@@ -322,7 +322,7 @@ export default function OutfitScreen() {
           onPress={handleRecommendationPress}
         >
           {loading ? <ActivityIndicator color={BrandColors.ivory} /> : null}
-          <Text style={styles.buttonText}>{loading ? 'Styling your outfit…' : result && rankedOutfits.length > 1 && rankedOutfits.findIndex(outfit => outfit.rank === selectedRank) < rankedOutfits.length - 1 ? 'Show another look  →' : result ? 'Style another outfit  →' : 'Recommend an outfit  →'}</Text>
+          <Text style={styles.buttonText}>{loading ? 'Styling your outfit…' : result && rankedOutfits.length > 1 && rankedOutfits.findIndex(outfit => outfit.rank === selectedRank) < rankedOutfits.length - 1 ? 'Show another look  →︎' : result ? 'Style another outfit  →︎' : 'Recommend an outfit  →︎'}</Text>
         </Pressable>
       </View>
 
@@ -351,7 +351,7 @@ export default function OutfitScreen() {
         {rankedOutfits.length > 1 && <View style={styles.optionSection}>
           <View style={styles.sectionHeading}>
             <Text style={styles.sectionTitle}>Choose your look</Text>
-            <Text style={styles.sectionSubtitle}>{rankedOutfits.length} ranked options, each made only from your wardrobe.</Text>
+            <Text style={styles.sectionSubtitle}>{language === 'ar' ? `${rankedOutfits.length} إطلالات مرتبة، جميعها من قطع خزانتك فقط.` : `${rankedOutfits.length} ranked options, each made only from your wardrobe.`}</Text>
           </View>
           <View style={styles.optionRow}>
             {rankedOutfits.map(outfit => {
@@ -402,7 +402,7 @@ export default function OutfitScreen() {
                 ...(changeMode === 'swap' ? { replaceSourceUrl: replaceUrl } : {}),
                 avoidOutfits: [...previousLooks, ...rankedOutfits.map(look => look.sourceUrls)].slice(-20),
               })}>
-              <Text style={styles.buttonText}>{loading ? 'Restyling…' : 'Show my new look →'}</Text>
+              <Text style={styles.buttonText}>{loading ? 'Restyling…' : 'Show my new look →︎'}</Text>
             </Pressable>}
           </View>
           <View style={[styles.occasionRow, language === 'ar' && styles.occasionRowArabic]}>
@@ -456,7 +456,7 @@ export default function OutfitScreen() {
         </View>}
       </>}
 
-      <Link href="/saved-outfits"><Text>Saved outfits →</Text></Link>
+      <Link href="/saved-outfits"><Text>Saved outfits →︎</Text></Link>
       {!!savedError && <View style={styles.errorBox}><Text accessibilityRole="alert" style={styles.error}>{savedError}</Text></View>}
     </ScrollView>
   </View>;

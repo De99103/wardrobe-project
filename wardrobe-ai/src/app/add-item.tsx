@@ -175,7 +175,7 @@ export default function AddItemScreen() {
 
     {error ? <Text style={styles.error} accessibilityRole="alert">{error}</Text> : null}
     {saving ? <ActivityIndicator color={BrandColors.charcoal} /> : null}
-    {showDetails && <Pressable style={[styles.primaryButton, disabled && styles.disabled]} disabled={disabled} accessibilityRole="button" onPress={() => save(false)}><Text style={styles.primaryButtonText}>Save item  →</Text></Pressable>}
+    {showDetails && <Pressable style={[styles.primaryButton, disabled && styles.disabled]} disabled={disabled} accessibilityRole="button" onPress={() => save(false)}><Text style={styles.primaryButtonText}>Save item  →︎</Text></Pressable>}
     <Pressable style={[showDetails ? styles.secondaryButton : styles.primaryButton, disabled && styles.disabled]} disabled={disabled} accessibilityRole="button" onPress={() => save(true)}>
       <Text style={showDetails ? styles.secondaryButtonText : styles.primaryButtonText}>Skip details & save</Text>
     </Pressable>

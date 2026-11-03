@@ -25,7 +25,7 @@ export function AppHeaderBack() {
     if (navigation.canGoBack()) navigation.goBack();
     else router.replace('/');
   };
-  return <HeaderButton label="Back" symbol="←" onPress={goBack} />;
+  return <HeaderButton label="Back" symbol="←︎" onPress={goBack} />;
 }
 
 export function AppHeaderHome() {
@@ -41,7 +41,7 @@ export function AppHeader({ title }: { title: string }) {
   const navigation = useNavigation();
   const goBack = () => navigation.canGoBack() ? navigation.goBack() : router.replace('/');
   return <View style={styles.header}>
-    <View style={styles.headerSide}><HeaderButton label="Back" symbol="←" onPress={goBack} /></View>
+    <View style={styles.headerSide}><HeaderButton label="Back" symbol="←︎" onPress={goBack} /></View>
     <Text style={styles.headerTitle}>{title}</Text>
     <View style={[styles.headerSide, styles.headerRight]}><AppHeaderLanguage /><HeaderButton label="Home" symbol="⌂" onPress={() => router.replace('/')} /></View>
   </View>;

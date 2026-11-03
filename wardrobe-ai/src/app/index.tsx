@@ -46,27 +46,27 @@ export default function HomeScreen() {
       <View style={styles.quickGrid}>
         <Pressable style={styles.quickCard} accessibilityRole="button" onPress={() => router.push({ pathname: '/wardrobe', params: { status: 'owned' } })}>
           <Text style={styles.quickCardLabel}>COLLECTION</Text>
-          <View style={[styles.cardTitleRow, language === 'ar' && styles.cardTitleRowArabic]}><Text style={styles.quickCardTitle}>My wardrobe</Text><Text style={styles.quickArrow}>{language === 'ar' ? '↖' : '↗'}</Text></View>
+          <View style={[styles.cardTitleRow, language === 'ar' && styles.cardTitleRowArabic]}><Text style={styles.quickCardTitle}>My wardrobe</Text><Text style={styles.quickArrow}>{language === 'ar' ? '↖︎' : '↗︎'}</Text></View>
           <Text style={styles.quickCardMeta}>Browse everything you own</Text>
         </Pressable>
         <Pressable style={[styles.quickCard, styles.quickCardAccent]} accessibilityRole="button" onPress={() => router.push({ pathname: '/wardrobe', params: { status: 'wishlist' } })}>
           <Text style={styles.quickCardLabel}>SAVED FOR LATER</Text>
-          <View style={[styles.cardTitleRow, language === 'ar' && styles.cardTitleRowArabic]}><Text style={styles.quickCardTitle}>Wishlist</Text><Text style={styles.quickArrow}>{language === 'ar' ? '↖' : '↗'}</Text></View>
+          <View style={[styles.cardTitleRow, language === 'ar' && styles.cardTitleRowArabic]}><Text style={styles.quickCardTitle}>Wishlist</Text><Text style={styles.quickArrow}>{language === 'ar' ? '↖︎' : '↗︎'}</Text></View>
           <Text style={styles.quickCardMeta}>Keep an eye on future finds</Text>
         </Pressable>
       </View>
 
       <View style={styles.homeLinks}>
         <Pressable accessibilityRole="button" onPress={() => router.push('/saved-outfits')}>
-          <Text style={styles.homeLink}>Saved outfits →</Text>
+          <Text style={styles.homeLink}>Saved outfits →︎</Text>
           <Text style={styles.homeLinkHint}>Your favorite looks, ready to wear again</Text>
         </Pressable>
         <Pressable accessibilityRole="button" onPress={() => router.push('/outfit')}>
-          <Text style={styles.homeLink}>Style an outfit  →</Text>
+          <Text style={styles.homeLink}>Style an outfit  →︎</Text>
           <Text style={styles.homeLinkHint}>With AI recommendation</Text>
         </Pressable>
         <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/add-item', params: { status } })}>
-          <Text style={styles.homeLink}>Add an item  →</Text>
+          <Text style={styles.homeLink}>Add an item  →︎</Text>
           <Text style={styles.homeLinkHint}>Manually or using a store link</Text>
         </Pressable>
       </View>
