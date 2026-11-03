@@ -38,6 +38,7 @@ class WardrobeItem(BaseModel):
 
 
 class OutfitFeedback(BaseModel):
+    reason: Optional[Literal['too_warm', 'too_cold', 'too_formal', 'too_casual', 'colors', 'comfort', 'not_my_style']] = None
     sourceUrls: List[Annotated[str, Field(min_length=1, max_length=2048)]] = Field(min_length=1, max_length=8)
     rating: Literal['like', 'dislike']
     occasion: str = Field(max_length=200)
@@ -595,7 +596,7 @@ def recommend_outfit(request, groq_client, model):
         'requiredItemIds': compact_urls(request.requiredSourceUrls),
         'variation': compact_variation,
         'previousFeedback': [
-            {'itemIds': compact_urls(entry.sourceUrls), 'rating': entry.rating, 'occasion': entry.occasion}
+            {'itemIds': compact_urls(entry.sourceUrls), 'rating': entry.rating, 'occasion': entry.occasion, 'reason': entry.reason}
             for entry in request.feedback
             if set(entry.sourceUrls).issubset(item_ids)
         ],
@@ -611,6 +612,9 @@ def recommend_outfit(request, groq_client, model):
                     'Create up to three genuinely distinct outfits, strongest first, for the occasion, planned time, environment, and weather. '
                     'Rank primarily by weather comfort and safety, then occasion formality, color and pattern harmony, silhouette, and useful layering. '
                     'Use previousFeedback to personalize: favor qualities of liked combinations and avoid disliked combinations when suitable alternatives exist. '
+                    'Use feedback reasons specifically: too_warm means lighter layers, too_cold means warmer layers, '
+                    'too_formal or too_casual means adjust formality for that occasion, colors means improve color harmony, '
+                    'comfort means favor comfortable alternatives without inventing fabric properties. '
                     'Feedback describes a combination for its occasion, not a blanket dislike of each piece. Weather safety takes priority over feedback. '
                     'Use only integer id values from ownedWardrobe in itemIds; never invent an id. '
                     'Include all requiredItemIds in the outfit for this request. They are not a permanent preference. '

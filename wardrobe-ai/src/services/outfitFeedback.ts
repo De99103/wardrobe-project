@@ -1,7 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storageAccount } from './firebaseClient';
 
-export type OutfitFeedback = { sourceUrls: string[]; rating: 'like' | 'dislike'; occasion: string };
+export const feedbackReasons = ['too_warm', 'too_cold', 'too_formal', 'too_casual', 'colors', 'comfort', 'not_my_style'] as const;
+export type FeedbackReason = typeof feedbackReasons[number];
+export type OutfitFeedback = { sourceUrls: string[]; rating: 'like' | 'dislike'; occasion: string; reason?: FeedbackReason };
 let pending = Promise.resolve();
 async function key() {
   const user = await storageAccount();
@@ -12,7 +14,7 @@ async function read(key: string): Promise<OutfitFeedback[]> {
   if (!raw) return [];
   const rows = JSON.parse(raw);
   if (!Array.isArray(rows) || !rows.every(row => row && ['like', 'dislike'].includes(row.rating)
-    && typeof row.occasion === 'string' && Array.isArray(row.sourceUrls)
+    && typeof row.occasion === 'string' && (row.reason === undefined || feedbackReasons.includes(row.reason)) && Array.isArray(row.sourceUrls)
     && row.sourceUrls.every((url: unknown) => typeof url === 'string'))) {
     throw new Error('Could not read outfit feedback.');
   }

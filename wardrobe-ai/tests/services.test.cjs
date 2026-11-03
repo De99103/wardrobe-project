@@ -43,10 +43,11 @@ test('feedback replaces ratings for the same combination and isolates accounts',
     },
   });
   await service.saveOutfitFeedback({ sourceUrls: ['a', 'b'], occasion: 'Work', rating: 'like' });
-  await service.saveOutfitFeedback({ sourceUrls: ['b', 'a'], occasion: 'Work', rating: 'dislike' });
+  await service.saveOutfitFeedback({ sourceUrls: ['b', 'a'], occasion: 'Work', rating: 'dislike', reason: 'too_warm' });
   let rows = await service.loadOutfitFeedback();
   assert.equal(rows.length, 1);
   assert.equal(rows[0].rating, 'dislike');
+  assert.equal(rows[0].reason, 'too_warm');
   uid = 'bob';
   assert.equal((await service.loadOutfitFeedback()).length, 0);
   uid = null;

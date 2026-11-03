@@ -13,6 +13,7 @@ import { Text, TextInput } from '../components/AppTypography';
 import { BrandColors } from '../constants/brand';
 import { useLanguage } from '../services/i18n';
 import { saveOutfitFeedback } from '../services/outfitFeedback';
+import { feedbackReasons, type FeedbackReason } from '../services/outfitFeedback';
 
 const occasionOptions = ['Everyday', 'Work', 'Dinner', 'Going out'] as const;
 const environmentOptions: { value: OutfitEnvironment; label: string }[] = [
@@ -25,6 +26,7 @@ export default function OutfitScreen() {
   const { language } = useLanguage();
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [sendingFeedback, setSendingFeedback] = useState(false);
+  const [showFeedbackReasons, setShowFeedbackReasons] = useState(false);
   const [items, setItems] = useState<SavedClothing[]>([]);
   const [requiredSourceUrls, setRequiredSourceUrls] = useState<string[]>([]);
   const [piecePickerOpen, setPiecePickerOpen] = useState(false);
@@ -153,12 +155,13 @@ export default function OutfitScreen() {
 
   const busy = loading || loadingWardrobe || savingOutfit;
 
-  async function rateOutfit(rating: 'like' | 'dislike') {
+  async function rateOutfit(rating: 'like' | 'dislike', reason?: FeedbackReason) {
     if (!selectedOutfit || sendingFeedback) return;
     setSendingFeedback(true);
     setFeedbackMessage('');
     try {
-      await saveOutfitFeedback({ sourceUrls: selectedOutfit.sourceUrls, occasion: resultOccasion, rating });
+      await saveOutfitFeedback({ sourceUrls: selectedOutfit.sourceUrls, occasion: resultOccasion, rating, ...(reason ? { reason } : {}) });
+      setShowFeedbackReasons(false);
       setFeedbackMessage(language === 'ar' ? 'تم حفظ رأيك لتحسين الاقتراحات القادمة على هذا الجهاز.' : 'Feedback saved for future recommendations on this device.');
     } catch {
       setFeedbackMessage(language === 'ar' ? 'تعذّر حفظ رأيك. حاول مجدداً.' : 'Could not save feedback. Please try again.');
@@ -409,10 +412,21 @@ export default function OutfitScreen() {
             <Pressable accessibilityRole="button" disabled={sendingFeedback} style={styles.occasionPill} onPress={() => rateOutfit('like')}>
               <Text>{language === 'ar' ? 'سأرتدي هذه الإطلالة' : 'I’d wear this'}</Text>
             </Pressable>
-            <Pressable accessibilityRole="button" disabled={sendingFeedback} style={styles.occasionPill} onPress={() => rateOutfit('dislike')}>
+            <Pressable accessibilityRole="button" disabled={sendingFeedback} style={styles.occasionPill} onPress={() => setShowFeedbackReasons(value => !value)}>
               <Text>{language === 'ar' ? 'ليست من ذوقي' : 'Not my style'}</Text>
             </Pressable>
           </View>
+          {showFeedbackReasons && <View>
+            <Text>{language === 'ar' ? 'ما الذي تريد تحسينه؟' : 'What should we improve?'}</Text>
+            <View style={styles.occasionRow}>{feedbackReasons.map(reason => {
+              const labels: Record<FeedbackReason, [string, string]> = {
+                too_warm: ['Too warm', 'دافئة أكثر من اللازم'], too_cold: ['Too cold', 'غير دافئة بما يكفي'],
+                too_formal: ['Too formal', 'رسمية أكثر من اللازم'], too_casual: ['Too casual', 'غير رسمية بما يكفي'],
+                colors: ['Colors don’t match', 'الألوان غير متناسقة'], comfort: ['Not comfortable', 'غير مريحة'], not_my_style: ['Not my style', 'ليست من ذوقي'],
+              };
+              return <Pressable key={reason} disabled={sendingFeedback} accessibilityRole="button" style={styles.occasionPill} onPress={() => rateOutfit('dislike', reason)}><Text>{labels[reason][language === 'ar' ? 1 : 0]}</Text></Pressable>;
+            })}</View>
+          </View>}
           {!!feedbackMessage && <Text accessibilityLiveRegion="polite">{feedbackMessage}</Text>}
           <Text style={styles.resultEyebrow}>{selectedOutfit.label}</Text>
           <Text style={styles.cardTitle}>{selectedOutfit.title}</Text>
