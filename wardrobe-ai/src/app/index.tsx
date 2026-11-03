@@ -57,12 +57,16 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.homeLinks}>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/saved-outfits')}>
+          <Text style={styles.homeLink}>Saved outfits →</Text>
+          <Text style={styles.homeLinkHint}>Your favorite looks, ready to wear again</Text>
+        </Pressable>
         <Pressable accessibilityRole="button" onPress={() => router.push('/outfit')}>
           <Text style={styles.homeLink}>Style an outfit  →</Text>
           <Text style={styles.homeLinkHint}>With AI recommendation</Text>
         </Pressable>
         <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/add-item', params: { status } })}>
-          <Text style={styles.homeLink}>Add a piece  →</Text>
+          <Text style={styles.homeLink}>Add an item  →</Text>
           <Text style={styles.homeLinkHint}>Manually or using a store link</Text>
         </Pressable>
       </View>

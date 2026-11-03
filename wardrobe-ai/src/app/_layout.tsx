@@ -32,6 +32,7 @@ export default function RootLayout() {
       <Stack.Screen name="import-result" options={{ title: 'Import' }} />
       <Stack.Screen name="information" options={{ title: 'Information' }} />
       <Stack.Screen name="outfit" options={{ title: 'Outfit stylist' }} />
+      <Stack.Screen name="saved-outfits" options={{ title: 'Saved outfits' }} />
       <Stack.Screen
         name="index"
         options={{ title: 'Wearly', headerShown: false, headerLeft: undefined, headerRight: undefined }}
