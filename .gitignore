@@ -33,3 +33,4 @@ wardrobe-backend/main 2.py
 **/.DS_Store
 .vscode/
 **/.vscode/
+/wardrobe-ai/firestore.rules
