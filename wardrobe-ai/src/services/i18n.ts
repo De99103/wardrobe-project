@@ -34,6 +34,9 @@ function hydrateLanguage() {
 }
 
 const arabic: Record<string, string> = {
+  'Pants': 'البناطيل',
+  'Jackets & Coats': 'الجاكيتات والمعاطف',
+  'No suitable replacement is available for this item while keeping your other pieces. Choose another item to replace.': 'لا يتوفر بديل مناسب لهذه القطعة مع إبقاء القطع الأخرى. اختر قطعة أخرى لاستبدالها.',
   'Sunny and mild—no outerwear needed.': 'الطقس مشمس ومعتدل، ولا حاجة إلى جاكيت أو معطف.',
   'Sunny and mild—no outerwear needed': 'الطقس مشمس ومعتدل، ولا حاجة إلى جاكيت أو معطف.',
   'Sunny and mild — no outerwear needed.': 'الطقس مشمس ومعتدل، ولا حاجة إلى جاكيت أو معطف.',
@@ -81,7 +84,7 @@ const arabic: Record<string, string> = {
   'Category': 'الفئة', 'Required': 'مطلوب', 'Optional': 'اختياري', 'Photo': 'الصورة', 'Details': 'التفاصيل',
   'Replace photo': 'تغيير الصورة', 'Add optional details': 'إضافة تفاصيل اختيارية', 'Skip this question': 'تخطّي هذا السؤال',
   'Review estimated styling details': 'مراجعة خصائص التنسيق المقترحة', 'Save item  →︎': 'حفظ القطعة ←︎',
-  'Skip details & save': 'تخطّي التفاصيل والحفظ', 'Brand': 'العلامة التجارية', 'Color': 'اللون', 'Material': 'الخامة',
+  'Skip details & save': 'تخطّي التفاصيل والحفظ', 'Brand': 'العلامة التجارية', 'Color': 'اللون', 'Material': 'القماش',
   'Price': 'السعر', 'Currency': 'العملة', 'Not available': 'غير متوفر', 'Unknown': 'غير معروف',
   'Reading the product page and preparing the details…': 'جارٍ قراءة صفحة المنتج وتجهيز التفاصيل…',
   'IMPORT ASSISTANT': 'مساعد الإضافة', 'Let’s try that again.': 'لنحاول مرة أخرى.',
@@ -149,6 +152,19 @@ const arabic: Record<string, string> = {
 
 export function translate(value: string, locale: AppLanguage = language): string { return locale === 'ar' ? arabic[value] ?? value : value; }
 export function getLanguage(): AppLanguage { return language; }
+export function localizedMaterial(value: string | null | undefined, locale: AppLanguage): string {
+  if (!value) return translate('Not available', locale);
+  if (locale !== 'ar') return value;
+  const words: Record<string, string> = {
+    cotton: 'قطن', bomull: 'قطن', wool: 'صوف', ull: 'صوف', linen: 'كتان', linne: 'كتان',
+    polyester: 'بوليستر', viscose: 'فيسكوز', viskos: 'فيسكوز', silk: 'حرير', siden: 'حرير',
+    leather: 'جلد', läder: 'جلد', elastane: 'إيلاستين', elastan: 'إيلاستين', spandex: 'إيلاستين',
+    nylon: 'نايلون', polyamide: 'بولي أميد', polyamid: 'بولي أميد', acrylic: 'أكريليك', akryl: 'أكريليك',
+    cashmere: 'كشمير', kashmir: 'كشمير', modal: 'مودال', lyocell: 'ليوسيل', denim: 'دنيم',
+    recycled: 'معاد التدوير', organic: 'عضوي', blend: 'مزيج', mix: 'مزيج', and: 'و',
+  };
+  return value.replace(/[A-Za-zÀ-ž]+/g, word => words[word.toLowerCase()] ?? word);
+}
 export async function setLanguage(value: AppLanguage) {
   language = value;
   revision += 1;

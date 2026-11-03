@@ -13,7 +13,7 @@ export const categories = [
 
 export type Category = typeof categories[number];
 export type CollectionSort = 'type' | 'newest' | 'name';
-export const categoryLabel = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+export const categoryLabel = (value: string) => value === 'outerwear' ? 'Jackets & Coats' : value === 'bottoms' ? 'Pants' : value.charAt(0).toUpperCase() + value.slice(1);
 export function clothingCategory(item: SavedClothing): Category {
   const value = item.category?.toLowerCase().trim();
   return categories.includes(value as Category) ? value as Category : 'uncategorized';

@@ -16,6 +16,17 @@ const patternWords = [
   ['animal print', /\b(animal print|leopard|zebra|snake print)\b/i], ['graphic', /\b(graphic|logo print|printed)\b/i],
 ] as const;
 const styleWords = [
+  ['chunky knit', /\b(chunky|cable knit|grovstickad)\b/i],
+  ['ribbed texture', /\b(ribbed|ribbstickad)\b/i],
+  ['satin finish', /\b(satin)\b/i],
+  ['structured', /\b(structured|tailored|figursydd)\b/i],
+  ['flowing', /\b(flowing|draped|draperad)\b/i],
+  ['oversized fit', /\b(oversized|oversize|loose fit)\b/i],
+  ['fitted', /\b(fitted|slim fit|figurnära)\b/i],
+  ['cropped length', /\b(cropped|crop top)\b/i],
+  ['maxi length', /\b(maxi|ankle.length)\b/i],
+  ['lightweight', /\b(lightweight|light.weight)\b/i],
+  ['heavyweight', /\b(heavyweight|heavy.weight)\b/i],
   ['casual', /\b(casual|everyday)\b/i], ['formal', /\b(formal|occasion|evening|tuxedo)\b/i],
   ['classic', /\b(classic|timeless|tailored)\b/i], ['minimal', /\b(minimal|clean-lined|simple)\b/i],
   ['sporty', /\b(sporty|athletic|training|running)\b/i], ['romantic', /\b(romantic|ruffle|lace|bow)\b/i],

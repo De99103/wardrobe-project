@@ -9,8 +9,10 @@ import { Text } from '../components/AppTypography';
 import { BrandColors } from '../constants/brand';
 import type { ClothingStatus, SavedClothing } from '../types/clothing';
 import { styles } from '../styles/collectionStyles';
+import { localizedMaterial, useLanguage } from '../services/i18n';
 
 export default function WardrobeScreen() {
+  const { language } = useLanguage();
   const { status: selectedStatus } = useLocalSearchParams<{ status?: string }>();
   const status: ClothingStatus = selectedStatus === 'wishlist' ? 'wishlist' : 'owned';
   const [items, setItems] = useState<SavedClothing[]>([]);
@@ -120,7 +122,7 @@ export default function WardrobeScreen() {
             return <View style={styles.card}>
               {item.imageUrl ? <Image source={{ uri: item.imageUrl }} style={styles.image} resizeMode="contain" /> : <View style={[styles.image, { alignItems: 'center', justifyContent: 'center' }]}><Text>◇</Text></View>}
               <Text style={styles.cardEyebrow}>{categoryLabel(item.category ?? 'uncategorized')}</Text>
-              <Pressable accessibilityRole="button" style={styles.chip} onPress={() => setEditingCategory(editingCategory === key ? null : key)}><Text>Change category</Text></Pressable>
+              <Pressable accessibilityRole="button" style={styles.chip} onPress={() => setEditingCategory(editingCategory === key ? null : key)}><Text style={{ fontSize: 12, fontStyle: 'italic', color: BrandColors.mutedText }}>Change category</Text></Pressable>
               {editingCategory === key && <View style={styles.row}>{categories.map(value => <Pressable key={value} accessibilityRole="button" disabled={savingCategory} style={styles.chip} onPress={async () => {
                 setSavingCategory(true); setDeleteError('');
                 try {
@@ -131,6 +133,10 @@ export default function WardrobeScreen() {
               }}><Text>{categoryLabel(value)}</Text></Pressable>)}</View>}
               <Text style={styles.name} numberOfLines={2}>{item.name ?? `${categoryLabel(item.category ?? 'uncategorized')} item`}</Text>
               <Text style={styles.meta} numberOfLines={2}>{[item.brand, item.color, item.subcategory].filter(Boolean).join(' · ') || ' '}</Text>
+              <View style={{ minHeight: 34 }}>
+                <Text style={styles.chipText}>Material</Text>
+                <Text numberOfLines={2} style={{ color: BrandColors.mutedText, fontSize: 12 }}>{localizedMaterial(item.material, language)}</Text>
+              </View>
               <Text style={styles.price}>{item.price !== null ? `${item.price} ${item.currency ?? ''}` : ' '}</Text>
               {url && <Link href={url as `https://${string}`} target="_blank" rel="noopener noreferrer" accessibilityLabel={`Open store page for ${item.name ?? 'this item'}`} style={styles.storeLink}>Open store page ↗︎</Link>}
               {item.status === 'wishlist' && <Pressable style={styles.moveButton} accessibilityRole="button" disabled={deleting || moving !== null} onPress={() => markBought(item)}><Text style={styles.moveButtonText}>{moving === item.sourceUrl ? 'Moving…' : 'I bought this  →︎'}</Text></Pressable>}

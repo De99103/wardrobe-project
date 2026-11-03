@@ -2,6 +2,7 @@ import type { SavedClothing } from '../types/clothing';
 import { API_URL } from './apiConfig';
 import { inferClothingStyling } from './stylingTags';
 import { loadOutfitFeedback } from './outfitFeedback';
+import { aiAuthorization } from './aiAuth';
 
 export type WeatherSummary = {
   location: string;
@@ -144,7 +145,7 @@ export async function getOutfitRecommendation(
   try {
     const response = await fetch(`${API_URL}/recommend-outfit`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Authorization: await aiAuthorization() },
       body: JSON.stringify({
         location: location.trim(),
         occasion: occasion.trim() || 'everyday',
@@ -162,7 +163,9 @@ export async function getOutfitRecommendation(
     });
     const data: unknown = await response.json().catch(() => null);
     if (!response.ok) {
+      if (response.status === 401) throw new Error(context.language === 'ar' ? 'سجّل الدخول للحصول على اقتراحات الإطلالات.' : 'Sign in to get outfit recommendations.');
       const detail = data && typeof data === 'object' && 'detail' in data ? data.detail : null;
+      if (detail === 'AI sign-in verification is not configured.') throw new Error(context.language === 'ar' ? 'خدمة الاقتراحات غير متاحة مؤقتاً. حاول لاحقاً.' : 'Outfit recommendations are temporarily unavailable. Please try again later.');
       throw new Error(typeof detail === 'string' ? detail : 'Could not create an outfit. Please try again.');
     }
     if (!isRecommendation(data)) throw new Error('The server returned an invalid outfit.');

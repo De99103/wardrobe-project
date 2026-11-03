@@ -188,6 +188,7 @@ test('outfit API sends planned context and structured styling, then accepts rank
   ];
   let request;
   const service = load('outfitApi', {
+    './aiAuth': { aiAuthorization: async () => 'Bearer test-token' },
     './stylingTags': { inferClothingStyling: () => styling },
   }, { fetch: async (url, options) => {
     request = { url, options, body: JSON.parse(options.body) };
@@ -226,7 +227,7 @@ test('outfit API rejects duplicate ranked looks and unknown items in every retur
   const item = { ...product, status: 'owned', savedAt: '2026-11-01', styling: null };
   const styling = { inferClothingStyling: () => ({ version: 1, colors: [], pattern: null, warmth: null, formality: null, layerRole: null, styleTags: [], seasonTags: [], waterproof: null, windproof: null, fit: null }) };
   let payload = { weather, outfit: choice, outfits: ranked, context: { plannedTime: null, environment: 'mixed' }, notice: null };
-  const service = load('outfitApi', { './stylingTags': styling }, { fetch: async () => ({ ok: true, json: async () => payload }) });
+  const service = load('outfitApi', { './aiAuth': { aiAuthorization: async () => 'Bearer test-token' }, './stylingTags': styling }, { fetch: async () => ({ ok: true, json: async () => payload }) });
   await assert.rejects(service.getOutfitRecommendation('Stockholm', 'Work', [item]), /invalid outfit/);
   payload = { ...payload, outfits: undefined, outfit: { ...choice, sourceUrls: ['manual:unknown'] } };
   await assert.rejects(service.getOutfitRecommendation('Stockholm', 'Work', [item]), /unknown wardrobe item/);

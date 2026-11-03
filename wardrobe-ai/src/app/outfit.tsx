@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native';
-import { Stack, Link } from 'expo-router';
+import { Stack, Link, router } from 'expo-router';
+import { storageAccount } from '../services/firebaseClient';
 
 import { getOutfitRecommendation } from '../services/outfitApi';
 import type { HijabPreference, OutfitEnvironment, OutfitRecommendation, RankedOutfit, OutfitVariation } from '../services/outfitApi';
@@ -27,6 +28,7 @@ export default function OutfitScreen() {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [sendingFeedback, setSendingFeedback] = useState(false);
   const [showFeedbackReasons, setShowFeedbackReasons] = useState(false);
+  const [showFeedbackInfo, setShowFeedbackInfo] = useState(false);
   const [items, setItems] = useState<SavedClothing[]>([]);
   const [requiredSourceUrls, setRequiredSourceUrls] = useState<string[]>([]);
   const [piecePickerOpen, setPiecePickerOpen] = useState(false);
@@ -79,6 +81,10 @@ export default function OutfitScreen() {
   const selectedSaved = selectedOutfit ? savedRanks.includes(selectedOutfit.rank) : false;
 
   async function createOutfit(variation?: OutfitVariation) {
+    if (!await storageAccount()) {
+      router.push('/account');
+      return;
+    }
     setFeedbackMessage('');
     if (savingOutfit) return;
     if (!location.trim()) { setError('Enter a city or postcode.'); return; }
@@ -91,10 +97,12 @@ export default function OutfitScreen() {
     }
     setLoading(true); setError(''); setSavedError('');
     try {
-      const recommendation = await getOutfitRecommendation(location, occasion, owned, { plannedTime, environment, hijab, requiredSourceUrls, language,
+      const pinnedForRequest = variation?.mode === 'swap' ? requiredSourceUrls.filter(url => url !== variation.replaceSourceUrl) : requiredSourceUrls;
+      const recommendation = await getOutfitRecommendation(location, occasion, owned, { plannedTime, environment, hijab, requiredSourceUrls: pinnedForRequest, language,
         favoriteOutfits: savedOutfits.slice(0, 10).map(saved => ({ sourceUrls: saved.outfit.sourceUrls, occasion: saved.occasion })),
       }, variation);
       setResult(recommendation);
+      if (variation?.mode === 'swap') setRequiredSourceUrls(pinnedForRequest);
       setChangeMode(null);
       setReplaceUrl(null);
       setPreviousLooks(previous => [...previous, ...rankedOutfits.map(look => look.sourceUrls), ...(recommendation.outfits?.map(look => look.sourceUrls) ?? [recommendation.outfit.sourceUrls])].slice(-20));
@@ -189,8 +197,8 @@ export default function OutfitScreen() {
           <Text style={styles.sectionTitle}>Set the scene</Text>
           <Text style={styles.sectionTitle}>{language === 'ar' ? 'ابدأ بقطع من خزانتك' : 'Build around your pieces'}</Text>
           <Text>{language === 'ar' ? 'اختياري: اختر قطعة واحدة من كل فئة لهذه الإطلالة.' : 'Optional: choose one piece per category for this outfit.'}</Text>
-          <Pressable accessibilityRole="button" accessibilityState={{ expanded: piecePickerOpen }} style={styles.occasionPill} onPress={() => setPiecePickerOpen(open => !open)}>
-            <Text>{language === 'ar' ? `اختر القطع (${requiredSourceUrls.length})` : requiredSourceUrls.length ? `${requiredSourceUrls.length} pieces selected` : 'Choose wardrobe pieces'} {piecePickerOpen ? '⌃' : '⌄'}</Text>
+          <Pressable accessibilityRole="button" accessibilityState={{ expanded: piecePickerOpen }} style={[styles.occasionPill, { backgroundColor: BrandColors.stone, borderBottomColor: BrandColors.charcoal, borderBottomWidth: 2, paddingHorizontal: 18, paddingVertical: 14, minHeight: 48 }]} onPress={() => setPiecePickerOpen(open => !open)}>
+            <Text style={{ fontWeight: '700', color: BrandColors.charcoal }}>{language === 'ar' ? `اختر القطع (${requiredSourceUrls.length})` : requiredSourceUrls.length ? `${requiredSourceUrls.length} pieces selected` : 'Choose wardrobe pieces'} {piecePickerOpen ? '⌃' : '⌄'}</Text>
           </Pressable>
           {piecePickerOpen && <ScrollView style={{ maxHeight: 280 }} nestedScrollEnabled>
             {owned.map(item => <Pressable key={item.sourceUrl} accessibilityRole="checkbox" accessibilityState={{ checked: requiredSourceUrls.includes(item.sourceUrl) }} style={styles.occasionPill}
@@ -366,7 +374,7 @@ export default function OutfitScreen() {
                 accessibilityRole="radio"
                 accessibilityState={{ checked: active }}
                 style={[styles.optionButton, active && styles.optionButtonSelected]}
-                onPress={() => { setFeedbackMessage(''); setSelectedRank(outfit.rank); }}
+                onPress={() => { setFeedbackMessage(''); setSelectedRank(outfit.rank); setChangeMode(null); setReplaceUrl(null); setShowFeedbackReasons(false); }}
               >
                 <Text style={styles.optionRank}>0{outfit.rank}</Text>
                 <Text style={[styles.optionLabel, active && styles.optionLabelSelected]}>{outfit.label}</Text>
@@ -377,9 +385,18 @@ export default function OutfitScreen() {
         </View>}
 
         {selectedOutfit && <View style={styles.card}>
-          <View style={styles.setupCard}>
+          <Text accessibilityLiveRegion="polite" style={styles.cardTitle}>{selectedOutfit.title}</Text>
+          <Text style={styles.explanation}>{selectedOutfit.explanation}</Text>
+          <View style={styles.savedImages}>
+            {selected.map(item => item.imageUrl ? <View key={item.sourceUrl} style={requiredSourceUrls.includes(item.sourceUrl) ? { borderWidth: 2, borderColor: '#A33232', borderRadius: 8, padding: 3 } : undefined}>
+              <Image source={{ uri: item.imageUrl }} style={styles.savedImage} resizeMode="contain" accessibilityLabel={item.name ?? 'Outfit item'} />
+              {requiredSourceUrls.includes(item.sourceUrl) && <Text style={{ color: '#A33232', fontSize: 12, fontWeight: '700', textAlign: 'center' }}>{language === 'ar' ? 'قطعة أساسية مختارة' : 'Must include'}</Text>}
+            </View> : null)}
+          </View>
+          <View style={{ backgroundColor: BrandColors.charcoalSoft, padding: 18, gap: 16, borderTopWidth: 1, borderBottomWidth: 1, borderColor: BrandColors.stone }}>
+          <View style={{ gap: 10 }}>
             <Text style={styles.sectionTitle}>Change this look</Text>
-            <Text style={styles.sectionSubtitle}>What would you like to change?</Text>
+            <Text style={styles.sectionSubtitle}>{language === 'ar' ? 'استبدل قطعة أو جرّب تنسيقاً مختلفاً، ثم أخبرنا برأيك.' : 'Swap a piece or try a different style, then tell us what you think.'}</Text>
             <View style={styles.occasionRow}>
               <Pressable accessibilityRole="button" style={[styles.occasionPill, changeMode === 'swap' && styles.occasionPillSelected]}
                 onPress={() => { setChangeMode('swap'); setReplaceUrl(null); }}>
@@ -410,6 +427,13 @@ export default function OutfitScreen() {
               <Text style={styles.buttonText}>{loading ? 'Restyling…' : 'Show my new look →︎'}</Text>
             </Pressable>}
           </View>
+          <View style={{ flexDirection: language === 'ar' ? 'row-reverse' : 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={{ fontWeight: '700' }}>{language === 'ar' ? 'رأيك في الإطلالة' : 'Your feedback'}</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel={language === 'ar' ? 'كيف يساعد رأيك؟' : 'How your feedback helps'} accessibilityState={{ expanded: showFeedbackInfo }} hitSlop={8} onPress={() => setShowFeedbackInfo(value => !value)} style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 1, borderColor: BrandColors.charcoal, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 13, fontWeight: '700', lineHeight: 17 }}>i</Text></View>
+            </Pressable>
+          </View>
+          {showFeedbackInfo && <Text accessibilityLiveRegion="polite" style={styles.sectionSubtitle}>{language === 'ar' ? 'أخبرنا بما يعجبك لنقترح إطلالات أقرب إلى ذوقك في المرات القادمة.' : 'Tell us what you like to help make future outfits feel more like you.'}</Text>}
           <View style={[styles.occasionRow, language === 'ar' && styles.occasionRowArabic]}>
             <Pressable accessibilityRole="button" disabled={sendingFeedback} style={styles.occasionPill} onPress={() => rateOutfit('like')}>
               <Text>{language === 'ar' ? 'سأرتدي هذه الإطلالة' : 'I’d wear this'}</Text>
@@ -431,7 +455,7 @@ export default function OutfitScreen() {
             })}</View>
           </View>}
           {!!feedbackMessage && <Text accessibilityLiveRegion="polite">{feedbackMessage}</Text>}
-          <Text>{language === 'ar' ? 'عدّل هذه الإطلالة' : 'Adjust this look'}</Text>
+          <Text style={{ fontWeight: '700' }}>{language === 'ar' ? 'جرّب أسلوباً آخر' : 'Try a different style'}</Text>
           <View style={[styles.occasionRow, language === 'ar' && styles.occasionRowArabic]}>
             {([
               ['too_formal', 'Make it more casual', 'اجعلها أكثر عفوية'],
@@ -450,9 +474,7 @@ export default function OutfitScreen() {
               finally { setSendingFeedback(false); }
             }}><Text>{language === 'ar' ? ar : en}</Text></Pressable>)}
           </View>
-          <Text style={styles.resultEyebrow}>{selectedOutfit.label}</Text>
-          <Text style={styles.cardTitle}>{selectedOutfit.title}</Text>
-          <Text style={styles.explanation}>{selectedOutfit.explanation}</Text>
+          </View>
           {!!selectedOutfit.hijabColor && <View style={styles.hijabBox}>
             <Text style={styles.missingTitle}>Hijab color suggestion</Text>
             <Text style={styles.missingText}>{selectedOutfit.hijabColor}</Text>
@@ -464,11 +486,12 @@ export default function OutfitScreen() {
 
           {!!selected.length && <View style={styles.itemList}>
             <Text style={styles.itemListTitle}>The pieces</Text>
-            {selected.map(item => <View key={item.sourceUrl} style={styles.item}>
+            {selected.map(item => <View key={item.sourceUrl} style={[styles.item, requiredSourceUrls.includes(item.sourceUrl) && { borderWidth: 2, borderColor: '#A33232', borderRadius: 8, padding: 10 }]}>
               {item.imageUrl
                 ? <Image source={{ uri: item.imageUrl }} style={styles.image} resizeMode="contain" />
                 : <View style={[styles.image, styles.imagePlaceholder]}><Text style={styles.imagePlaceholderText}>◇</Text></View>}
               <View style={styles.itemText}>
+                {requiredSourceUrls.includes(item.sourceUrl) && <Text style={{ color: '#A33232', fontSize: 12, fontWeight: '700' }}>{language === 'ar' ? 'قطعة أساسية مختارة' : 'Must include'}</Text>}
                 <Text style={styles.itemName}>{item.name ?? item.subcategory ?? 'Wardrobe item'}</Text>
                 <Text style={styles.itemMeta}>{[item.brand, item.color, item.category].filter(Boolean).join(' · ') || 'From your wardrobe'}</Text>
               </View>

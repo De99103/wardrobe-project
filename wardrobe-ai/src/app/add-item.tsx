@@ -86,7 +86,8 @@ export default function AddItemScreen() {
       setCategory(suggestions.category);
       setDetails(previous => ({
         ...previous, name: suggestions.name ?? previous.name,
-        subcategory: suggestions.subcategory ?? previous.subcategory, color: suggestions.color ?? previous.color
+        subcategory: suggestions.subcategory ?? previous.subcategory, color: suggestions.color ?? previous.color,
+        material: suggestions.material ?? previous.material
       }));
       setStylingDetails(null); setShowDetails(true); setReviewPhoto(true);
     } catch (err) {

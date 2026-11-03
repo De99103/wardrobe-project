@@ -8,7 +8,8 @@ from functools import lru_cache
 from typing import Optional, Literal, Dict
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, Depends
+from api_auth import require_user
 from fastapi.middleware.cors import CORSMiddleware
 from groq import Groq
 from pydantic import BaseModel, Field
@@ -40,7 +41,7 @@ configured_origins.update({
 })
 app.add_middleware(CORSMiddleware,
     allow_origins=sorted(configured_origins),
-    allow_methods=['GET', 'POST'], allow_headers=['Content-Type'])
+    allow_methods=['GET', 'POST'], allow_headers=['Content-Type', 'Authorization'])
 
 
 @app.get('/health')
@@ -49,7 +50,7 @@ def health():
 
 
 @app.post('/analyze-photo', response_model=PhotoDetails)
-def analyze_clothing_photo(request: PhotoRequest):
+def analyze_clothing_photo(request: PhotoRequest, uid: str = Depends(require_user)):
     return analyze_photo(request)
 
 
@@ -59,7 +60,7 @@ def root():
 
 
 @app.post('/recommend-outfit', response_model=OutfitResult)
-def recommend_weather_outfit(request: OutfitRequest):
+def recommend_weather_outfit(request: OutfitRequest, uid: str = Depends(require_user)):
     return recommend_outfit(request, get_client(), os.getenv('GROQ_MODEL', 'openai/gpt-oss-20b'))
 
 

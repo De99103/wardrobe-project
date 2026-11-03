@@ -294,18 +294,33 @@ def _valid_composition(selected_items, wardrobe_supports_complete):
     categories = [_category(item) for item in selected_items]
     if categories.count('bottoms') > 1 or categories.count('dresses') > 1 or categories.count('shoes') > 1:
         return False
-    if categories.count('outerwear') > 2 or categories.count('accessories') > 3 or categories.count('tops') > 2 or categories.count('hijabs') > 1:
+    if categories.count('outerwear') > 1 or categories.count('tops') > 1 or categories.count('hijabs') > 1:
         return False
     tops = [item for item in selected_items if _category(item) == 'tops']
     if len(tops) == 2:
         roles = [item.styling.layerRole if item.styling else None for item in tops]
         if None in roles or len(set(roles)) != 2:
             return False
-    if 'dresses' in categories and 'bottoms' in categories:
+    if 'dresses' in categories and ('bottoms' in categories or 'tops' in categories):
         return False
     if not wardrobe_supports_complete:
         return True
     return 'dresses' in categories or ('tops' in categories and 'bottoms' in categories)
+
+
+def _required_slots(selected, wardrobe, weather, hijab):
+    chosen = {_category(item) for item in selected}
+    available = {_category(item) for item in wardrobe}
+    if 'shoes' in available and 'shoes' not in chosen:
+        return False
+    needs_jacket = weather.feelsLikeC <= 14 or (weather.chanceOfRain or 0) >= 40
+    if needs_jacket and 'outerwear' in available and 'outerwear' not in chosen:
+        return False
+    if hijab == 'yes' and 'hijabs' in available and 'hijabs' not in chosen:
+        return False
+    if hijab == 'no' and 'hijabs' in chosen:
+        return False
+    return True
 
 
 def _strict_schema(schema):
@@ -326,6 +341,9 @@ def _strict_schema(schema):
 def _variation_signatures(variation):
     if not variation:
         return set()
+    if variation.mode == 'swap':
+        # A previously previewed look is still a valid explicit one-item swap.
+        return {frozenset(variation.currentSourceUrls)}
     return {frozenset(urls) for urls in [
         variation.currentSourceUrls, *variation.avoidOutfits
     ]}
@@ -366,6 +384,8 @@ def _validated_candidates(candidates, items, weather, variation=None, hijab='no'
         selected_items = [by_url[url] for url in selected_urls]
         if not _valid_composition(selected_items, supports_complete):
             continue
+        if not _required_slots(selected_items, items, weather, hijab):
+            continue
         if hijab == 'no' and any(_category(item) == 'hijabs' for item in selected_items):
             continue
         seen.add(signature)
@@ -374,16 +394,23 @@ def _validated_candidates(candidates, items, weather, variation=None, hijab='no'
             label = 'Alternative style'
         valid.append(RankedOutfit(
             sourceUrls=selected_urls,
-            title=candidate.title,
-            explanation=candidate.explanation,
-            weatherTip=candidate.weatherTip,
+            title=_user_text(candidate.title),
+            explanation=_user_text(candidate.explanation),
+            weatherTip=_user_text(candidate.weatherTip),
             missingPieces=list(dict.fromkeys([*candidate.missingPieces, *_missing_pieces(selected_items, weather)]))[:6],
             hijabColor=(candidate.hijabColor or _suggest_hijab_color(selected_items))
             if hijab == 'yes' else None,
             rank=len(valid) + 1,
-            label=label,
+            label=_user_text(label),
         ))
     return valid
+
+
+def _user_text(value):
+    """Remove leaked model-only item references without altering item identities."""
+    value = re.sub(r'[\(\[]\s*(?:item\s*)?id\s*[:#-]?\s*\d+(?:\s*,\s*(?:id\s*)?\d+)*\s*[\)\]]', '', value, flags=re.I)
+    value = re.sub(r'\b(?:item\s*)?id\s*[:#-]?\s*\d+\b', '', value, flags=re.I)
+    return re.sub(r'\s+([,.!?;:])', r'\1', re.sub(r' {2,}', ' ', value)).strip()
 
 
 def _fallback_variations(items, weather, occasion, hijab='no', variation=None, required=None):
@@ -443,6 +470,8 @@ def _fallback_variations(items, weather, occasion, hijab='no', variation=None, r
         if not _follows_variation(urls, variation, by_url):
             continue
         if not _valid_composition(combination, _wardrobe_supports_complete_outfit(items)):
+            continue
+        if not _required_slots(combination, items, weather, hijab):
             continue
         seen.add(signature)
         change = 'One-piece swap' if variation and variation.mode == 'swap' else 'Fresh combination'
@@ -519,6 +548,7 @@ def _prompt_item(item, item_id):
         'id': item_id,
         'name': item.name,
         'category': item.category,
+        'type': item.subcategory,
         'color': item.color,
         'material': item.material,
         'styling': _inferred_styling(item).model_dump(exclude_none=True),
@@ -546,6 +576,9 @@ def _model_candidates_to_candidates(generated, items):
 
 def recommend_outfit(request, groq_client, model):
     required = set(request.requiredSourceUrls)
+    if request.variation and request.variation.mode == 'swap':
+        # An explicit replacement overrides the original pinned-item choice.
+        required.discard(request.variation.replaceSourceUrl)
     if not required.issubset({item.sourceUrl for item in request.items}):
         raise HTTPException(422, 'A selected piece is no longer in your wardrobe.')
     required_items = [item for item in request.items if item.sourceUrl in required]
@@ -593,7 +626,8 @@ def recommend_outfit(request, groq_client, model):
         'hijab': request.hijab,
         'rankingCriteria': [
             'weather comfort and safety', 'occasion formality', 'color and pattern harmony',
-            'sensible silhouette and layering', 'distinctness from the other options'],
+            'fabric texture and weight compatibility', 'balanced proportions and garment structure',
+            'coherent fashion style or intentional contrast', 'sensible silhouette and layering', 'distinctness from the other options'],
         'variationGuidance': (
             'A warmer variation is useful when it remains comfortable.'
             if weather.feelsLikeC < 18 else
@@ -604,7 +638,7 @@ def recommend_outfit(request, groq_client, model):
             for saved in request.favoriteOutfits
             if set(saved.sourceUrls).issubset(item_ids)
         ],
-        'requiredItemIds': compact_urls(request.requiredSourceUrls),
+        'requiredItemIds': compact_urls(required),
         'variation': compact_variation,
         'previousFeedback': [
             {'itemIds': compact_urls(entry.sourceUrls), 'rating': entry.rating, 'occasion': entry.occasion, 'reason': entry.reason}
@@ -636,12 +670,28 @@ def recommend_outfit(request, groq_client, model):
                     'lines, fewer accessories and restrained colors. Respect occasion and weather in every adjustment. '
                     'Feedback describes a combination for its occasion, not a blanket dislike of each piece. Weather safety takes priority over feedback. '
                     'Use only integer id values from ownedWardrobe in itemIds; never invent an id. '
+                    'Internal IDs belong only in itemIds. Never mention IDs, item numbers, tag scores or rating numbers '
+                    'in labels, titles, explanations or weather advice. Refer to clothing by natural names. '
                     'Include all requiredItemIds in the outfit for this request. They are not a permanent preference. '
-                    'Each complete outfit should contain either a dress or a top and bottom. Include owned shoes in every outfit when available; '
+                    'Each outfit must contain exactly one dress OR exactly one top and one pair of pants, never both structures. '
+                    'Use exactly one pair of owned shoes when available, at most one jacket/coat, and exactly one owned hijab when hijab is yes and available. '
+                    'Include owned shoes in every outfit when available; '
+                    'Accessories have no fixed category count: include as many owned accessories as improve the look '
+                    'within the eight-item outfit size, prioritizing the required clothing slots. Avoid redundant bags '
+                    'or competing statement pieces unless explicitly requested. '
                     'include outerwear for cold, rainy, or windy conditions and accessories when useful. '
                     'Treat styling tags as editable heuristic guidance, not guaranteed physical ratings. Use them when present, but never invent missing '
                     'attributes or claim waterproofing, windproofing, or fabric performance without explicit evidence. '
                     'Account for feels-like temperature, rain, wind, daylight, and whether the plans are indoors, outdoors, or mixed. '
+                    'Evaluate materials, texture, weight, structure, fit and length before choosing each combination. '
+                    'Use type, material and explicit styling words as evidence; unknown details stay unknown. '
+                    'Do not treat fiber alone as proof of thickness, breathability, waterproofing or warmth. '
+                    'Balance proportions: consider cropped versus long and fitted versus oversized pieces. '
+                    'Avoid bulky midlayers beneath explicitly fitted outerwear. Do not assume fit when unspecified. '
+                    'Texture contrast such as chunky knit with smooth tailored fabric can work; identical fabrics are not required. '
+                    'Maintain an understandable style direction (minimal, tailored, sporty, romantic, casual), allowing deliberate '
+                    'contrasts such as trainers with tailoring when suitable for the occasion and user preferences. '
+                    'In the explanation, give one specific material, texture, proportion or style reason supported by the item data. '
                     'If hijab is yes, select at most one owned hijab when available and always give a matching hijabColor, '
                     'including when the user has not saved a hijab; '
                     'if hijab is no, do not select hijabs and leave hijabColor null. '
@@ -681,6 +731,8 @@ def recommend_outfit(request, groq_client, model):
     if required:
         outfits = [outfit for outfit in outfits if required.issubset(outfit.sourceUrls)]
         if not outfits:
+            if variation and variation.mode == 'swap':
+                raise HTTPException(422, 'No suitable replacement is available for this item while keeping your other pieces. Choose another item to replace.')
             raise HTTPException(422, 'Could not build a suitable outfit around these pieces. Try again or choose fewer pieces.')
     if not outfits:
         if variation:
