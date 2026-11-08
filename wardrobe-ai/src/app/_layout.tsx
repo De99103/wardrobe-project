@@ -1,4 +1,6 @@
 import { Stack } from 'expo-router';
+import { observeAccount } from '../services/firebaseClient';
+import { useActiveProfile } from '../components/ProfileLink';
 import { useEffect } from 'react';
 import { AppHeader } from '../components/AppHeaderNavigation';
 import { appFontFamily } from '../components/AppTypography';
@@ -7,6 +9,8 @@ import { useLanguage } from '../services/i18n';
 
 export default function RootLayout() {
   const { language } = useLanguage();
+  const profile = useActiveProfile();
+  useEffect(() => observeAccount(() => {}), []);
   useEffect(() => {
     if (typeof document !== 'undefined') {
       document.documentElement.dir = 'ltr';
@@ -16,7 +20,7 @@ export default function RootLayout() {
     }
   }, [language]);
   return (
-    <Stack screenOptions={{
+    <Stack key={profile.revision} screenOptions={{
       headerStyle: { backgroundColor: BrandColors.ivory } as any,
       headerShadowVisible: false,
       headerTintColor: BrandColors.charcoal,

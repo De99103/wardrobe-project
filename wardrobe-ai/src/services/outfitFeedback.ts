@@ -1,3 +1,4 @@
+import { getProfileSession, profileIdFor } from './profileSession';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storageAccount } from './firebaseClient';
 
@@ -6,8 +7,10 @@ export type FeedbackReason = typeof feedbackReasons[number];
 export type OutfitFeedback = { sourceUrls: string[]; rating: 'like' | 'dislike'; occasion: string; reason?: FeedbackReason };
 let pending = Promise.resolve();
 async function key() {
+  const profile = getProfileSession();
   const user = await storageAccount();
-  return `wearly:feedback:v1:${user?.uid ?? 'guest'}`;
+  const suffix = user && profileIdFor(user.uid, profile) === 'secondary' ? ':secondary' : '';
+  return `wearly:feedback:v1:${user?.uid ?? 'guest'}${suffix}`;
 }
 async function read(key: string): Promise<OutfitFeedback[]> {
   const raw = await AsyncStorage.getItem(key);
@@ -21,8 +24,9 @@ async function read(key: string): Promise<OutfitFeedback[]> {
   return rows.slice(0, 20);
 }
 export async function loadOutfitFeedback() {
+  const target = key();
   await pending;
-  return read(await key());
+  return read(await target);
 }
 export function saveOutfitFeedback(value: OutfitFeedback) {
   const owner = key();

@@ -9,6 +9,7 @@ import { Link, router, useLocalSearchParams } from 'expo-router';
 
 import { Text } from '../components/AppTypography';
 import { styles } from '../styles/homeStyles';
+import { ProfileLink, useActiveProfile } from '../components/ProfileLink';
 import { observeAccount } from '../services/firebaseClient';
 import type { ClothingStatus } from '../types/clothing';
 import { useLanguage } from '../services/i18n';
@@ -16,6 +17,7 @@ import { useLanguage } from '../services/i18n';
 export default function HomeScreen() {
   const { status: selectedStatus } = useLocalSearchParams<{ status?: string }>();
   const status: ClothingStatus = selectedStatus === 'wishlist' ? 'wishlist' : 'owned';
+  const profile = useActiveProfile();
   const [userName, setUserName] = useState<string | null>(null);
   const { language, setLanguage } = useLanguage();
 
@@ -35,8 +37,9 @@ export default function HomeScreen() {
           <Link href="/account" asChild><Pressable accessibilityRole="button" style={styles.infoButton}><Text style={styles.infoButtonText}>{userName ? 'Account' : 'Sign in'}</Text></Pressable></Link>
         </View>
       </View>
+      <ProfileLink />
       <View style={styles.hero}>
-        <Text style={styles.heroTitle}>{userName ? `${language === 'ar' ? 'أهلاً،' : 'Welcome,'}\n${userName}` : language === 'ar' ? 'أهلاً WEARLY' : 'Welcome to W E A R L Y'}</Text>
+        <Text style={styles.heroTitle}>{userName ? `${language === 'ar' ? 'أهلاً،' : 'Welcome,'}\n${profile.id === 'secondary' ? profile.name : userName}` : language === 'ar' ? 'أهلاً WEARLY' : 'Welcome to W E A R L Y'}</Text>
         {!userName && <Text style={styles.heroHint}>
           {language === 'ar' ? 'أول مرة هنا؟ ' : 'First time here? '}
           <Link href="/information" style={styles.heroLink}>{language === 'ar' ? 'اطّلع على المعلومات' : 'Visit Information'}</Link>

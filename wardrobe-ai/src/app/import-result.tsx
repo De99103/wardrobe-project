@@ -1,3 +1,4 @@
+import { ProfileLink } from '../components/ProfileLink';
 
 import { useEffect, useState } from 'react';
 
@@ -216,6 +217,7 @@ export default function ImportResultScreen() {
   if (error || !product) {
     return (
       <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={styles.container}>
+      <ProfileLink />
         <View style={styles.header}>
           <Text style={styles.eyebrow}>IMPORT ASSISTANT</Text>
           <Text style={styles.title}>Let’s try that again.</Text>
@@ -262,6 +264,7 @@ export default function ImportResultScreen() {
   // Successful product import
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ProfileLink />
       <View style={styles.header}>
         <Text style={styles.eyebrow}>READY TO SAVE</Text>
         <Text style={styles.title}>We found your piece.</Text>

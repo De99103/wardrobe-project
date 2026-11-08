@@ -1,3 +1,4 @@
+import { ProfileLink } from '../components/ProfileLink';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -10,6 +11,7 @@ import { useLanguage } from '../services/i18n';
 import { saveClothing } from '../services/wardrobeStorage';
 import { styles } from '../styles/addItemStyles';
 import { Text, TextInput } from '../components/AppTypography';
+import { AiSignInRequiredError } from '../services/aiErrors';
 import { StylingEditor } from '../components/StylingEditor';
 import { BrandColors } from '../constants/brand';
 import { stylingDraft, stylingFromDraft, type StylingDraft } from '../services/stylingTags';
@@ -91,12 +93,17 @@ export default function AddItemScreen() {
       }));
       setStylingDetails(null); setShowDetails(true); setReviewPhoto(true);
     } catch (err) {
+      if (err instanceof AiSignInRequiredError) {
+        router.push({ pathname: '/account', params: { reason: 'ai-sign-in' } });
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Could not analyze photo. Enter details manually.');
     } finally { busy.current = false; setAnalyzing(false); }
   }
 
   const disabled = saving || picking || analyzing;
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ProfileLink />
     <Text style={styles.eyebrow}>Add to your collection</Text>
     <Text style={styles.title}>Tell us about this piece.</Text>
     <Text style={styles.subtitle}>Start with a category. A photo and the details are completely optional.</Text>

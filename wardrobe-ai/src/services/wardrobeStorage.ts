@@ -1,3 +1,4 @@
+import { getProfileSession, profileIdFor } from './profileSession';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { ClothingStatus, ImportedProduct, SavedClothing } from '../types/clothing';
 import { storageAccount, loadCloudClothing, saveCloudClothing, deleteCloudClothing, moveCloudClothingToWardrobe } from './cloudWardrobe';
@@ -20,25 +21,28 @@ export async function loadDeviceClothing(): Promise<SavedClothing[]> {
 }
 
 export async function loadClothing(): Promise<SavedClothing[]> {
+  const profile = getProfileSession();
   const user = await storageAccount();
-  return user ? loadCloudClothing(user.uid) : loadDeviceClothing();
+  return user ? loadCloudClothing(user.uid, profileIdFor(user.uid, profile)) : loadDeviceClothing();
 }
 
 export async function uploadDeviceClothing(): Promise<number> {
+  const profile = getProfileSession();
   const user = await storageAccount();
   if (!user) throw new Error('Sign in before uploading device items.');
   const items = await loadDeviceClothing();
-  for (const item of items) await saveCloudClothing(user.uid, item);
+  for (const item of items) await saveCloudClothing(user.uid, item, profileIdFor(user.uid, profile));
   return items.length;
 }
 
 export function saveClothing(product: ImportedProduct, status: ClothingStatus): Promise<void> {
+  const profile = getProfileSession();
   const session = storageAccount();
   const operation = pending.then(async () => {
     const styledProduct = withInferredStyling(product);
     const user = await session;
     if (user) {
-      await saveCloudClothing(user.uid, { ...styledProduct, status, savedAt: new Date().toISOString() });
+      await saveCloudClothing(user.uid, { ...styledProduct, status, savedAt: new Date().toISOString() }, profileIdFor(user.uid, profile));
       return;
     }
     const items = await loadDeviceClothing();
@@ -53,12 +57,13 @@ export function saveClothing(product: ImportedProduct, status: ClothingStatus): 
 }
 
 export function updateClothingCategory(item: SavedClothing, category: SavedClothing['category']): Promise<void> {
+  const profile = getProfileSession();
   const session = storageAccount();
   const operation = pending.then(async () => {
     const user = await session;
     const updated = { ...item, category };
     if (user) {
-      await saveCloudClothing(user.uid, updated);
+      await saveCloudClothing(user.uid, updated, profileIdFor(user.uid, profile));
       return;
     }
     const items = await loadDeviceClothing();
@@ -70,11 +75,12 @@ export function updateClothingCategory(item: SavedClothing, category: SavedCloth
 }
 
 export function deleteClothing(item: Pick<SavedClothing, 'sourceUrl' | 'status'>): Promise<void> {
+  const profile = getProfileSession();
   const session = storageAccount();
   const operation = pending.then(async () => {
     const user = await session;
     if (user) {
-      await deleteCloudClothing(user.uid, item);
+      await deleteCloudClothing(user.uid, item, profileIdFor(user.uid, profile));
       return;
     }
     const items = await loadDeviceClothing();
@@ -86,11 +92,12 @@ export function deleteClothing(item: Pick<SavedClothing, 'sourceUrl' | 'status'>
 }
 
 export function moveToWardrobe(sourceUrl: string): Promise<void> {
+  const profile = getProfileSession();
   const session = storageAccount();
   const operation = pending.then(async () => {
     const user = await session;
     if (user) {
-      await moveCloudClothingToWardrobe(user.uid, sourceUrl);
+      await moveCloudClothingToWardrobe(user.uid, sourceUrl, profileIdFor(user.uid, profile));
       return;
     }
     const items = await loadDeviceClothing();

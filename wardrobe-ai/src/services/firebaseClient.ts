@@ -1,3 +1,4 @@
+import { resetAccountProfile } from './profileSession';
 import { Platform } from 'react-native';
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getAuth, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth';
@@ -61,6 +62,7 @@ export async function storageAccount(): Promise<User | null> {
   const services = firebaseServices();
   if (!services) return null;
   await services.auth.authStateReady();
+  resetAccountProfile(services.auth.currentUser?.uid ?? null);
   return services.auth.currentUser;
 }
 
@@ -70,6 +72,7 @@ export function observeAccount(listener: (user: User | null) => void, onProfileE
   if (!services) { listener(null); return () => {}; }
   let active = true;
   const unsubscribe = onAuthStateChanged(services.auth, user => {
+    resetAccountProfile(user?.uid ?? null);
     listener(user);
     if (!user) return;
     const key = JSON.stringify([user.uid, user.displayName]);

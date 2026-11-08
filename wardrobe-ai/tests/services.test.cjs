@@ -16,6 +16,9 @@ function load(name, overrides = {}, globals = {}) {
     exports, require: key => {
       if (key in overrides) return overrides[key];
       if (key === './cloudWardrobe') return { storageAccount: async () => null };
+      if (key === './wardrobeStorage') return { loadClothing: async () => [] };
+      if (key === './profileSession') return load('profileSession');
+      if (key === './aiErrors') return load('aiErrors');
       if (key === './productValidation') return load('productValidation');
       if (key === './stylingTags') return load('stylingTags');
       if (key === './outfitFeedback') return { loadOutfitFeedback: async () => [] };
@@ -707,4 +710,231 @@ test('cloud outfits use owner-scoped Firestore documents and validate reads', as
   await assert.rejects(service.loadCloudOutfits('other'), /account changed/);
   readValue = { broken: true };
   await assert.rejects(service.loadCloudOutfits('owner'), /could not be read/);
+});
+
+test('AI endpoints distinguish expired sessions from service failures in both languages', async () => {
+  for (const language of ['en', 'ar']) {
+    for (const status of [401, 503]) {
+      const detail = status === 503 ? 'AI sign-in verification is not configured.' : 'Your session expired. Please sign in again.';
+      const overrides = {
+        './aiAuth': { aiAuthorization: async () => 'Bearer test-token' },
+        './i18n': { getLanguage: () => language },
+        './collectionView': { categories: ['tops'] },
+      };
+      const globals = { fetch: async () => ({ ok: false, status, json: async () => ({ detail }) }) };
+      const outfit = load('outfitApi', overrides, globals);
+      const photo = load('photoAnalysis', overrides, globals);
+      for (const request of [
+        () => outfit.getOutfitRecommendation('Linköping', 'Work', [{ ...product, status: 'owned' }], { language }),
+        () => photo.analyzeClothingPhoto('test-image'),
+      ]) {
+        await assert.rejects(request, error => {
+          assert.equal(error.name, status === 401 ? 'AiSignInRequiredError' : 'Error');
+          assert.match(error.message, language === 'ar' ? /[\u0600-\u06ff]/ : status === 401 ? /Sign in to continue/ : /service problem/);
+          assert.doesNotMatch(error.message, /FIREBASE|not configured/);
+          return true;
+        });
+      }
+    }
+  }
+});
+
+test('AI authorization never sends an AI request for signed-out or expired users', async () => {
+  for (const user of [null, { getIdToken: async () => { throw { code: 'auth/user-token-expired' }; } }]) {
+    const auth = load('aiAuth', {
+      './firebaseClient': { storageAccount: async () => user },
+      './i18n': { getLanguage: () => 'en' },
+    });
+    await assert.rejects(() => auth.aiAuthorization(), error => error.name === 'AiSignInRequiredError');
+  }
+});
+
+test('AI authorization connection errors do not ask the user to sign in again', async () => {
+  const auth = load('aiAuth', {
+    './firebaseClient': { storageAccount: async () => ({ getIdToken: async () => { throw { code: 'auth/network-request-failed' }; } }) },
+    './i18n': { getLanguage: () => 'en' },
+  });
+  await assert.rejects(() => auth.aiAuthorization(), error => error.name === 'Error' && /internet connection/.test(error.message));
+});
+
+test('photo analysis handles non-JSON server errors without a parsing exception', async () => {
+  const photo = load('photoAnalysis', {
+    './aiAuth': { aiAuthorization: async () => 'Bearer test-token' },
+    './i18n': { getLanguage: () => 'ar' },
+    './collectionView': { categories: ['tops'] },
+  }, { fetch: async () => ({ ok: false, status: 502, json: async () => { throw new SyntaxError(); } }) });
+  await assert.rejects(() => photo.analyzeClothingPhoto('test'), /تعذّر تحليل الصورة/);
+});
+
+
+test('profiles default to main, reset across accounts, and retain legacy paths', () => {
+  const session = load('profileSession');
+  assert.equal(session.getProfileSession().id, 'main');
+  session.resetAccountProfile('alice');
+  session.activateProfile('alice', 'secondary', 'Child');
+  session.resetAccountProfile('alice'); // Another screen subscribing must not reset selection.
+  assert.equal(session.getProfileSession().id, 'secondary');
+  assert.equal(session.profilePath('alice', 'main', 'clothing'), 'users/alice/clothing');
+  assert.equal(session.profilePath('alice', 'secondary', 'clothing'), 'users/alice/profiles/secondary/clothing');
+  assert.throws(() => session.profilePath('alice', 'third', 'outfits'), /Invalid profile/);
+  session.resetAccountProfile(null);
+  session.resetAccountProfile('alice');
+  assert.equal(session.getProfileSession().id, 'main');
+  session.resetAccountProfile('bob');
+  assert.throws(() => session.activateProfile('alice', 'secondary'), /account changed/);
+  assert.equal(load('profileSession').getProfileSession().id, 'main'); // App restart.
+});
+
+test('only one additional profile can be created, including concurrent attempts', async () => {
+  const session = load('profileSession');
+  session.resetAccountProfile('alice');
+  const auth = { currentUser: { uid: 'alice' } };
+  const docs = new Map();
+  let pending = Promise.resolve();
+  const firestore = {
+    doc: (_, ...parts) => parts.join('/'),
+    getDoc: async path => ({ exists: () => docs.has(path), data: () => docs.get(path) }),
+    runTransaction: (_, operation) => {
+      const job = pending.then(() => operation({ get: firestore.getDoc, set: (path, value) => docs.set(path, value) }));
+      pending = job.catch(() => {}); return job;
+    },
+  };
+  const service = load('accountProfiles', {
+    './profileSession': session,
+    './firebaseClient': { firebaseServices: () => ({ db: {}, auth }), storageAccount: async () => auth.currentUser },
+    'firebase/firestore': firestore,
+  });
+  await assert.rejects(service.switchProfile('alice', 'secondary'), /Create/);
+  await assert.rejects(service.createExtraProfile('alice', ' '), /profile name/);
+  const attempts = await Promise.allSettled([service.createExtraProfile('alice', ' Child '), service.createExtraProfile('alice', 'Another')]);
+  assert.equal(attempts.filter(value => value.status === 'fulfilled').length, 1);
+  assert.equal(docs.size, 1);
+  assert.equal((await service.loadExtraProfile('alice')).displayName, 'Child');
+  await service.switchProfile('alice', 'secondary');
+  assert.equal(session.getProfileSession().name, 'Child');
+  auth.currentUser = { uid: 'bob' };
+  await assert.rejects(service.loadExtraProfile('alice'), /account changed/);
+});
+
+test('wardrobes and wishlists isolate profiles, and profile switches reject in-flight writes', async () => {
+  const session = load('profileSession'); session.resetAccountProfile('alice');
+  const docs = new Map();
+  let pauseHash = null;
+  const cloud = load('cloudWardrobe', {
+    './profileSession': session,
+    './firebaseClient': { firebaseServices: () => ({ db: {}, auth: { currentUser: { uid: 'alice' } } }) },
+    'expo-crypto': { CryptoDigestAlgorithm: { SHA256: 'sha' }, digestStringAsync: async (_, value) => { if (pauseHash) await pauseHash; return value; } },
+    'firebase/firestore': {
+      doc: (_, ...parts) => parts.join('/'), collection: (_, ...parts) => parts.join('/'),
+      setDoc: async (path, value) => docs.set(path, value), deleteDoc: async path => docs.delete(path),
+      getDocs: async path => ({ docs: [...docs].filter(([key]) => key.startsWith(path + '/')).map(([, value]) => ({ data: () => value })) }),
+    },
+  });
+  const item = { ...product, status: 'owned', savedAt: '2026-11-08' };
+  await cloud.saveCloudClothing('alice', item);
+  session.activateProfile('alice', 'secondary', 'Child');
+  assert.equal((await cloud.loadCloudClothing('alice', 'secondary')).length, 0);
+  await cloud.saveCloudClothing('alice', { ...item, name: 'Child dress', status: 'wishlist' }, 'secondary');
+  await cloud.deleteCloudClothing('alice', { ...item, status: 'wishlist' }, 'secondary');
+  assert.equal(docs.size, 1);
+  session.activateProfile('alice', 'main');
+  assert.equal((await cloud.loadCloudClothing('alice'))[0].name, 'Dress');
+  let release;
+  pauseHash = new Promise(resolve => { release = resolve; });
+  const saving = cloud.saveCloudClothing('alice', { ...item, name: 'Do not mix' });
+  session.activateProfile('alice', 'secondary', 'Child'); release();
+  await assert.rejects(saving, /profile changed/);
+  assert.equal(docs.size, 1);
+});
+
+test('profile captured before a queued wardrobe save cannot drift into the new profile', async () => {
+  const session = load('profileSession'); session.resetAccountProfile('alice');
+  const attempts = [];
+  const storage = load('wardrobeStorage', {
+    './profileSession': session,
+    './cloudWardrobe': {
+      storageAccount: async () => ({ uid: 'alice' }),
+      saveCloudClothing: async (uid, item, profile) => { attempts.push(profile); session.assertActiveProfile(uid, profile); },
+    },
+    '@react-native-async-storage/async-storage': {},
+  });
+  const save = storage.saveClothing(product, 'owned');
+  session.activateProfile('alice', 'secondary', 'Child');
+  await assert.rejects(save, /profile changed/);
+  await storage.saveClothing(product, 'owned');
+  assert.deepEqual(attempts, ['main', 'secondary']);
+});
+
+test('feedback retains main history and keeps secondary preferences separate', async () => {
+  const session = load('profileSession'); session.resetAccountProfile('alice');
+  const data = new Map();
+  const service = load('outfitFeedback', {
+    './profileSession': session,
+    './firebaseClient': { storageAccount: async () => ({ uid: 'alice' }) },
+    '@react-native-async-storage/async-storage': { getItem: async key => data.get(key) ?? null, setItem: async (key, value) => data.set(key, value) },
+  });
+  await service.saveOutfitFeedback({ sourceUrls: ['same-url'], rating: 'like', occasion: 'Work' });
+  session.activateProfile('alice', 'secondary', 'Child');
+  assert.equal((await service.loadOutfitFeedback()).length, 0);
+  await service.saveOutfitFeedback({ sourceUrls: ['same-url'], rating: 'dislike', occasion: 'School' });
+  session.activateProfile('alice', 'main');
+  assert.equal((await service.loadOutfitFeedback())[0].rating, 'like');
+  assert.ok(data.has('wearly:feedback:v1:alice'));
+  assert.ok(data.has('wearly:feedback:v1:alice:secondary'));
+});
+
+test('manual outfits persist setting without inventing weather and validate owned pieces', async () => {
+  const model = load('outfitModel');
+  const items = [{ ...product, status: 'owned', savedAt: '2026-11-08' }, { ...product, sourceUrl: 'wishlist-url', status: 'wishlist' }];
+  const input = { title: ' My school look ', sourceUrls: [product.sourceUrl], occasion: 'School', environment: 'indoors' };
+  const saved = model.makeManualOutfit(input, items, 'manual-look', '2026-11-08');
+  assert.equal(saved.weather, null);
+  assert.equal(saved.origin, 'manual');
+  assert.equal(saved.environment, 'indoors');
+  assert.equal(model.isSavedOutfit(saved), true);
+  assert.equal(model.isSavedOutfit({ ...saved, origin: undefined }), false);
+  for (const urls of [[], ['wishlist-url'], ['unknown'], [product.sourceUrl, product.sourceUrl]]) {
+    assert.throws(() => model.makeManualOutfit({ ...input, sourceUrls: urls }, items, 'id', 'now'), /wardrobe/);
+  }
+  assert.throws(() => model.makeManualOutfit({ ...input, environment: 'invalid' }, items, 'id', 'now'), /where/);
+  const examples = model.favoriteOutfitExamples([saved], items);
+  assert.equal(examples[0].occasion, 'School'); assert.equal(examples[0].environment, 'indoors');
+  assert.equal(model.favoriteOutfitExamples([saved], []).length, 0);
+  const docs = new Map();
+  const session = load('profileSession'); session.resetAccountProfile('alice'); session.activateProfile('alice', 'secondary', 'Child');
+  const cloud = load('cloudOutfits', {
+    './profileSession': session, './outfitModel': model,
+    './firebaseClient': { firebaseServices: () => ({ db: {}, auth: { currentUser: { uid: 'alice' } } }) },
+    'firebase/firestore': {
+      doc: (_, ...parts) => parts.join('/'), collection: (_, ...parts) => parts.join('/'),
+      setDoc: async (path, value) => docs.set(path, value), deleteDoc: async path => docs.delete(path),
+      getDocs: async path => ({ docs: [...docs].filter(([key]) => key.startsWith(path + '/')).map(([, value]) => ({ data: () => value })) }),
+    },
+  });
+  await cloud.saveCloudOutfit('alice', saved, 'secondary');
+  assert.ok(docs.has('users/alice/profiles/secondary/outfits/manual-look'));
+  assert.equal((await cloud.loadCloudOutfits('alice', 'secondary'))[0].environment, 'indoors');
+  session.activateProfile('alice', 'main');
+  assert.equal((await cloud.loadCloudOutfits('alice')).length, 0);
+  await assert.rejects(cloud.deleteCloudOutfit('alice', saved.id, 'secondary'), /profile changed/);
+});
+
+test('manual outfit save uses the current profile and reloads its latest wardrobe before saving', async () => {
+  const model = load('outfitModel'); const session = load('profileSession');
+  session.resetAccountProfile('alice'); session.activateProfile('alice', 'secondary', 'Child');
+  let items = [{ ...product, status: 'owned', savedAt: 'now' }]; const writes = [];
+  const storage = load('outfitStorage', {
+    './outfitModel': model, './profileSession': session,
+    './firebaseClient': { storageAccount: async () => ({ uid: 'alice' }) },
+    './wardrobeStorage': { loadClothing: async () => items },
+    './cloudOutfits': { saveCloudOutfit: async (uid, saved, profile) => writes.push({ uid, saved, profile }) },
+    'expo-crypto': { randomUUID: () => 'manual-id' }, '@react-native-async-storage/async-storage': {},
+  });
+  const input = { title: 'School look', sourceUrls: [product.sourceUrl], occasion: 'School', environment: 'mixed' };
+  await storage.saveManualOutfit(input);
+  assert.equal(writes[0].profile, 'secondary');
+  assert.equal(writes[0].saved.environment, 'mixed');
+  items = [];
+  await assert.rejects(storage.saveManualOutfit(input), /wardrobe/);
+  assert.equal(writes.length, 1);
 });

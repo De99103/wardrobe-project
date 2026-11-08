@@ -1,3 +1,6 @@
+import { ProfileLink } from '../components/ProfileLink';
+import { OutfitBuilder } from '../components/OutfitBuilder';
+import { useLanguage, translate } from '../services/i18n';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native';
 import { loadClothing } from '../services/wardrobeStorage';
@@ -7,6 +10,7 @@ import { Text } from '../components/AppTypography';
 import { styles } from '../styles/outfitStyles';
 import { BrandColors } from '../constants/brand';
 export default function SavedOutfitsScreen() {
+ const { language } = useLanguage();
  const [savedOutfits,setSavedOutfits]=useState<SavedOutfit[]>([]);
  const [owned,setOwned]=useState<SavedClothing[]>([]);
  const [loadingSaved,setLoadingSaved]=useState(true);
@@ -16,6 +20,7 @@ export default function SavedOutfitsScreen() {
  useEffect(()=>{Promise.all([loadSavedOutfits(),loadClothing()]).then(([looks,items])=>{setSavedOutfits(looks);setOwned(items);}).catch(()=>setError('Could not load saved outfits.')).finally(()=>setLoadingSaved(false));},[]);
  async function removeSavedOutfit(id:string){setDeleting(id);try{await deleteSavedOutfit(id);setSavedOutfits(previous=>previous.filter(value=>value.id!==id));setConfirmDelete(null);}catch{setError('Could not remove outfit.');}finally{setDeleting(null);}}
  return <ScrollView contentContainerStyle={styles.container}>
+      <ProfileLink />
       <View style={styles.savedSection}>
         <View style={styles.savedHeading}>
           <View style={{ flex: 1 }}>
@@ -24,14 +29,15 @@ export default function SavedOutfitsScreen() {
           </View>
           <View style={styles.savedCount}><Text style={styles.savedCountText}>{savedOutfits.length}</Text></View>
         </View>
+        {!loadingSaved && !error && <OutfitBuilder items={owned} onSaved={saved => setSavedOutfits(previous => [saved, ...previous])} />}
         {loadingSaved ? <ActivityIndicator color={BrandColors.charcoal} /> : savedOutfits.length === 0 ? <Text style={styles.emptySaved}>Your saved outfits will appear here.</Text> : savedOutfits.map(saved => {
-          const savedItems = saved.outfit.sourceUrls.map(sourceUrl => owned.find(value => value.sourceUrl === sourceUrl)).filter((item): item is SavedClothing => !!item);
+          const savedItems = saved.outfit.sourceUrls.map(sourceUrl => owned.find(value => value.status === 'owned' && value.sourceUrl === sourceUrl)).filter((item): item is SavedClothing => !!item);
           const pieceNames = savedItems.map(item => item.name ?? item.subcategory ?? 'Wardrobe item');
           return <View key={saved.id} style={styles.savedCard}>
             <View style={styles.savedCardTop}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.savedTitle}>{saved.outfit.title}</Text>
-                <Text style={styles.savedMeta}>{saved.occasion} · {saved.weather.location} · {Math.round(saved.weather.temperatureC)}°C</Text>
+                <Text style={styles.savedMeta}>{[translate(saved.occasion, language), saved.environment ? (language === 'ar' ? { indoors: 'في الداخل', outdoors: 'في الخارج', mixed: 'كلاهما' } : { indoors: 'Indoors', outdoors: 'Outdoors', mixed: 'Both' })[saved.environment] : null, saved.weather ? `${saved.weather.location} · ${Math.round(saved.weather.temperatureC)}°C` : null].filter(Boolean).join(' · ')}</Text>
               </View>
               <Text style={styles.savedDate}>{new Date(saved.savedAt).toLocaleDateString()}</Text>
             </View>
@@ -39,7 +45,8 @@ export default function SavedOutfitsScreen() {
               {savedItems.map(item => item.imageUrl ? <Image key={item.sourceUrl} source={{ uri: item.imageUrl }} style={styles.savedImage} resizeMode="cover" accessibilityLabel={item.name ?? 'Saved outfit piece'} /> : null)}
             </View>}
             <Text style={styles.savedPieces}>{pieceNames.join(' · ')}</Text>
-            <Text style={styles.savedTip}>{saved.outfit.weatherTip}</Text>
+            {!!saved.outfit.weatherTip && <Text style={styles.savedTip}>{saved.outfit.weatherTip}</Text>}
+            {saved.origin === 'manual' && <Text style={styles.savedMeta}>{language === 'ar' ? 'من تنسيقك' : 'Created by you'}</Text>}
             {confirmDelete === saved.id ? <View style={styles.confirmPanel}>
               <Text style={styles.savedMeta}>Remove this saved outfit?</Text>
               <View style={styles.confirmRow}>

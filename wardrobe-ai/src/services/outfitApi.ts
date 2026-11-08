@@ -3,6 +3,7 @@ import { API_URL } from './apiConfig';
 import { inferClothingStyling } from './stylingTags';
 import { loadOutfitFeedback } from './outfitFeedback';
 import { aiAuthorization } from './aiAuth';
+import { aiServiceError } from './aiErrors';
 
 export type WeatherSummary = {
   location: string;
@@ -55,7 +56,7 @@ export type OutfitContext = {
   hijab?: HijabPreference;
   requiredSourceUrls?: string[];
   language?: 'en' | 'ar';
-  favoriteOutfits?: { sourceUrls: string[]; occasion: string }[];
+  favoriteOutfits?: { sourceUrls: string[]; occasion: string; environment?: OutfitEnvironment }[];
 };
 
 function isOutfitChoice(value: unknown): value is OutfitChoice {
@@ -163,10 +164,8 @@ export async function getOutfitRecommendation(
     });
     const data: unknown = await response.json().catch(() => null);
     if (!response.ok) {
-      if (response.status === 401) throw new Error(context.language === 'ar' ? 'سجّل الدخول للحصول على اقتراحات الإطلالات.' : 'Sign in to get outfit recommendations.');
       const detail = data && typeof data === 'object' && 'detail' in data ? data.detail : null;
-      if (detail === 'AI sign-in verification is not configured.') throw new Error(context.language === 'ar' ? 'خدمة الاقتراحات غير متاحة مؤقتاً. حاول لاحقاً.' : 'Outfit recommendations are temporarily unavailable. Please try again later.');
-      throw new Error(typeof detail === 'string' ? detail : 'Could not create an outfit. Please try again.');
+      throw aiServiceError(response.status, detail, context.language ?? 'en', 'Could not create an outfit. Please try again.');
     }
     if (!isRecommendation(data)) throw new Error('The server returned an invalid outfit.');
     const ownedUrls = new Set(owned.map(item => item.sourceUrl));

@@ -1,3 +1,4 @@
+import { ProfileLink } from '../components/ProfileLink';
 import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -28,6 +29,7 @@ export default function BrowserImportScreen() {
 
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container}>
+      <ProfileLink />
       <View style={styles.header}>
         <Text style={styles.eyebrow}>STORE IMPORT</Text>
         <Text style={styles.title}>Add from a product link.</Text>

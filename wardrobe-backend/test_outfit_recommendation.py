@@ -47,9 +47,9 @@ def completion(outfits):
     return value
 
 
-def ranked(source_urls, rank, label):
+def ranked(item_ids, rank, label):
     return {
-        'sourceUrls': source_urls,
+        'itemIds': item_ids,
         'title': f'Look {rank}',
         'explanation': 'These pieces make a coherent outfit for the plan.',
         'weatherTip': 'Take an umbrella if the rain continues.',
@@ -59,6 +59,20 @@ def ranked(source_urls, rank, label):
 
 
 class OutfitRecommendationTests(unittest.TestCase):
+    def test_personal_outfit_occasion_and_setting_reach_the_stylist(self):
+        client = Mock()
+        client.chat.completions.create.return_value = completion([ranked([1, 3], 1, 'School')])
+        request = OutfitRequest(location='Stockholm', occasion='School', environment='indoors', items=ITEMS,
+            favoriteOutfits=[{'sourceUrls': ['manual:top-black', 'manual:bottom'], 'occasion': 'School', 'environment': 'indoors'},
+                            {'sourceUrls': ['manual:deleted'], 'occasion': 'Dinner', 'environment': 'outdoors'}])
+        with patch.dict(os.environ, {'weather_api_key': 'secret'}, clear=True), \
+             patch('outfit_recommendation.requests.get', return_value=weather_response()):
+            recommend_outfit(request, client, 'test-model')
+        messages = client.chat.completions.create.call_args.kwargs['messages']
+        sent = json.loads(messages[1]['content'])
+        self.assertEqual(sent['savedStyleExamples'], [{'itemIds': [1, 3], 'occasion': 'School', 'environment': 'indoors'}])
+        self.assertIn('indoor/outdoor settings', messages[0]['content'])
+
     def test_weather_key_and_response_are_normalized(self):
         with patch.dict(os.environ, {'weather_api_key': 'secret'}, clear=True), \
              patch('outfit_recommendation.requests.get', return_value=weather_response()) as get:
@@ -101,9 +115,9 @@ class OutfitRecommendationTests(unittest.TestCase):
 
     def test_three_ranked_outfits_are_grounded_and_legacy_best_is_preserved(self):
         choices = [
-            ranked(['manual:top-black', 'manual:bottom'], 1, 'Best match'),
-            ranked(['manual:dress'], 2, 'One-piece option'),
-            ranked(['manual:top-white', 'manual:bottom'], 3, 'Lighter alternative'),
+            ranked([1, 3], 1, 'Best match'),
+            ranked([4], 2, 'One-piece option'),
+            ranked([2, 3], 3, 'Lighter alternative'),
         ]
         client = Mock()
         client.chat.completions.create.return_value = completion(choices)
@@ -126,8 +140,8 @@ class OutfitRecommendationTests(unittest.TestCase):
 
     def test_duplicate_outfits_are_removed_with_an_honest_notice(self):
         choices = [
-            ranked(['manual:top-black', 'manual:bottom'], 1, 'Best match'),
-            ranked(['manual:bottom', 'manual:top-black'], 2, 'Duplicate'),
+            ranked([1, 3], 1, 'Best match'),
+            ranked([3, 1], 2, 'Duplicate'),
         ]
         client = Mock()
         client.chat.completions.create.return_value = completion(choices)
@@ -140,7 +154,7 @@ class OutfitRecommendationTests(unittest.TestCase):
     def test_invented_or_structurally_invalid_outfits_are_rejected(self):
         client = Mock()
         client.chat.completions.create.return_value = completion([
-            ranked(['manual:not-owned'], 1, 'Invalid'),
+            ranked([999], 1, 'Invalid'),
         ])
         with patch.dict(os.environ, {'weather_api_key': 'secret'}, clear=True), \
              patch('outfit_recommendation.requests.get', return_value=weather_response()):
@@ -149,7 +163,7 @@ class OutfitRecommendationTests(unittest.TestCase):
 
         two_bottoms = ITEMS + [{'sourceUrl': 'manual:bottom-2', 'category': 'bottoms'}]
         client.chat.completions.create.return_value = completion([
-            ranked(['manual:bottom', 'manual:bottom-2'], 1, 'Invalid structure'),
+            ranked([3, 5], 1, 'Invalid structure'),
         ])
         with patch.dict(os.environ, {'weather_api_key': 'secret'}, clear=True), \
              patch('outfit_recommendation.requests.get', return_value=weather_response()):

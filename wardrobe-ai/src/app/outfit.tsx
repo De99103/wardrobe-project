@@ -1,8 +1,10 @@
+import { ProfileLink } from '../components/ProfileLink';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native';
 import { Stack, Link, router } from 'expo-router';
 import { storageAccount } from '../services/firebaseClient';
 
+import { favoriteOutfitExamples } from '../services/outfitModel';
 import { getOutfitRecommendation } from '../services/outfitApi';
 import type { HijabPreference, OutfitEnvironment, OutfitRecommendation, RankedOutfit, OutfitVariation } from '../services/outfitApi';
 import { loadClothing } from '../services/wardrobeStorage';
@@ -11,6 +13,7 @@ import type { SavedOutfit } from '../services/outfitStorage';
 import type { SavedClothing } from '../types/clothing';
 import { styles } from '../styles/outfitStyles';
 import { Text, TextInput } from '../components/AppTypography';
+import { AiSignInRequiredError } from '../services/aiErrors';
 import { BrandColors } from '../constants/brand';
 import { useLanguage } from '../services/i18n';
 import { saveOutfitFeedback } from '../services/outfitFeedback';
@@ -82,7 +85,7 @@ export default function OutfitScreen() {
 
   async function createOutfit(variation?: OutfitVariation) {
     if (!await storageAccount()) {
-      router.push('/account');
+      router.push({ pathname: '/account', params: { reason: 'ai-sign-in' } });
       return;
     }
     setFeedbackMessage('');
@@ -99,7 +102,7 @@ export default function OutfitScreen() {
     try {
       const pinnedForRequest = variation?.mode === 'swap' ? requiredSourceUrls.filter(url => url !== variation.replaceSourceUrl) : requiredSourceUrls;
       const recommendation = await getOutfitRecommendation(location, occasion, owned, { plannedTime, environment, hijab, requiredSourceUrls: pinnedForRequest, language,
-        favoriteOutfits: savedOutfits.slice(0, 10).map(saved => ({ sourceUrls: saved.outfit.sourceUrls, occasion: saved.occasion })),
+        favoriteOutfits: favoriteOutfitExamples(savedOutfits, owned),
       }, variation);
       setResult(recommendation);
       if (variation?.mode === 'swap') setRequiredSourceUrls(pinnedForRequest);
@@ -110,6 +113,10 @@ export default function OutfitScreen() {
       setResultOccasion(occasion.trim() || 'Everyday');
       setSelectedRank(recommendation.outfits?.[0]?.rank ?? 1);
     } catch (reason) {
+      if (reason instanceof AiSignInRequiredError) {
+        router.push({ pathname: '/account', params: { reason: 'ai-sign-in' } });
+        return;
+      }
       setError(reason instanceof Error ? reason.message : 'Could not create an outfit.');
     } finally { setLoading(false); }
   }
@@ -186,6 +193,7 @@ export default function OutfitScreen() {
       headerTintColor: BrandColors.charcoal,
     }} />
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ProfileLink />
       <View style={styles.hero}>
         <Text style={styles.eyebrow}>Weather-aware styling</Text>
         <Text style={styles.heroTitle}>What should I wear?</Text>

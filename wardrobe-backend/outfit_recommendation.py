@@ -52,6 +52,7 @@ class OutfitVariation(BaseModel):
 
 
 class FavoriteOutfit(BaseModel):
+    environment: Optional[Literal['indoors', 'outdoors', 'mixed']] = None
     sourceUrls: List[Annotated[str, Field(min_length=1, max_length=2048)]] = Field(min_length=1, max_length=8)
     occasion: str = Field(max_length=200)
 
@@ -634,7 +635,7 @@ def recommend_outfit(request, groq_client, model):
             'Do not create or label a warmer option in these mild or hot conditions.'),
         'ownedWardrobe': wardrobe,
         'savedStyleExamples': [
-            {'itemIds': compact_urls(saved.sourceUrls), 'occasion': saved.occasion}
+            {'itemIds': compact_urls(saved.sourceUrls), 'occasion': saved.occasion, 'environment': saved.environment}
             for saved in request.favoriteOutfits
             if set(saved.sourceUrls).issubset(item_ids)
         ],
@@ -659,7 +660,7 @@ def recommend_outfit(request, groq_client, model):
                     'Use previousFeedback to personalize: favor qualities of liked combinations and avoid disliked combinations when suitable alternatives exist. '
                     'Treat savedStyleExamples as positive style examples. Infer recurring color palettes, formality, '
                     'silhouettes, patterns and accessory choices from their referenced wardrobe items. Favor similar '
-                    'qualities in fresh combinations, especially for matching occasions. Do not simply copy saved '
+                    'qualities in fresh combinations, especially for matching occasions and indoor/outdoor settings. Do not simply copy saved '
                     'outfits or infer personal identity, religion or body characteristics. Explicit adjustment requests '
                     'and recent negative feedback override saved examples; weather safety always takes priority. '
                     'Use feedback reasons specifically: too_warm means lighter layers, too_cold means warmer layers, '
