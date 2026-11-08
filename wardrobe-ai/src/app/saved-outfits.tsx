@@ -4,7 +4,6 @@ import { loadClothing } from '../services/wardrobeStorage';
 import { loadSavedOutfits, deleteSavedOutfit, type SavedOutfit } from '../services/outfitStorage';
 import type { SavedClothing } from '../types/clothing';
 import { Text } from '../components/AppTypography';
-import { RouteSeo } from '../components/RouteSeo';
 import { styles } from '../styles/outfitStyles';
 import { BrandColors } from '../constants/brand';
 export default function SavedOutfitsScreen() {
@@ -17,7 +16,6 @@ export default function SavedOutfitsScreen() {
  useEffect(()=>{Promise.all([loadSavedOutfits(),loadClothing()]).then(([looks,items])=>{setSavedOutfits(looks);setOwned(items);}).catch(()=>setError('Could not load saved outfits.')).finally(()=>setLoadingSaved(false));},[]);
  async function removeSavedOutfit(id:string){setDeleting(id);try{await deleteSavedOutfit(id);setSavedOutfits(previous=>previous.filter(value=>value.id!==id));setConfirmDelete(null);}catch{setError('Could not remove outfit.');}finally{setDeleting(null);}}
  return <ScrollView contentContainerStyle={styles.container}>
-      <RouteSeo title="Saved outfits | Wearly" path="/saved-outfits" noIndex />
       <View style={styles.savedSection}>
         <View style={styles.savedHeading}>
           <View style={{ flex: 1 }}>

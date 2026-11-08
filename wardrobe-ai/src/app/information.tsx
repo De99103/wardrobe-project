@@ -1,7 +1,6 @@
 import { ScrollView, View } from 'react-native';
 import { Link } from 'expo-router';
 import { Text } from '../components/AppTypography';
-import { RouteSeo } from '../components/RouteSeo';
 import { styles } from '../styles/informationStyles';
 
 const steps = [
@@ -29,20 +28,15 @@ const steps = [
 
 export default function InformationScreen() {
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container}>
-    <RouteSeo
-      title="How Wearly Works | Digital Wardrobe & AI Outfit Planner"
-      description="Learn how to add clothes, organize a wardrobe and wishlist, and create weather-aware outfit recommendations with Wearly."
-      path="/information"
-    />
     <Text style={styles.eyebrow}>Information</Text>
-    <Text accessibilityRole="header" style={styles.title}>How Wearly works</Text>
+    <Text style={styles.title}>How Wearly works</Text>
     <Text style={styles.subtitle}>A quick guide to adding clothes, organizing them, and creating outfits.</Text>
 
     <View style={styles.steps}>
       {steps.map(step => <View key={step.number} style={styles.card}>
         <View style={styles.number}><Text style={styles.numberText}>{step.number}</Text></View>
         <View style={styles.copy}>
-          <Text accessibilityRole="header" style={styles.cardTitle}>{step.title}</Text>
+          <Text style={styles.cardTitle}>{step.title}</Text>
           <Text style={styles.body}>{step.body}</Text>
         </View>
       </View>)}

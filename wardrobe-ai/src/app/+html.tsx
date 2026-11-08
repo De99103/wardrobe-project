@@ -10,7 +10,10 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <title>Wearly | Digital Wardrobe & AI Outfit Planner</title>
         <meta name="description" content="Wearly is a digital wardrobe and AI outfit planner. Organize the clothes you own, save a wishlist, and get weather-aware outfit ideas." />
+        <meta name="robots" content="index, follow, max-image-preview:large" />
         <meta name="theme-color" content="#F6F3EE" />
+        <link rel="canonical" href="https://wearly-closet-app.vercel.app/" />
+        <link rel="alternate" hrefLang="en" href="https://wearly-closet-app.vercel.app/" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://wearly-closet-app.vercel.app/" />
         <meta property="og:site_name" content="Wearly" />

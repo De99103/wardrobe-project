@@ -11,7 +11,6 @@ import type { SavedOutfit } from '../services/outfitStorage';
 import type { SavedClothing } from '../types/clothing';
 import { styles } from '../styles/outfitStyles';
 import { Text, TextInput } from '../components/AppTypography';
-import { RouteSeo } from '../components/RouteSeo';
 import { BrandColors } from '../constants/brand';
 import { useLanguage } from '../services/i18n';
 import { saveOutfitFeedback } from '../services/outfitFeedback';
@@ -180,7 +179,6 @@ export default function OutfitScreen() {
   }
 
   return <View style={styles.container}>
-    <RouteSeo title="Outfit stylist | Wearly" path="/outfit" noIndex />
     <Stack.Screen options={{
       title: 'Outfit stylist',
       headerStyle: { backgroundColor: BrandColors.ivory },

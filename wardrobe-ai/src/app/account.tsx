@@ -4,7 +4,6 @@ import { router } from 'expo-router';
 import { cloudEnabled, finishGoogleSignIn, firebaseConfigured, googleSignIn, logOut, observeAccount } from '../services/firebaseClient';
 import { uploadDeviceClothing } from '../services/wardrobeStorage';
 import { Text } from '../components/AppTypography';
-import { RouteSeo } from '../components/RouteSeo';
 import type { User } from 'firebase/auth';
 import { styles } from '../styles/collectionStyles';
 
@@ -33,7 +32,6 @@ export default function AccountScreen() {
   const initials = identity.split(/\s+|@/).filter(Boolean).slice(0, 2).map(part => part[0]?.toUpperCase()).join('') || 'WA';
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container}>
-      <RouteSeo title="Account | Wearly" path="/account" noIndex />
       <Text style={styles.eyebrow}>Profile & sync</Text>
       <Text style={styles.title}>Your account</Text>
       <Text style={styles.subtitle}>Keep your wardrobe private, backed up, and available across devices.</Text>

@@ -51,15 +51,6 @@ export const styles = StyleSheet.create({
     marginTop: 16,
   },
 
-  heroDescription: {
-    color: BrandColors.mutedText,
-    fontFamily: appFontFamily,
-    fontSize: 16,
-    lineHeight: 23,
-    marginTop: 14,
-    maxWidth: 620,
-  },
-
   heroLink: {
     color: BrandColors.mutedText,
     fontFamily: appFontFamily,
@@ -217,30 +208,6 @@ export const styles = StyleSheet.create({
     color: BrandColors.mutedText,
     fontSize: 13,
     lineHeight: 18,
-  },
-
-  featureSummary: {
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: BrandColors.stone,
-  },
-  featureItem: {
-    gap: 5,
-    paddingVertical: 18,
-    borderBottomWidth: 1,
-    borderColor: BrandColors.stone,
-  },
-  featureTitle: {
-    color: BrandColors.charcoal,
-    fontFamily: appFontFamily,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  featureBody: {
-    color: BrandColors.mutedText,
-    fontFamily: appFontFamily,
-    fontSize: 14,
-    lineHeight: 20,
   },
 
   panel: {

@@ -29,7 +29,6 @@ import type {
 
 import { styles } from '../styles/importResultStyles';
 import { Text, TextInput } from '../components/AppTypography';
-import { RouteSeo } from '../components/RouteSeo';
 import { StylingEditor } from '../components/StylingEditor';
 import { BrandColors } from '../constants/brand';
 import { stylingDraft, stylingFromDraft, type StylingDraft } from '../services/stylingTags';
@@ -206,7 +205,6 @@ export default function ImportResultScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <RouteSeo title="Import an item | Wearly" path="/import-result" noIndex />
         <Text style={styles.placeholderMark}>W</Text>
         <ActivityIndicator size="large" color={BrandColors.charcoal} />
         <Text style={styles.message}>Reading the product page and preparing the details…</Text>
@@ -218,7 +216,6 @@ export default function ImportResultScreen() {
   if (error || !product) {
     return (
       <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={styles.container}>
-        <RouteSeo title="Import an item | Wearly" path="/import-result" noIndex />
         <View style={styles.header}>
           <Text style={styles.eyebrow}>IMPORT ASSISTANT</Text>
           <Text style={styles.title}>Let’s try that again.</Text>
@@ -265,7 +262,6 @@ export default function ImportResultScreen() {
   // Successful product import
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <RouteSeo title="Import an item | Wearly" path="/import-result" noIndex />
       <View style={styles.header}>
         <Text style={styles.eyebrow}>READY TO SAVE</Text>
         <Text style={styles.title}>We found your piece.</Text>
