@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, View } from 'react-native';
-import { router } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { cloudEnabled, finishGoogleSignIn, firebaseConfigured, googleSignIn, logOut, observeAccount } from '../services/firebaseClient';
 import { uploadDeviceClothing } from '../services/wardrobeStorage';
 import { Text } from '../components/AppTypography';
@@ -35,7 +35,9 @@ export default function AccountScreen() {
       <Text style={styles.eyebrow}>Profile & sync</Text>
       <Text style={styles.title}>Your account</Text>
       <Text style={styles.subtitle}>Keep your wardrobe private, backed up, and available across devices.</Text>
-      {!firebaseConfigured ? <View style={styles.accountCard}><View style={styles.statusBadge}><Text style={styles.statusBadgeText}>Saved on device</Text></View><Text style={styles.accountBody}>Firebase is not connected yet. Your collection is safely stored on this device.</Text></View>
+      {!loading && !user && <Text style={styles.message}>{'Sign in to use Wearly. You can read the Information page without an account.'}</Text>}
+      <Link href="/information"><Text style={styles.tertiaryButtonText}>Information</Text></Link>
+      {!firebaseConfigured ? <View style={styles.accountCard}><View style={styles.statusBadge}><Text style={styles.statusBadgeText}>Sign-in unavailable</Text></View><Text style={styles.accountBody}>Sign-in is temporarily unavailable. Please try again later.</Text></View>
         : Platform.OS !== 'web' ? <View style={styles.accountCard}><Text style={styles.accountName}>Mobile sign-in is coming next</Text><Text style={styles.accountBody}>Google sign-in currently works in the web app. Native sign-in needs the iOS and Android platform configuration.</Text></View>
         : loading ? <ActivityIndicator /> : user ? <>
           <View style={styles.accountCard}>

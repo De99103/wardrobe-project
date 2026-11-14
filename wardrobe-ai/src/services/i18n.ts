@@ -34,6 +34,9 @@ function hydrateLanguage() {
 }
 
 const arabic: Record<string, string> = {
+  'Sign in to use Wearly. You can read the Information page without an account.': 'سجّل الدخول لاستخدام Wearly. يمكنك قراءة صفحة المعلومات دون حساب.',
+  'Sign-in is temporarily unavailable. Please try again later.': 'تسجيل الدخول غير متاح مؤقتاً. حاول لاحقاً.',
+  'Sign-in unavailable': 'تسجيل الدخول غير متاح',
   'Create your own look': 'أنشئ إطلالتك بنفسك',
   'Create your own look  →︎': 'أنشئ إطلالتك بنفسك ←︎',
   'Create your own look →︎': 'أنشئ إطلالتك بنفسك ←︎',
