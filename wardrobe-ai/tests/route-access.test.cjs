@@ -58,9 +58,9 @@ test('no app screens mount before the persisted account is restored', () => {
   assert.equal(app.dispose(), true);
 });
 
-test('signed-out users can access only Account and Information', () => {
+test('signed-out users can access Home, Account and Information', () => {
   const app = layoutHarness();
-  assert.deepEqual(accessibleScreens(app.account(null)), ['account', 'information']);
+  assert.deepEqual(accessibleScreens(app.account(null)), ['account', 'information', 'index']);
 });
 
 test('sign-in unlocks every page and sign-out revokes access again', () => {
@@ -69,5 +69,5 @@ test('sign-in unlocks every page and sign-out revokes access again', () => {
     .filter(name => name.endsWith('.tsx') && !name.startsWith('_') && !name.startsWith('+'))
     .map(name => name.replace(/\.tsx$/, '')).sort();
   assert.deepEqual(accessibleScreens(app.account({ uid: 'alice' })).sort(), routes);
-  assert.deepEqual(accessibleScreens(app.account(null)), ['account', 'information']);
+  assert.deepEqual(accessibleScreens(app.account(null)), ['account', 'information', 'index']);
 });

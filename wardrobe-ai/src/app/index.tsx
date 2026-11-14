@@ -5,7 +5,7 @@ import {
   Pressable,
   ScrollView,
 } from 'react-native';
-import { Link, router, useLocalSearchParams } from 'expo-router';
+import { Link, router, useLocalSearchParams, type Href } from 'expo-router';
 
 import { Text } from '../components/AppTypography';
 import { styles } from '../styles/homeStyles';
@@ -16,12 +16,16 @@ import { useLanguage } from '../services/i18n';
 export default function HomeScreen() {
   const { status: selectedStatus } = useLocalSearchParams<{ status?: string }>();
   const status: ClothingStatus = selectedStatus === 'wishlist' ? 'wishlist' : 'owned';
+  const [signedIn, setSignedIn] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const { language, setLanguage } = useLanguage();
 
   useEffect(() => observeAccount(user => {
+    setSignedIn(!!user);
     setUserName(user?.displayName?.trim() || user?.email?.split('@')[0] || null);
   }), []);
+
+  const openFeature = (href: Href) => router.push(signedIn ? href : '/account');
 
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={styles.container}>
@@ -44,12 +48,12 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.quickGrid}>
-        <Pressable style={styles.quickCard} accessibilityRole="button" onPress={() => router.push({ pathname: '/wardrobe', params: { status: 'owned' } })}>
+        <Pressable style={styles.quickCard} accessibilityRole="button" onPress={() => openFeature({ pathname: '/wardrobe', params: { status: 'owned' } })}>
           <Text style={styles.quickCardLabel}>COLLECTION</Text>
           <View style={[styles.cardTitleRow, language === 'ar' && styles.cardTitleRowArabic]}><Text style={styles.quickCardTitle}>My wardrobe</Text><Text style={styles.quickArrow}>{language === 'ar' ? '↖︎' : '↗︎'}</Text></View>
           <Text style={styles.quickCardMeta}>Browse everything you own</Text>
         </Pressable>
-        <Pressable style={[styles.quickCard, styles.quickCardAccent]} accessibilityRole="button" onPress={() => router.push({ pathname: '/wardrobe', params: { status: 'wishlist' } })}>
+        <Pressable style={[styles.quickCard, styles.quickCardAccent]} accessibilityRole="button" onPress={() => openFeature({ pathname: '/wardrobe', params: { status: 'wishlist' } })}>
           <Text style={styles.quickCardLabel}>SAVED FOR LATER</Text>
           <View style={[styles.cardTitleRow, language === 'ar' && styles.cardTitleRowArabic]}><Text style={styles.quickCardTitle}>Wishlist</Text><Text style={styles.quickArrow}>{language === 'ar' ? '↖︎' : '↗︎'}</Text></View>
           <Text style={styles.quickCardMeta}>Keep an eye on future finds</Text>
@@ -57,19 +61,19 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.homeLinks}>
-        <Pressable accessibilityRole="button" onPress={() => router.push('/saved-outfits')}>
+        <Pressable accessibilityRole="button" onPress={() => openFeature('/saved-outfits')}>
           <Text style={styles.homeLink}>Saved outfits →︎</Text>
           <Text style={styles.homeLinkHint}>Your favorite looks, ready to wear again</Text>
         </Pressable>
-        <Pressable accessibilityRole="button" onPress={() => router.push('/create-outfit')}>
+        <Pressable accessibilityRole="button" onPress={() => openFeature('/create-outfit')}>
           <Text style={styles.homeLink}>Create your own look  →︎</Text>
           <Text style={styles.homeLinkHint}>Teach the stylist what you love</Text>
         </Pressable>
-        <Pressable accessibilityRole="button" onPress={() => router.push('/outfit')}>
+        <Pressable accessibilityRole="button" onPress={() => openFeature('/outfit')}>
           <Text style={styles.homeLink}>Style an outfit  →︎</Text>
           <Text style={styles.homeLinkHint}>With AI recommendation</Text>
         </Pressable>
-        <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/add-item', params: { status } })}>
+        <Pressable accessibilityRole="button" onPress={() => openFeature({ pathname: '/add-item', params: { status } })}>
           <Text style={styles.homeLink}>Add an item  →︎</Text>
           <Text style={styles.homeLinkHint}>Manually or using a store link</Text>
         </Pressable>

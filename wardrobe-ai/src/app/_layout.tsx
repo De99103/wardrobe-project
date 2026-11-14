@@ -36,6 +36,10 @@ export default function RootLayout() {
     }}>
       <Stack.Screen name="account" options={{ title: 'Account' }} />
       <Stack.Screen name="information" options={{ title: 'Information' }} />
+      <Stack.Screen
+        name="index"
+        options={{ title: 'Wearly', headerShown: false, headerLeft: undefined, headerRight: undefined }}
+      />
       <Stack.Protected guard={signedIn}>
         <Stack.Screen name="add-item" options={{ title: 'Add item' }} />
         <Stack.Screen name="explore" options={{ title: 'Explore' }} />
@@ -44,10 +48,6 @@ export default function RootLayout() {
         <Stack.Screen name="outfit" options={{ title: 'Outfit stylist' }} />
         <Stack.Screen name="saved-outfits" options={{ title: 'Saved outfits' }} />
         <Stack.Screen name="create-outfit" options={{ title: 'Create a look' }} />
-        <Stack.Screen
-          name="index"
-          options={{ title: 'Wearly', headerShown: false, headerLeft: undefined, headerRight: undefined }}
-        />
         <Stack.Screen
           name="wardrobe"
           options={{ title: 'Collection' }}
