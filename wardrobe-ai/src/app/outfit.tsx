@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native';
-import { Stack, Link, router } from 'expo-router';
+import { Stack, Link, router, useFocusEffect } from 'expo-router';
 import { storageAccount } from '../services/firebaseClient';
 
 import { getOutfitRecommendation } from '../services/outfitApi';
@@ -57,8 +57,11 @@ export default function OutfitScreen() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     let active = true;
+    setLoadingWardrobe(true);
+    setLoadingSaved(true);
+    setSavedError('');
     loadClothing().then(value => { if (active) setItems(value); })
       .catch(() => { if (active) setError('Could not load your wardrobe.'); })
       .finally(() => { if (active) setLoadingWardrobe(false); });
@@ -66,7 +69,7 @@ export default function OutfitScreen() {
       .catch(reason => { if (active) setSavedError(savedOutfitError(reason, 'load')); })
       .finally(() => { if (active) setLoadingSaved(false); });
     return () => { active = false; };
-  }, []);
+  }, []));
 
   const owned = useMemo(() => items.filter(item => item.status === 'owned'), [items]);
   const rankedOutfits = useMemo<RankedOutfit[]>(() => {
@@ -87,7 +90,7 @@ export default function OutfitScreen() {
       return;
     }
     setFeedbackMessage('');
-    if (savingOutfit) return;
+    if (savingOutfit || loadingSaved || loadingWardrobe) return;
     if (!location.trim()) { setError('Enter a city or postcode.'); return; }
     let plannedTime: string | null;
     try {
@@ -165,7 +168,7 @@ export default function OutfitScreen() {
     } finally { setDeleting(null); }
   }
 
-  const busy = loading || loadingWardrobe || savingOutfit;
+  const busy = loading || loadingWardrobe || loadingSaved || savingOutfit;
 
   async function rateOutfit(rating: 'like' | 'dislike', reason?: FeedbackReason) {
     if (!selectedOutfit || sendingFeedback) return;

@@ -116,6 +116,29 @@ class RecommendationTests(unittest.TestCase):
         # ...and white (a liked color) beats red when nothing else separates them.
         self.assertEqual(offered[0], {'manual:top-white', 'manual:bottom-blue'})
 
+    def test_small_fallback_pools_rank_by_taste(self):
+        for count in (2, 3):
+            with self.subTest(count=count):
+                items = fallback_items()[:3]
+                if count == 3:
+                    items.append({'sourceUrl': 'manual:top-green', 'category': 'tops', 'color': 'green'})
+                # A deleted accessory keeps the example distinct from the candidates.
+                favorites = [{'sourceUrls': ['manual:top-white', 'manual:bottom-blue', 'manual:gone'],
+                              'occasion': 'Everyday', 'source': 'user'}]
+                result = run(OutfitRequest(location='Stockholm', items=items, favoriteOutfits=favorites),
+                             self.failing_client())
+                self.assertEqual(len(result.outfits), count)
+                self.assertIn('manual:top-white', result.outfits[0].sourceUrls)
+                self.assertEqual([o.rank for o in result.outfits], list(range(1, count + 1)))
+
+    def test_small_fallback_pool_places_saved_look_last(self):
+        favorites = [{'sourceUrls': ['manual:top-red', 'manual:bottom-blue'],
+                      'occasion': 'Everyday', 'source': 'user'}]
+        result = run(OutfitRequest(location='Stockholm', items=fallback_items()[:3], favoriteOutfits=favorites),
+                     self.failing_client())
+        self.assertIn('manual:top-white', result.outfits[0].sourceUrls)
+        self.assertIn('manual:top-red', result.outfits[-1].sourceUrls)
+
     def test_prompt_carries_profile_and_marks_user_made_looks(self):
         client = Mock()
         client.chat.completions.create.return_value = completion([ranked(['manual:dress'], 1, 'Best match')])

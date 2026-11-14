@@ -502,7 +502,7 @@ def _fallback_variations(items, weather, occasion, hijab='no', variation=None, r
                       - (100 if signature in saved_looks else 0))
         if len(outfits) == pool_size:
             break
-    if profile and len(outfits) > 3:
+    if profile:
         # Stable sort: equally good matches keep their original order.
         order = sorted(range(len(outfits)), key=lambda index: -scored[index])[:3]
         outfits = [outfits[index] for index in order]
