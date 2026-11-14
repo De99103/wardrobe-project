@@ -16,7 +16,7 @@ export default function SavedOutfitsScreen() {
  const [deleting,setDeleting]=useState<string|null>(null);
  useEffect(()=>{Promise.all([loadSavedOutfits(),loadClothing()]).then(([looks,items])=>{setSavedOutfits(looks);setOwned(items);}).catch(()=>setError('Could not load saved outfits.')).finally(()=>setLoadingSaved(false));},[]);
  async function removeSavedOutfit(id:string){setDeleting(id);try{await deleteSavedOutfit(id);setSavedOutfits(previous=>previous.filter(value=>value.id!==id));setConfirmDelete(null);}catch{setError('Could not remove outfit.');}finally{setDeleting(null);}}
- return <ScrollView contentContainerStyle={styles.container}>
+ return <ScrollView style={styles.container} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
       <View style={styles.savedSection}>
         <View style={styles.savedHeading}>
           <View style={{ flex: 1 }}>
@@ -39,7 +39,7 @@ export default function SavedOutfitsScreen() {
               </View>
               <Text style={styles.savedDate}>{new Date(saved.savedAt).toLocaleDateString()}</Text>
             </View>
-            {!!savedItems.some(item => !!item.imageUrl) && <View style={styles.savedImages}>
+            {!!savedItems.some(item => !!item.imageUrl) && <View style={[styles.savedImages, { flexWrap: 'wrap' }]}>
               {savedItems.map(item => item.imageUrl ? <Image key={item.sourceUrl} source={{ uri: item.imageUrl }} style={styles.savedImage} resizeMode="cover" accessibilityLabel={item.name ?? 'Saved outfit piece'} /> : null)}
             </View>}
             <Text style={styles.savedPieces}>{pieceNames.join(' · ')}</Text>
