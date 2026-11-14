@@ -55,7 +55,7 @@ export type OutfitContext = {
   hijab?: HijabPreference;
   requiredSourceUrls?: string[];
   language?: 'en' | 'ar';
-  favoriteOutfits?: { sourceUrls: string[]; occasion: string }[];
+  favoriteOutfits?: { sourceUrls: string[]; occasion: string; source?: 'ai' | 'user' }[];
 };
 
 function isOutfitChoice(value: unknown): value is OutfitChoice {

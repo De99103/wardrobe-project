@@ -34,6 +34,22 @@ function hydrateLanguage() {
 }
 
 const arabic: Record<string, string> = {
+  'Create your own look': 'أنشئ إطلالتك بنفسك',
+  'Create your own look  →︎': 'أنشئ إطلالتك بنفسك ←︎',
+  'Create your own look →︎': 'أنشئ إطلالتك بنفسك ←︎',
+  'Teach the stylist what you love': 'علّم المنسّق ما تحبه',
+  'Teach your stylist': 'علّم المنسّق ذوقك',
+  'Pick the pieces of an outfit you love. Wearly learns your colors, formality and style from it to make better recommendations.': 'اختر قطع إطلالة تحبها. يتعلّم Wearly ألوانك ودرجة رسميتك وأسلوبك منها ليقدّم اقتراحات أفضل.',
+  'Add a few pieces first': 'أضف بعض القطع أولاً',
+  'Your looks are built from clothes in your wardrobe.': 'تُبنى إطلالاتك من ملابس خزانتك.',
+  '1. Choose the pieces': '١. اختر القطع',
+  '2. What is it for?': '٢. لأي مناسبة؟',
+  'Or describe the occasion…': 'أو صف المناسبة…',
+  'Name this look (optional)': 'سمِّ هذه الإطلالة (اختياري)',
+  'My Friday favourite': 'إطلالتي المفضلة ليوم الجمعة',
+  'Save this look  →︎': 'احفظ هذه الإطلالة ←︎',
+  'Saving…': 'جارٍ الحفظ…',
+  'Create a look': 'إنشاء إطلالة',
   'Pants': 'البناطيل',
   'Jackets & Coats': 'الجاكيتات والمعاطف',
   'No suitable replacement is available for this item while keeping your other pieces. Choose another item to replace.': 'لا يتوفر بديل مناسب لهذه القطعة مع إبقاء القطع الأخرى. اختر قطعة أخرى لاستبدالها.',

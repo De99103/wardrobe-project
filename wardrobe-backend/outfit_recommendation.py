@@ -11,6 +11,8 @@ import requests
 from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
+from style_profile import build_style_profile, taste_score
+
 
 ShortTag = Annotated[str, Field(min_length=1, max_length=60)]
 
@@ -54,6 +56,8 @@ class OutfitVariation(BaseModel):
 class FavoriteOutfit(BaseModel):
     sourceUrls: List[Annotated[str, Field(min_length=1, max_length=2048)]] = Field(min_length=1, max_length=8)
     occasion: str = Field(max_length=200)
+    # 'user' looks were built by the person themselves; 'ai' looks were saved from a suggestion.
+    source: Literal['ai', 'user'] = 'ai'
 
 
 class OutfitRequest(BaseModel):
@@ -413,8 +417,11 @@ def _user_text(value):
     return re.sub(r'\s+([,.!?;:])', r'\1', re.sub(r' {2,}', ' ', value)).strip()
 
 
-def _fallback_variations(items, weather, occasion, hijab='no', variation=None, required=None):
-    """Build distinct, wardrobe-only options if the model cannot provide them."""
+def _fallback_variations(items, weather, occasion, hijab='no', variation=None, required=None, profile=None, saved_looks=()):
+    """Build distinct, wardrobe-only options if the model cannot provide them.
+
+    With a taste profile, gather several valid combinations and keep the three
+    closest to the user's liked looks; without one, keep the first three."""
     required = set(required or [])
     items = sorted(items, key=lambda item: item.sourceUrl not in required)
     grouped = {}
@@ -453,7 +460,9 @@ def _fallback_variations(items, weather, occasion, hijab='no', variation=None, r
         )
 
     outfits = []
+    scored = []
     seen = set()
+    pool_size = 40 if profile else 3
     for combination in combinations:
         # Build around the pinned pieces before validating or limiting results.
         combination = list({item.sourceUrl: item for item in [
@@ -477,7 +486,7 @@ def _fallback_variations(items, weather, occasion, hijab='no', variation=None, r
         change = 'One-piece swap' if variation and variation.mode == 'swap' else 'Fresh combination'
         hijab_item = next((item for item in combination if _category(item) == 'hijabs'), None)
         outfits.append(RankedOutfit(
-            sourceUrls=urls, rank=len(outfits) + 1, label=change,
+            sourceUrls=urls, rank=min(len(outfits) + 1, 3), label=change,
             title=f'{occasion.title()} look {len(outfits) + 1}',
             explanation=('Replaced just the selected piece, keeping your other choices.' if
                          variation and variation.mode == 'swap' else
@@ -488,9 +497,18 @@ def _fallback_variations(items, weather, occasion, hijab='no', variation=None, r
             hijabColor=(hijab_item.color if hijab_item and hijab_item.color else
                         'soft taupe' if hijab == 'yes' else None),
         ))
-        if len(outfits) == 3:
+        # Looks the user already saved rank last: still available, but not the first thing offered.
+        scored.append(taste_score(_taste_pieces(combination), profile, occasion)
+                      - (100 if signature in saved_looks else 0))
+        if len(outfits) == pool_size:
             break
-    return outfits
+    if profile and len(outfits) > 3:
+        # Stable sort: equally good matches keep their original order.
+        order = sorted(range(len(outfits)), key=lambda index: -scored[index])[:3]
+        outfits = [outfits[index] for index in order]
+    return [outfit.model_copy(update={
+        'rank': number, 'title': outfit.title.rsplit(' ', 1)[0] + f' {number}'
+    }) for number, outfit in enumerate(outfits, start=1)]
 
 
 def _notice(outfits, items):
@@ -535,6 +553,34 @@ def _inferred_styling(item):
     return StylingAttributes(
         colors=colors, pattern=pattern, warmth=warmth, formality=formality,
         layerRole=layer_role, styleTags=style_tags)
+
+
+def _taste_pieces(items):
+    """Reduce wardrobe items to the few attributes the taste profile compares."""
+    pieces = []
+    for item in items:
+        styling = _inferred_styling(item)
+        pieces.append({
+            'category': _category(item), 'colors': styling.colors, 'pattern': styling.pattern,
+            'formality': styling.formality, 'styleTags': styling.styleTags,
+        })
+    return pieces
+
+
+def _favorite_looks(favorites, items):
+    """Turn saved/created looks into profile input, ignoring pieces no longer owned."""
+    by_url = {item.sourceUrl: item for item in items}
+    looks = []
+    for favorite in favorites:
+        present = [by_url[url] for url in dict.fromkeys(favorite.sourceUrls) if url in by_url]
+        if len(present) >= 2:
+            looks.append({'source': favorite.source, 'occasion': favorite.occasion,
+                          'pieces': _taste_pieces(present)})
+    return looks
+
+
+def _is_saved_look(urls, favorites):
+    return any(set(urls) == set(favorite.sourceUrls) for favorite in favorites)
 
 
 def _prompt_item(item, item_id):
@@ -617,6 +663,7 @@ def recommend_outfit(request, groq_client, model):
             'replaceItemId': item_ids.get(variation.replaceSourceUrl),
             'avoidOutfits': [compact_urls(urls) for urls in variation.avoidOutfits],
         }
+    style_profile = build_style_profile(_favorite_looks(request.favoriteOutfits, request.items), request.occasion)
     prompt = json.dumps({
         'weather': weather.model_dump(),
         'responseLanguage': request.language,
@@ -633,8 +680,10 @@ def recommend_outfit(request, groq_client, model):
             if weather.feelsLikeC < 18 else
             'Do not create or label a warmer option in these mild or hot conditions.'),
         'ownedWardrobe': wardrobe,
+        'styleProfile': style_profile,
         'savedStyleExamples': [
-            {'itemIds': compact_urls(saved.sourceUrls), 'occasion': saved.occasion}
+            {'itemIds': compact_urls(saved.sourceUrls), 'occasion': saved.occasion,
+             'madeByUser': saved.source == 'user'}
             for saved in request.favoriteOutfits
             if set(saved.sourceUrls).issubset(item_ids)
         ],
@@ -657,6 +706,10 @@ def recommend_outfit(request, groq_client, model):
                     'Create up to three genuinely distinct outfits, strongest first, for the occasion, planned time, environment, and weather. '
                     'Rank primarily by weather comfort and safety, then occasion formality, color and pattern harmony, silhouette, and useful layering. '
                     'Use previousFeedback to personalize: favor qualities of liked combinations and avoid disliked combinations when suitable alternatives exist. '
+                    'styleProfile summarizes recurring taste from looks the user saved or built themselves; looks with '
+                    'madeByUser true are stronger evidence than saved AI suggestions. Treat it as taste guidance, never as a rule: '
+                    'weather safety, requiredItemIds, the occasion and explicit adjustment requests always override it. '
+                    'Never reproduce a savedStyleExamples look exactly; offer fresh combinations in the same spirit. '
                     'Treat savedStyleExamples as positive style examples. Infer recurring color palettes, formality, '
                     'silhouettes, patterns and accessory choices from their referenced wardrobe items. Favor similar '
                     'qualities in fresh combinations, especially for matching occasions. Do not simply copy saved '
@@ -725,9 +778,15 @@ def recommend_outfit(request, groq_client, model):
         outfits = []
 
     outfits = [outfit for outfit in outfits if required.issubset(outfit.sourceUrls)]
+    # A saved look is already known to the user. Prefer fresh combinations, but
+    # keep a repeat if it is the only suitable option.
+    fresh = [outfit for outfit in outfits if not _is_saved_look(outfit.sourceUrls, request.favoriteOutfits)]
+    if fresh and not variation:
+        outfits = [outfit.model_copy(update={'rank': number}) for number, outfit in enumerate(fresh, start=1)]
     used_fallback = not outfits
     if not outfits:
-        outfits = _fallback_variations(request.items, weather, request.occasion, request.hijab, variation, required)
+        outfits = _fallback_variations(request.items, weather, request.occasion, request.hijab, variation, required, style_profile,
+                                       {frozenset(favorite.sourceUrls) for favorite in request.favoriteOutfits})
     if required:
         outfits = [outfit for outfit in outfits if required.issubset(outfit.sourceUrls)]
         if not outfits:

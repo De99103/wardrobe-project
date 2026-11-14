@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native';
+import { router } from 'expo-router';
 import { loadClothing } from '../services/wardrobeStorage';
 import { loadSavedOutfits, deleteSavedOutfit, type SavedOutfit } from '../services/outfitStorage';
 import type { SavedClothing } from '../types/clothing';
@@ -24,6 +25,9 @@ export default function SavedOutfitsScreen() {
           </View>
           <View style={styles.savedCount}><Text style={styles.savedCountText}>{savedOutfits.length}</Text></View>
         </View>
+        <Pressable accessibilityRole="button" style={styles.smallButton} onPress={() => router.push('/create-outfit')}>
+          <Text style={styles.smallButtonText}>Create your own look  →︎</Text>
+        </Pressable>
         {loadingSaved ? <ActivityIndicator color={BrandColors.charcoal} /> : savedOutfits.length === 0 ? <Text style={styles.emptySaved}>Your saved outfits will appear here.</Text> : savedOutfits.map(saved => {
           const savedItems = saved.outfit.sourceUrls.map(sourceUrl => owned.find(value => value.sourceUrl === sourceUrl)).filter((item): item is SavedClothing => !!item);
           const pieceNames = savedItems.map(item => item.name ?? item.subcategory ?? 'Wardrobe item');
@@ -31,7 +35,7 @@ export default function SavedOutfitsScreen() {
             <View style={styles.savedCardTop}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.savedTitle}>{saved.outfit.title}</Text>
-                <Text style={styles.savedMeta}>{saved.occasion} · {saved.weather.location} · {Math.round(saved.weather.temperatureC)}°C</Text>
+                <Text style={styles.savedMeta}>{saved.source === 'user' ? `${saved.occasion} · Your look` : `${saved.occasion} · ${saved.weather.location} · ${Math.round(saved.weather.temperatureC)}°C`}</Text>
               </View>
               <Text style={styles.savedDate}>{new Date(saved.savedAt).toLocaleDateString()}</Text>
             </View>
@@ -39,7 +43,7 @@ export default function SavedOutfitsScreen() {
               {savedItems.map(item => item.imageUrl ? <Image key={item.sourceUrl} source={{ uri: item.imageUrl }} style={styles.savedImage} resizeMode="cover" accessibilityLabel={item.name ?? 'Saved outfit piece'} /> : null)}
             </View>}
             <Text style={styles.savedPieces}>{pieceNames.join(' · ')}</Text>
-            <Text style={styles.savedTip}>{saved.outfit.weatherTip}</Text>
+            {saved.source !== 'user' && <Text style={styles.savedTip}>{saved.outfit.weatherTip}</Text>}
             {confirmDelete === saved.id ? <View style={styles.confirmPanel}>
               <Text style={styles.savedMeta}>Remove this saved outfit?</Text>
               <View style={styles.confirmRow}>

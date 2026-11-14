@@ -61,6 +61,10 @@ export default function HomeScreen() {
           <Text style={styles.homeLink}>Saved outfits →︎</Text>
           <Text style={styles.homeLinkHint}>Your favorite looks, ready to wear again</Text>
         </Pressable>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/create-outfit')}>
+          <Text style={styles.homeLink}>Create your own look  →︎</Text>
+          <Text style={styles.homeLinkHint}>Teach the stylist what you love</Text>
+        </Pressable>
         <Pressable accessibilityRole="button" onPress={() => router.push('/outfit')}>
           <Text style={styles.homeLink}>Style an outfit  →︎</Text>
           <Text style={styles.homeLinkHint}>With AI recommendation</Text>

@@ -47,9 +47,17 @@ def completion(outfits):
     return value
 
 
+KNOWN_URLS = [item['sourceUrl'] for item in ITEMS] + ['manual:bottom-2']
+
+
+def item_id(url):
+    # The model sees 1-based integer ids; unknown urls map to an id that does not exist.
+    return KNOWN_URLS.index(url) + 1 if url in KNOWN_URLS else 99
+
+
 def ranked(source_urls, rank, label):
     return {
-        'sourceUrls': source_urls,
+        'itemIds': [item_id(url) for url in source_urls],
         'title': f'Look {rank}',
         'explanation': 'These pieces make a coherent outfit for the plan.',
         'weatherTip': 'Take an umbrella if the rain continues.',

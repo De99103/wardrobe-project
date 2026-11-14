@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
 import { storageAccount } from './firebaseClient';
 import { deleteCloudOutfit, loadCloudOutfits, saveCloudOutfit } from './cloudOutfits';
-import { isSavedOutfit, makeSavedOutfit } from './outfitModel';
+import { isSavedOutfit, makeSavedOutfit, makeUserOutfit } from './outfitModel';
 import type { SavedOutfit } from './outfitModel';
 import type { OutfitRecommendation } from './outfitApi';
 
@@ -34,6 +34,28 @@ export function saveOutfit(recommendation: OutfitRecommendation, occasion: strin
       const outfits = await loadDeviceOutfits();
       await AsyncStorage.setItem(KEY, JSON.stringify([saved, ...outfits]));
     }
+  });
+  pending = operation.catch(() => undefined);
+  return operation.then(() => saved);
+}
+
+export function saveUserOutfit(sourceUrls: string[], occasion: string, title: string): Promise<SavedOutfit> {
+  let saved: SavedOutfit;
+  try {
+    saved = makeUserOutfit(sourceUrls, occasion, title, Crypto.randomUUID(), new Date().toISOString());
+  } catch (error) {
+    return Promise.reject(error);
+  }
+  const session = storageAccount();
+  const operation = pending.then(async () => {
+    const user = await session;
+    const existing = user ? await loadCloudOutfits(user.uid) : await loadDeviceOutfits();
+    const same = (outfit: SavedOutfit) => outfit.source === 'user'
+      && outfit.occasion.toLowerCase() === saved.occasion.toLowerCase()
+      && [...outfit.outfit.sourceUrls].sort().join('\n') === [...saved.outfit.sourceUrls].sort().join('\n');
+    if (existing.some(same)) throw new Error('You already saved this look for this occasion.');
+    if (user) await saveCloudOutfit(user.uid, saved);
+    else await AsyncStorage.setItem(KEY, JSON.stringify([saved, ...existing]));
   });
   pending = operation.catch(() => undefined);
   return operation.then(() => saved);

@@ -7,6 +7,7 @@ import { getOutfitRecommendation } from '../services/outfitApi';
 import type { HijabPreference, OutfitEnvironment, OutfitRecommendation, RankedOutfit, OutfitVariation } from '../services/outfitApi';
 import { loadClothing } from '../services/wardrobeStorage';
 import { deleteSavedOutfit, loadSavedOutfits, saveOutfit } from '../services/outfitStorage';
+import { pickFavoriteLooks } from '../services/outfitModel';
 import type { SavedOutfit } from '../services/outfitStorage';
 import type { SavedClothing } from '../types/clothing';
 import { styles } from '../styles/outfitStyles';
@@ -99,7 +100,8 @@ export default function OutfitScreen() {
     try {
       const pinnedForRequest = variation?.mode === 'swap' ? requiredSourceUrls.filter(url => url !== variation.replaceSourceUrl) : requiredSourceUrls;
       const recommendation = await getOutfitRecommendation(location, occasion, owned, { plannedTime, environment, hijab, requiredSourceUrls: pinnedForRequest, language,
-        favoriteOutfits: savedOutfits.slice(0, 10).map(saved => ({ sourceUrls: saved.outfit.sourceUrls, occasion: saved.occasion })),
+        // Looks the person built themselves come first; they are the strongest taste signal.
+        favoriteOutfits: pickFavoriteLooks(savedOutfits),
       }, variation);
       setResult(recommendation);
       if (variation?.mode === 'swap') setRequiredSourceUrls(pinnedForRequest);
@@ -515,6 +517,10 @@ export default function OutfitScreen() {
         </View>}
       </>}
 
+      {!loadingSaved && !savedOutfits.some(saved => saved.source === 'user') && <View style={styles.noticeBox}>
+        <Text style={styles.noticeText}>{language === 'ar' ? 'علّم المنسّق ذوقك: أنشئ إطلالة تحبها وسنقترح إطلالات أقرب إلى أسلوبك.' : 'Teach the stylist your taste: create a look you love and recommendations will follow your style.'}</Text>
+        <Link href="/create-outfit"><Text>Create your own look →︎</Text></Link>
+      </View>}
       <Link href="/saved-outfits"><Text>Saved outfits →︎</Text></Link>
       {!!savedError && <View style={styles.errorBox}><Text accessibilityRole="alert" style={styles.error}>{savedError}</Text></View>}
     </ScrollView>
